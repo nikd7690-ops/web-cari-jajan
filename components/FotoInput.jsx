@@ -111,6 +111,7 @@ export default function FotoInput({ label, hint, onChange }) {
         type="file"
         accept="image/*"
         capture="environment"
+        aria-label={`Ambil foto dari kamera untuk ${label}`}
         onChange={pilih}
         className="hidden"
       />
@@ -118,6 +119,7 @@ export default function FotoInput({ label, hint, onChange }) {
         ref={galeriRef}
         type="file"
         accept="image/*"
+        aria-label={`Pilih foto dari galeri untuk ${label}`}
         onChange={pilih}
         className="hidden"
       />

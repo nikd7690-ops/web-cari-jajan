@@ -444,6 +444,7 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
             >
               <input
                 type="text"
+                aria-label="Nama menu"
                 value={menu.namaMenu}
                 onChange={(e) =>
                   setMenus((prev) =>
@@ -456,6 +457,7 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
               <input
                 type="number"
                 min="0"
+                aria-label="Harga menu"
                 value={menu.harga}
                 onChange={(e) =>
                   setMenus((prev) =>

@@ -130,7 +130,7 @@ async function main() {
 
   await Vendor.insertMany(vendors);
 
-  console.log(`Akun demo: ${user.email}`);
+  console.log("Akun demo disiapkan dari environment.");
   console.log(`Berhasil menyisipkan ${vendors.length} warung contoh di Jember.`);
 
   await mongoose.disconnect();
