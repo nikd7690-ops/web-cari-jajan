@@ -18,7 +18,7 @@ const PUSAT_JEMBER = { lat: -8.1689, lng: 113.702 };
 
 function geserMenu(menus, index, field, value) {
   return menus.map((menu, i) =>
-    i === index ? { ...menu, [field]: value } : menu
+    i === index ? { ...menu, [field]: value, yakin: true } : menu
   );
 }
 
@@ -54,7 +54,10 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
   const [lokasiInfo, setLokasiInfo] = useState("");
   const [uploadInfo, setUploadInfo] = useState("");
   const [fotoWarung, setFotoWarung] = useState(null);
-  const [, setFotoMenu] = useState(null);
+  const [fotoMenu, setFotoMenu] = useState(null);
+  const [adaDraf, setAdaDraf] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiPesan, setAiPesan] = useState("");
 
   useEffect(() => {
     if (mode !== "tambah") return;
@@ -107,6 +110,59 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
     setMenus((prev) =>
       prev.length === 1 ? prev : prev.filter((_, i) => i !== index)
     );
+  }
+
+  async function bacaMenu() {
+    if (!fotoMenu) {
+      setAiPesan("Ambil atau pilih foto menu dulu.");
+      return;
+    }
+
+    setAiPesan("");
+    setAiLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", fotoMenu, "menu.jpg");
+
+      const res = await fetch("/api/menu-dari-foto", {
+        method: "POST",
+        body: formData,
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        setAiPesan(json.error || "AI gagal membaca menu. Isi manual saja.");
+        return;
+      }
+
+      const items = json.items ?? [];
+
+      if (items.length === 0) {
+        setAiPesan("AI tidak menemukan menu. Isi manual saja.");
+        return;
+      }
+
+      const draf = items.map((item) => ({
+        namaMenu: item.namaMenu,
+        harga: item.harga === null ? "" : String(item.harga),
+        yakin: Boolean(item.yakin),
+      }));
+
+      setMenus((prev) => {
+        const terisi = prev.filter(
+          (menu) => menu.namaMenu.trim() !== "" || menu.harga !== ""
+        );
+        const gabung = [...terisi, ...draf];
+        return gabung.length > 0 ? gabung : [{ namaMenu: "", harga: "" }];
+      });
+      setAdaDraf(true);
+      setAiPesan(`AI membaca ${items.length} menu. Periksa dulu sebelum simpan.`);
+    } catch {
+      setAiPesan("AI gagal membaca menu. Isi manual saja.");
+    } finally {
+      setAiLoading(false);
+    }
   }
 
   function gunakanLokasi() {
@@ -357,9 +413,35 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
           </button>
         </div>
 
+        <button
+          type="button"
+          onClick={bacaMenu}
+          disabled={aiLoading || !fotoMenu}
+          className="mb-2 w-full rounded-lg border border-emerald-600 px-3 py-2 text-sm font-medium text-emerald-700 disabled:opacity-50"
+        >
+          {aiLoading ? "AI membaca menu..." : "Baca menu dari foto"}
+        </button>
+
+        {adaDraf ? (
+          <p className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+            Draf AI, periksa dulu
+          </p>
+        ) : null}
+
+        {aiPesan ? (
+          <p className="mb-2 text-xs text-zinc-600">{aiPesan}</p>
+        ) : null}
+
         <div className="space-y-2">
           {menus.map((menu, index) => (
-            <div key={index} className="flex items-center gap-2">
+            <div
+              key={index}
+              className={`flex items-center gap-2 rounded-lg ${
+                menu.yakin === false
+                  ? "border border-amber-300 bg-amber-50 p-1"
+                  : ""
+              }`}
+            >
               <input
                 type="text"
                 value={menu.namaMenu}
@@ -380,7 +462,9 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
                     geserMenu(prev, index, "harga", e.target.value)
                   )
                 }
-                className="w-24 rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-600"
+                className={`w-24 rounded-lg border bg-white px-2 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-600 ${
+                  menu.yakin === false ? "border-amber-400" : "border-zinc-300"
+                }`}
                 placeholder="Harga"
               />
               <button
