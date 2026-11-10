@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import FotoInput from "@/components/FotoInput";
 
 const PinMap = dynamic(() => import("@/components/PinMap"), {
   ssr: false,
@@ -49,7 +50,54 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(mode === "tambah");
+  const [lokasiInfo, setLokasiInfo] = useState("");
+  const [uploadInfo, setUploadInfo] = useState("");
+  const [fotoWarung, setFotoWarung] = useState(null);
+  const [, setFotoMenu] = useState(null);
+
+  useEffect(() => {
+    if (mode !== "tambah") return;
+
+    let ignore = false;
+
+    async function mintaLokasi() {
+      await Promise.resolve();
+
+      if (ignore) return;
+
+      if (typeof navigator === "undefined" || !navigator.geolocation) {
+        setLokasiInfo(
+          "Perangkat tidak mendukung geolokasi. Geser pin manual di peta."
+        );
+        setGeoLoading(false);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          if (ignore) return;
+          setPin({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setLokasiInfo("Pin diisi dari lokasi kamu. Geser bila kurang tepat.");
+          setGeoLoading(false);
+        },
+        () => {
+          if (ignore) return;
+          setLokasiInfo(
+            "Izin lokasi ditolak. Geser pin manual atau tekan 'Gunakan lokasiku'."
+          );
+          setGeoLoading(false);
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+
+    mintaLokasi();
+
+    return () => {
+      ignore = true;
+    };
+  }, [mode]);
 
   function tambahBaris() {
     setMenus((prev) => [...prev, { namaMenu: "", harga: "" }]);
@@ -63,20 +111,24 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
 
   function gunakanLokasi() {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setError("Perangkat tidak mendukung geolokasi.");
+      setLokasiInfo(
+        "Perangkat tidak mendukung geolokasi. Geser pin manual di peta."
+      );
       return;
     }
 
-    setError("");
     setGeoLoading(true);
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setPin({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLokasiInfo("Pin diisi dari lokasi kamu. Geser bila kurang tepat.");
         setGeoLoading(false);
       },
       () => {
-        setError("Gagal mengambil lokasi. Geser pin manual saja.");
+        setLokasiInfo(
+          "Izin lokasi ditolak. Geser pin manual di peta, lokasi tetap bisa diisi."
+        );
         setGeoLoading(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -109,6 +161,28 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
     setLoading(true);
 
     try {
+      let fotoUrl = initial?.foto || "";
+
+      if (fotoWarung) {
+        setUploadInfo("Mengunggah foto...");
+        const formData = new FormData();
+        formData.append("file", fotoWarung, "warung.jpg");
+        const unggah = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const hasilUnggah = await unggah.json();
+
+        if (!unggah.ok) {
+          setUploadInfo("");
+          setError(hasilUnggah.error || "Gagal mengunggah foto.");
+          return;
+        }
+
+        fotoUrl = hasilUnggah.url;
+        setUploadInfo("");
+      }
+
       const payload = {
         namaToko,
         kategori,
@@ -117,7 +191,7 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
         jamTutup,
         nomorWA,
         layananAntar,
-        foto: initial?.foto || "",
+        foto: fotoUrl,
         lat: pin.lat,
         lng: pin.lng,
         menus: menuBersih,
@@ -264,6 +338,11 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
         <p className="mt-1 text-xs text-zinc-500">
           Geser pin bila GPS meleset. Peta: &copy; OpenStreetMap contributors
         </p>
+        {lokasiInfo ? (
+          <p className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            {lokasiInfo}
+          </p>
+        ) : null}
       </div>
 
       <div>
@@ -317,6 +396,25 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
           ))}
         </div>
       </div>
+
+      <div className="space-y-4">
+        <FotoInput
+          label="Foto warung (opsional)"
+          hint="Ambil dari kamera atau pilih galeri. Foto dikompres otomatis dan disimpan."
+          onChange={setFotoWarung}
+        />
+        <FotoInput
+          label="Foto menu (hanya untuk draf AI)"
+          hint="Dibaca AI untuk membuat draf menu. Tidak disimpan. Kalau kamera tidak terbuka, pilih dari galeri."
+          onChange={setFotoMenu}
+        />
+      </div>
+
+      {uploadInfo ? (
+        <p className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-600">
+          {uploadInfo}
+        </p>
+      ) : null}
 
       {error ? (
         <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
