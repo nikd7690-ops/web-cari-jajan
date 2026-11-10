@@ -3,6 +3,8 @@ import { z } from "zod";
 import { connectDB } from "@/lib/mongodb";
 import Vendor from "@/models/Vendor";
 import { isBuka } from "@/lib/jam";
+import { requireUser } from "@/lib/apiAuth";
+import { vendorInputSchema } from "@/lib/vendorSchema";
 
 const querySchema = z.object({
   lat: z.coerce
@@ -71,6 +73,65 @@ export async function GET(request) {
     console.error("GET /api/vendors gagal:", error);
     return NextResponse.json(
       { error: "Gagal mengambil data warung" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request) {
+  const { user, response } = await requireUser();
+  if (response) return response;
+
+  let body;
+
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Body JSON tidak valid" },
+      { status: 400 }
+    );
+  }
+
+  const parsed = vendorInputSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error: "Data tidak valid",
+        details: parsed.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      },
+      { status: 400 }
+    );
+  }
+
+  const d = parsed.data;
+
+  try {
+    await connectDB();
+
+    const vendor = await Vendor.create({
+      owner: user.id,
+      namaToko: d.namaToko,
+      kategori: d.kategori,
+      lokasi: { type: "Point", coordinates: [d.lng, d.lat] },
+      alamatPatokan: d.alamatPatokan,
+      jamBuka: d.jamBuka,
+      jamTutup: d.jamTutup,
+      nomorWA: d.nomorWA,
+      layananAntar: d.layananAntar,
+      foto: d.foto,
+      menus: d.menus,
+    });
+
+    return NextResponse.json({ data: vendor }, { status: 201 });
+  } catch (error) {
+    console.error("POST /api/vendors gagal:", error);
+    return NextResponse.json(
+      { error: "Gagal menyimpan warung" },
       { status: 500 }
     );
   }
