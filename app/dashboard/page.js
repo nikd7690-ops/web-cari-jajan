@@ -19,7 +19,7 @@ export default async function DashboardPage() {
     .lean();
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-6">
+    <main className="mx-auto w-full max-w-2xl px-4 py-6 pb-24">
       <header className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">Dashboard</h1>
@@ -37,7 +37,7 @@ export default async function DashboardPage() {
 
         {vendors.length === 0 ? (
           <p className="rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-600">
-            Belum ada warung terdaftar.
+            Belum ada warung terdaftar. Tekan tombol + untuk menambah.
           </p>
         ) : (
           <ul className="space-y-2">
@@ -55,12 +55,20 @@ export default async function DashboardPage() {
                       {vendor.kategori} - {vendor.jamBuka}-{vendor.jamTutup}
                     </p>
                   </div>
-                  <Link
-                    href={`/warung/${vendor._id}`}
-                    className="text-sm font-medium text-emerald-700 underline"
-                  >
-                    Lihat
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/warung/${vendor._id}`}
+                      className="text-sm font-medium text-zinc-600 underline"
+                    >
+                      Lihat
+                    </Link>
+                    <Link
+                      href={`/dashboard/edit/${vendor._id}`}
+                      className="text-sm font-medium text-emerald-700 underline"
+                    >
+                      Edit
+                    </Link>
+                  </div>
                 </div>
                 <p className="mt-1 text-sm text-zinc-600">
                   {vendor.alamatPatokan}
@@ -70,6 +78,14 @@ export default async function DashboardPage() {
           </ul>
         )}
       </section>
+
+      <Link
+        href="/dashboard/tambah"
+        aria-label="Tambah warung"
+        className="fixed bottom-5 right-5 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-3xl leading-none text-white shadow-lg active:bg-emerald-700"
+      >
+        +
+      </Link>
     </main>
   );
 }

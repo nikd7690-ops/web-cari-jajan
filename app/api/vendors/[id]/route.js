@@ -134,3 +134,7 @@ export async function DELETE(request, { params }) {
     );
   }
 }
+
+export async function PUT(request, context) {
+  return PATCH(request, context);
+}

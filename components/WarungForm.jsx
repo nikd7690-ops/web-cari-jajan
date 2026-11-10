@@ -1,0 +1,340 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+
+const PinMap = dynamic(() => import("@/components/PinMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-60 items-center justify-center rounded-xl bg-zinc-100 text-sm text-zinc-500">
+      Memuat peta...
+    </div>
+  ),
+});
+
+const PUSAT_JEMBER = { lat: -8.1689, lng: 113.702 };
+
+function geserMenu(menus, index, field, value) {
+  return menus.map((menu, i) =>
+    i === index ? { ...menu, [field]: value } : menu
+  );
+}
+
+export default function WarungForm({ mode = "tambah", vendorId, initial }) {
+  const router = useRouter();
+
+  const [namaToko, setNamaToko] = useState(initial?.namaToko || "");
+  const [kategori, setKategori] = useState(initial?.kategori || "warung");
+  const [alamatPatokan, setAlamatPatokan] = useState(
+    initial?.alamatPatokan || ""
+  );
+  const [jamBuka, setJamBuka] = useState(initial?.jamBuka || "06:00");
+  const [jamTutup, setJamTutup] = useState(initial?.jamTutup || "21:00");
+  const [nomorWA, setNomorWA] = useState(initial?.nomorWA || "");
+  const [layananAntar, setLayananAntar] = useState(
+    Boolean(initial?.layananAntar)
+  );
+  const [menus, setMenus] = useState(
+    initial?.menus?.length
+      ? initial.menus.map((menu) => ({
+          namaMenu: menu.namaMenu,
+          harga: String(menu.harga),
+        }))
+      : [{ namaMenu: "", harga: "" }]
+  );
+  const [pin, setPin] = useState({
+    lat: initial?.lat ?? PUSAT_JEMBER.lat,
+    lng: initial?.lng ?? PUSAT_JEMBER.lng,
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
+
+  function tambahBaris() {
+    setMenus((prev) => [...prev, { namaMenu: "", harga: "" }]);
+  }
+
+  function hapusBaris(index) {
+    setMenus((prev) =>
+      prev.length === 1 ? prev : prev.filter((_, i) => i !== index)
+    );
+  }
+
+  function gunakanLokasi() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setError("Perangkat tidak mendukung geolokasi.");
+      return;
+    }
+
+    setError("");
+    setGeoLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setPin({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGeoLoading(false);
+      },
+      () => {
+        setError("Gagal mengambil lokasi. Geser pin manual saja.");
+        setGeoLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  async function onSubmit(event) {
+    event.preventDefault();
+    setError("");
+
+    const adaBarisKosong = menus.some((menu) => {
+      const adaNama = menu.namaMenu.trim() !== "";
+      const adaHarga = menu.harga !== "";
+      return adaNama !== adaHarga;
+    });
+
+    if (adaBarisKosong) {
+      setError("Lengkapi nama dan harga tiap menu, atau hapus barisnya.");
+      return;
+    }
+
+    const menuBersih = menus
+      .filter((menu) => menu.namaMenu.trim() !== "")
+      .map((menu) => ({
+        namaMenu: menu.namaMenu.trim(),
+        harga: Number(menu.harga),
+        tersedia: true,
+      }));
+
+    setLoading(true);
+
+    try {
+      const payload = {
+        namaToko,
+        kategori,
+        alamatPatokan,
+        jamBuka,
+        jamTutup,
+        nomorWA,
+        layananAntar,
+        foto: initial?.foto || "",
+        lat: pin.lat,
+        lng: pin.lng,
+        menus: menuBersih,
+      };
+
+      const res = await fetch(
+        mode === "edit" ? `/api/vendors/${vendorId}` : "/api/vendors",
+        {
+          method: mode === "edit" ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      const json = await res.json();
+
+      if (!res.ok) {
+        setError(json.error || "Gagal menyimpan warung.");
+        return;
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setError("Gagal menyimpan, periksa koneksi lalu coba lagi.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div>
+        <label className="mb-1 block text-sm font-medium text-zinc-700">
+          Nama warung
+        </label>
+        <input
+          type="text"
+          required
+          value={namaToko}
+          onChange={(e) => setNamaToko(e.target.value)}
+          className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-600"
+          placeholder="Warung Bu Siti"
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium text-zinc-700">
+          Kategori
+        </label>
+        <select
+          value={kategori}
+          onChange={(e) => setKategori(e.target.value)}
+          className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-600"
+        >
+          <option value="warung">Warung</option>
+          <option value="pkl">PKL</option>
+          <option value="cafe">Cafe</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium text-zinc-700">
+          Alamat / patokan
+        </label>
+        <input
+          type="text"
+          required
+          value={alamatPatokan}
+          onChange={(e) => setAlamatPatokan(e.target.value)}
+          className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-600"
+          placeholder="Jl. Kalimantan, dekat masjid"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="mb-1 block text-sm font-medium text-zinc-700">
+            Jam buka
+          </label>
+          <input
+            type="time"
+            required
+            value={jamBuka}
+            onChange={(e) => setJamBuka(e.target.value)}
+            className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-600"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-zinc-700">
+            Jam tutup
+          </label>
+          <input
+            type="time"
+            required
+            value={jamTutup}
+            onChange={(e) => setJamTutup(e.target.value)}
+            className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-600"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium text-zinc-700">
+          Nomor WhatsApp
+        </label>
+        <input
+          type="tel"
+          required
+          value={nomorWA}
+          onChange={(e) => setNomorWA(e.target.value)}
+          className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-600"
+          placeholder="0812xxxxxxx"
+        />
+        <p className="mt-1 text-xs text-zinc-500">
+          Akan disimpan sebagai 62xxxxxxxxxx.
+        </p>
+      </div>
+
+      <label className="flex items-center gap-2 text-sm text-zinc-700">
+        <input
+          type="checkbox"
+          checked={layananAntar}
+          onChange={(e) => setLayananAntar(e.target.checked)}
+          className="h-4 w-4 accent-emerald-600"
+        />
+        Bisa diantar
+      </label>
+
+      <div>
+        <div className="mb-1 flex items-center justify-between">
+          <label className="block text-sm font-medium text-zinc-700">
+            Lokasi pin
+          </label>
+          <button
+            type="button"
+            onClick={gunakanLokasi}
+            disabled={geoLoading}
+            className="rounded-lg border border-emerald-600 px-2 py-1 text-xs font-medium text-emerald-700 disabled:opacity-60"
+          >
+            {geoLoading ? "Mengambil..." : "Gunakan lokasiku"}
+          </button>
+        </div>
+        <PinMap value={pin} onChange={setPin} />
+        <p className="mt-1 text-xs text-zinc-500">
+          Geser pin bila GPS meleset. Peta: &copy; OpenStreetMap contributors
+        </p>
+      </div>
+
+      <div>
+        <div className="mb-2 flex items-center justify-between">
+          <label className="block text-sm font-medium text-zinc-700">Menu</label>
+          <button
+            type="button"
+            onClick={tambahBaris}
+            className="rounded-lg border border-zinc-300 px-2 py-1 text-xs font-medium text-zinc-700"
+          >
+            + Menu
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          {menus.map((menu, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <input
+                type="text"
+                value={menu.namaMenu}
+                onChange={(e) =>
+                  setMenus((prev) =>
+                    geserMenu(prev, index, "namaMenu", e.target.value)
+                  )
+                }
+                className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-600"
+                placeholder="Nama menu"
+              />
+              <input
+                type="number"
+                min="0"
+                value={menu.harga}
+                onChange={(e) =>
+                  setMenus((prev) =>
+                    geserMenu(prev, index, "harga", e.target.value)
+                  )
+                }
+                className="w-24 rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-600"
+                placeholder="Harga"
+              />
+              <button
+                type="button"
+                onClick={() => hapusBaris(index)}
+                disabled={menus.length === 1}
+                className="rounded-lg border border-red-300 px-2 py-2 text-sm text-red-600 disabled:opacity-40"
+                aria-label="Hapus menu"
+              >
+                x
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {error ? (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </p>
+      ) : null}
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white active:bg-emerald-700 disabled:opacity-60"
+      >
+        {loading
+          ? "Menyimpan..."
+          : mode === "edit"
+            ? "Simpan perubahan"
+            : "Tambah warung"}
+      </button>
+    </form>
+  );
+}
