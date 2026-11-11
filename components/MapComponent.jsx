@@ -100,7 +100,9 @@ export default function MapComponent({
     <MapContainer
       center={center}
       zoom={zoom}
-      scrollWheelZoom={false}
+      scrollWheelZoom
+      touchZoom
+      doubleClickZoom
       style={{ height: "100%", width: "100%" }}
       className="h-full w-full z-0"
     >

@@ -110,3 +110,11 @@ body {
 .peta-beranda .leaflet-control-attribution {
   font-size: 10px;
 }
+
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
