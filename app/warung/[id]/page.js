@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   buatTeksPesanan,
   formatRupiah,
@@ -99,6 +100,19 @@ export default function DetailWarung() {
       >
         &larr; Kembali
       </Link>
+
+      {vendor.foto ? (
+        <div className="relative mt-3 h-48 w-full overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100">
+          <Image
+            src={vendor.foto}
+            alt={`Foto ${vendor.namaToko}`}
+            fill
+            priority
+            sizes="(max-width: 672px) 100vw, 672px"
+            className="object-cover"
+          />
+        </div>
+      ) : null}
 
       <header className="mt-3 mb-4">
         <h1 className="text-2xl font-bold text-zinc-900">{vendor.namaToko}</h1>
