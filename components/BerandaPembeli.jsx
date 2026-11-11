@@ -72,28 +72,27 @@ export default function BerandaPembeli() {
       setStatusLokasi(det.status);
       setIsNative(det.native);
 
-      if (det.status === "granted" || det.status === "prompt") {
-        try {
-          const pos = await mintaLokasi();
-          if (ignore) return;
-          setLoading(true);
-          setLokasi(pos);
-          setAreaAktif("Lokasi saya");
-        } catch (e) {
-          if (ignore) return;
-          if (e?.kode === "denied" || e?.kode === "insecure" || e?.kode === "unsupported") {
-            setStatusLokasi(e.kode);
-            setAreaTerbuka(true);
-          } else {
-            setPesanLokasi(e?.message || "Gagal membaca lokasi. Coba lagi.");
-          }
-        }
-      } else if (
-        det.status === "denied" ||
-        det.status === "insecure" ||
-        det.status === "unsupported"
-      ) {
+      if (det.status === "insecure" || det.status === "unsupported") {
         setAreaTerbuka(true);
+        return;
+      }
+
+      try {
+        const pos = await mintaLokasi();
+        if (ignore) return;
+        setLoading(true);
+        setLokasi(pos);
+        setAreaAktif("Lokasi saya");
+        setStatusLokasi("granted");
+      } catch (e) {
+        if (ignore) return;
+        const kode = e?.kode || "unavailable";
+        if (kode === "denied" || kode === "insecure" || kode === "unsupported") {
+          setStatusLokasi(kode);
+          setAreaTerbuka(true);
+        } else {
+          setPesanLokasi(e?.message || "Gagal membaca lokasi. Coba lagi.");
+        }
       }
     }
 
