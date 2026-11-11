@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import Vendor from "@/models/Vendor";
 import LogoutButton from "@/components/LogoutButton";
+import DeleteWarungButton from "@/components/DeleteWarungButton";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -55,19 +56,23 @@ export default async function DashboardPage() {
                       {vendor.kategori} - {vendor.jamBuka}-{vendor.jamTutup}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-end gap-2">
                     <Link
                       href={`/warung/${vendor._id}`}
-                      className="text-sm font-medium text-zinc-600 underline"
+                      className="rounded-lg px-2 py-2 text-sm font-medium text-zinc-600 underline"
                     >
                       Lihat
                     </Link>
                     <Link
                       href={`/dashboard/edit/${vendor._id}`}
-                      className="text-sm font-medium text-emerald-700 underline"
+                      className="rounded-lg px-2 py-2 text-sm font-medium text-emerald-700 underline"
                     >
                       Edit
                     </Link>
+                    <DeleteWarungButton
+                      vendorId={vendor._id.toString()}
+                      namaToko={vendor.namaToko}
+                    />
                   </div>
                 </div>
                 <p className="mt-1 text-sm text-zinc-600">
