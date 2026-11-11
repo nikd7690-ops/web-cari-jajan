@@ -102,3 +102,11 @@ body {
 .cj-pin-wrap--tutup .cj-pin__ekor {
   border-color: #dc2626;
 }
+
+.peta-beranda .leaflet-bottom.leaflet-right {
+  bottom: 78px;
+}
+
+.peta-beranda .leaflet-control-attribution {
+  font-size: 10px;
+}
