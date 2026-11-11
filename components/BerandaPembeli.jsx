@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import PilihAreaSheet from "@/components/PilihAreaSheet";
 
 const MapComponent = dynamic(() => import("@/components/MapComponent"), {
   ssr: false,
@@ -53,6 +54,24 @@ function IkonAkun({ className = "h-5 w-5" }) {
   );
 }
 
+function IkonLokasi({ className = "h-5 w-5" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M12 21s7-6 7-12a7 7 0 1 0-14 0c0 6 7 12 7 12Z" />
+      <circle cx="12" cy="9" r="2.5" />
+    </svg>
+  );
+}
+
 export default function BerandaPembeli({ loggedIn = false }) {
   const router = useRouter();
   const [lokasi, setLokasi] = useState(null);
@@ -63,6 +82,10 @@ export default function BerandaPembeli({ loggedIn = false }) {
   const [reloadKey, setReloadKey] = useState(0);
   const [query, setQuery] = useState("");
   const [cariTerbuka, setCariTerbuka] = useState(false);
+  const [areaTerbuka, setAreaTerbuka] = useState(false);
+  const [areaAktif, setAreaAktif] = useState("");
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [pesanLokasi, setPesanLokasi] = useState("");
   const [promptMasuk, setPromptMasuk] = useState(false);
   const inputCariRef = useRef(null);
 
@@ -84,6 +107,7 @@ export default function BerandaPembeli({ loggedIn = false }) {
         (pos) => {
           setLoading(true);
           setLokasi({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setAreaAktif("Lokasi saya");
         },
         () => {
           // Izin ditolak/tidak tersedia: tetap di tampilan peta Indonesia.
@@ -139,6 +163,41 @@ export default function BerandaPembeli({ loggedIn = false }) {
       vendor.namaToko.toLowerCase().includes(kata)
     );
   }, [vendors, query]);
+
+  const pilihArea = (area) => {
+    setError("");
+    setLoading(true);
+    setPesanLokasi("");
+    setLokasi({ lat: area.lat, lng: area.lng });
+    setAreaAktif(area.label);
+    setAreaTerbuka(false);
+  };
+
+  const mintaLokasiUlang = () => {
+    setPesanLokasi("");
+
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setPesanLokasi("Perangkat tidak mendukung lokasi.");
+      return;
+    }
+
+    setGeoLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeoLoading(false);
+        setLoading(true);
+        setLokasi({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setAreaAktif("Lokasi saya");
+        setAreaTerbuka(false);
+      },
+      () => {
+        setGeoLoading(false);
+        setPesanLokasi("Izin lokasi ditolak. Pilih kawasan manual di bawah.");
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const targetAkun = loggedIn ? "/dashboard" : "/masuk";
   const pusat = lokasi
@@ -279,6 +338,15 @@ export default function BerandaPembeli({ loggedIn = false }) {
 
           <button
             type="button"
+            onClick={() => setAreaTerbuka(true)}
+            className="flex flex-1 flex-col items-center gap-0.5 text-zinc-600"
+          >
+            <IkonLokasi />
+            <span className="text-[11px] font-medium">Lokasi</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() =>
               loggedIn ? router.push("/dashboard/tambah") : setPromptMasuk(true)
             }
@@ -297,6 +365,17 @@ export default function BerandaPembeli({ loggedIn = false }) {
           </Link>
         </div>
       </nav>
+
+      {areaTerbuka ? (
+        <PilihAreaSheet
+          lokasiAktif={areaAktif}
+          loadingLokasi={geoLoading}
+          pesanLokasi={pesanLokasi}
+          onGunakanLokasi={mintaLokasiUlang}
+          onPilih={pilihArea}
+          onClose={() => setAreaTerbuka(false)}
+        />
+      ) : null}
 
       {promptMasuk ? (
         <div
