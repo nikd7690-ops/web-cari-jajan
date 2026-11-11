@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
@@ -15,20 +15,47 @@ L.Icon.Default.mergeOptions({
   iconShadow: markerShadow.src || markerShadow,
 });
 
-export default function MapComponent({ center, vendors = [], userLocation }) {
+function FokusVendor({ vendors, selectedId }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!selectedId) return;
+
+    const vendor = vendors.find((item) => item._id === selectedId);
+    if (!vendor) return;
+
+    map.flyTo(
+      [vendor.lokasi.coordinates[1], vendor.lokasi.coordinates[0]],
+      Math.max(map.getZoom(), 16),
+      { duration: 0.6 }
+    );
+  }, [selectedId, vendors, map]);
+
+  return null;
+}
+
+export default function MapComponent({
+  center,
+  vendors = [],
+  userLocation,
+  selectedId,
+  onSelectVendor,
+}) {
   return (
     <MapContainer
       key={`${center[0]},${center[1]}`}
       center={center}
       zoom={15}
       scrollWheelZoom={false}
-      style={{ height: "320px", width: "100%" }}
-      className="rounded-xl z-0"
+      style={{ height: "100%", width: "100%" }}
+      className="h-full w-full z-0"
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+
+      <FokusVendor vendors={vendors} selectedId={selectedId} />
 
       {userLocation ? (
         <Marker position={userLocation}>
@@ -40,6 +67,9 @@ export default function MapComponent({ center, vendors = [], userLocation }) {
         <Marker
           key={vendor._id}
           position={[vendor.lokasi.coordinates[1], vendor.lokasi.coordinates[0]]}
+          eventHandlers={{
+            click: () => onSelectVendor?.(vendor._id),
+          }}
         >
           <Popup>
             <div className="space-y-1">
@@ -49,12 +79,6 @@ export default function MapComponent({ center, vendors = [], userLocation }) {
                 {vendor.buka ? "Buka" : "Tutup"} - jarak{" "}
                 {Math.round(vendor.jarak)} m
               </p>
-              <Link
-                href={`/warung/${vendor._id}`}
-                className="text-xs font-medium text-emerald-700 underline"
-              >
-                Lihat warung
-              </Link>
             </div>
           </Popup>
         </Marker>
