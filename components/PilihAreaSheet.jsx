@@ -11,10 +11,27 @@ const KAWASAN_JEMBER = [
   { nama: "Pasar Tanjung", lat: -8.175, lng: 113.708 },
 ];
 
+function panduanIzin(status, native) {
+  if (status === "denied") {
+    return native
+      ? "Izin lokasi ditolak. Buka Pengaturan HP → Aplikasi → Cari Jajan → Izin → Lokasi → Izinkan, lalu coba lagi."
+      : "Izin lokasi diblokir untuk situs ini. Buka ikon gembok di address bar → Lokasi → Izinkan, lalu muat ulang.";
+  }
+  if (status === "insecure") {
+    return "Lokasi hanya aktif lewat HTTPS. Silakan pilih kawasan manual.";
+  }
+  if (status === "unsupported") {
+    return "Perangkat tidak mendukung geolokasi. Silakan pilih kawasan manual.";
+  }
+  return "";
+}
+
 export default function PilihAreaSheet({
   lokasiAktif,
   loadingLokasi,
   pesanLokasi,
+  statusLokasi,
+  isNative,
   onGunakanLokasi,
   onPilih,
   onClose,
@@ -104,11 +121,21 @@ export default function PilihAreaSheet({
         <button
           type="button"
           onClick={onGunakanLokasi}
-          disabled={loadingLokasi}
+          disabled={
+            loadingLokasi ||
+            statusLokasi === "insecure" ||
+            statusLokasi === "unsupported"
+          }
           className="mt-3 w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white active:bg-emerald-700 disabled:opacity-60"
         >
           {loadingLokasi ? "Mengambil lokasi..." : "Gunakan lokasiku"}
         </button>
+
+        {panduanIzin(statusLokasi, isNative) ? (
+          <p className="mt-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">
+            {panduanIzin(statusLokasi, isNative)}
+          </p>
+        ) : null}
 
         {pesanLokasi ? (
           <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">

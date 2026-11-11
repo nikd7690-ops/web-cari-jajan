@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import PilihAreaSheet from "@/components/PilihAreaSheet";
+import { deteksiLokasi, mintaLokasi, pantauIzinLokasi } from "@/lib/geolokasi";
 
 const MapComponent = dynamic(() => import("@/components/MapComponent"), {
   ssr: false,
@@ -29,6 +30,8 @@ export default function BerandaPembeli() {
   const [areaAktif, setAreaAktif] = useState("");
   const [geoLoading, setGeoLoading] = useState(false);
   const [pesanLokasi, setPesanLokasi] = useState("");
+  const [statusLokasi, setStatusLokasi] = useState("");
+  const [isNative, setIsNative] = useState(false);
   const inputCariRef = useRef(null);
 
   useEffect(() => {
@@ -61,27 +64,60 @@ export default function BerandaPembeli() {
   }, []);
 
   useEffect(() => {
-    async function mintaLokasi() {
-      await Promise.resolve();
+    let ignore = false;
 
-      if (typeof navigator === "undefined" || !navigator.geolocation) {
-        return;
-      }
+    async function mulai() {
+      const det = await deteksiLokasi();
+      if (ignore) return;
+      setStatusLokasi(det.status);
+      setIsNative(det.native);
 
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
+      if (det.status === "granted" || det.status === "prompt") {
+        try {
+          const pos = await mintaLokasi();
+          if (ignore) return;
           setLoading(true);
-          setLokasi({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setLokasi(pos);
           setAreaAktif("Lokasi saya");
-        },
-        () => {
-          // Izin ditolak/tidak tersedia: tetap di tampilan peta Indonesia.
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
+        } catch (e) {
+          if (ignore) return;
+          if (e?.kode === "denied" || e?.kode === "insecure" || e?.kode === "unsupported") {
+            setStatusLokasi(e.kode);
+            setAreaTerbuka(true);
+          } else {
+            setPesanLokasi(e?.message || "Gagal membaca lokasi. Coba lagi.");
+          }
+        }
+      } else if (
+        det.status === "denied" ||
+        det.status === "insecure" ||
+        det.status === "unsupported"
+      ) {
+        setAreaTerbuka(true);
+      }
     }
 
-    mintaLokasi();
+    mulai();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    return pantauIzinLokasi(async (state) => {
+      setStatusLokasi(state);
+      if (state === "granted") {
+        try {
+          const pos = await mintaLokasi();
+          setLokasi(pos);
+          setAreaAktif("Lokasi saya");
+          setLoading(true);
+        } catch {
+          // biarkan panduan tampil dari statusLokasi
+        }
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -138,30 +174,28 @@ export default function BerandaPembeli() {
     setAreaTerbuka(false);
   };
 
-  const mintaLokasiUlang = () => {
+  const mintaLokasiUlang = async () => {
     setPesanLokasi("");
-
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setPesanLokasi("Perangkat tidak mendukung lokasi.");
-      return;
-    }
-
     setGeoLoading(true);
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setGeoLoading(false);
-        setLoading(true);
-        setLokasi({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setAreaAktif("Lokasi saya");
-        setAreaTerbuka(false);
-      },
-      () => {
-        setGeoLoading(false);
-        setPesanLokasi("Izin lokasi ditolak. Pilih kawasan manual di bawah.");
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+    try {
+      const pos = await mintaLokasi();
+      setLoading(true);
+      setLokasi(pos);
+      setAreaAktif("Lokasi saya");
+      setStatusLokasi("granted");
+      setPesanLokasi("");
+      setAreaTerbuka(false);
+    } catch (e) {
+      const kode = e?.kode || "unavailable";
+      if (kode === "denied" || kode === "insecure" || kode === "unsupported") {
+        setStatusLokasi(kode);
+      } else {
+        setPesanLokasi(e?.message || "Gagal membaca lokasi. Coba lagi.");
+      }
+    } finally {
+      setGeoLoading(false);
+    }
   };
 
   const pusat = lokasi
@@ -294,6 +328,8 @@ export default function BerandaPembeli() {
           lokasiAktif={areaAktif}
           loadingLokasi={geoLoading}
           pesanLokasi={pesanLokasi}
+          statusLokasi={statusLokasi}
+          isNative={isNative}
           onGunakanLokasi={mintaLokasiUlang}
           onPilih={pilihArea}
           onClose={() => setAreaTerbuka(false)}
