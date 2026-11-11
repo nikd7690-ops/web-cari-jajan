@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import PilihAreaSheet from "@/components/PilihAreaSheet";
 
@@ -18,62 +16,7 @@ const MapComponent = dynamic(() => import("@/components/MapComponent"), {
 const RADIUS = 3000;
 const INDONESIA = { lat: -2.5, lng: 118 };
 
-function IkonPeta({ className = "h-5 w-5" }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z" />
-      <path d="M9 4v14M15 6v14" />
-    </svg>
-  );
-}
-
-function IkonAkun({ className = "h-5 w-5" }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="8" r="3.5" />
-      <path d="M5 20a7 7 0 0 1 14 0" />
-    </svg>
-  );
-}
-
-function IkonLokasi({ className = "h-5 w-5" }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M12 21s7-6 7-12a7 7 0 1 0-14 0c0 6 7 12 7 12Z" />
-      <circle cx="12" cy="9" r="2.5" />
-    </svg>
-  );
-}
-
-export default function BerandaPembeli({ loggedIn = false }) {
-  const router = useRouter();
+export default function BerandaPembeli() {
   const [lokasi, setLokasi] = useState(null);
   const [vendors, setVendors] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -86,7 +29,6 @@ export default function BerandaPembeli({ loggedIn = false }) {
   const [areaAktif, setAreaAktif] = useState("");
   const [geoLoading, setGeoLoading] = useState(false);
   const [pesanLokasi, setPesanLokasi] = useState("");
-  const [promptMasuk, setPromptMasuk] = useState(false);
   const inputCariRef = useRef(null);
 
   useEffect(() => {
@@ -94,6 +36,29 @@ export default function BerandaPembeli({ loggedIn = false }) {
       inputCariRef.current?.focus();
     }
   }, [cariTerbuka]);
+
+  useEffect(() => {
+    async function bukaDariQuery() {
+      await Promise.resolve();
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("pilihArea") === "1") {
+        setAreaTerbuka(true);
+        window.history.replaceState(null, "", "/");
+      }
+    }
+
+    bukaDariQuery();
+  }, []);
+
+  useEffect(() => {
+    function buka() {
+      setAreaTerbuka(true);
+    }
+
+    window.addEventListener("carijajan:pilih-area", buka);
+    return () => window.removeEventListener("carijajan:pilih-area", buka);
+  }, []);
 
   useEffect(() => {
     async function mintaLokasi() {
@@ -199,7 +164,6 @@ export default function BerandaPembeli({ loggedIn = false }) {
     );
   };
 
-  const targetAkun = loggedIn ? "/dashboard" : "/masuk";
   const pusat = lokasi
     ? [lokasi.lat, lokasi.lng]
     : [INDONESIA.lat, INDONESIA.lng];
@@ -325,47 +289,6 @@ export default function BerandaPembeli({ loggedIn = false }) {
         </div>
       ) : null}
 
-      <nav className="fixed inset-x-0 bottom-0 z-[1100] border-t border-zinc-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-md items-center justify-around px-6 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2">
-          <Link
-            href="/"
-            aria-current="page"
-            className="flex flex-1 flex-col items-center gap-0.5 text-emerald-700"
-          >
-            <IkonPeta />
-            <span className="text-[11px] font-medium">Peta</span>
-          </Link>
-
-          <button
-            type="button"
-            onClick={() => setAreaTerbuka(true)}
-            className="flex flex-1 flex-col items-center gap-0.5 text-zinc-600"
-          >
-            <IkonLokasi />
-            <span className="text-[11px] font-medium">Lokasi</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() =>
-              loggedIn ? router.push("/dashboard/tambah") : setPromptMasuk(true)
-            }
-            aria-label="Tambah warung"
-            className="-mt-7 flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-3xl leading-none text-white shadow-lg active:bg-emerald-700"
-          >
-            +
-          </button>
-
-          <Link
-            href={targetAkun}
-            className="flex flex-1 flex-col items-center gap-0.5 text-zinc-600"
-          >
-            <IkonAkun />
-            <span className="text-[11px] font-medium">Akun</span>
-          </Link>
-        </div>
-      </nav>
-
       {areaTerbuka ? (
         <PilihAreaSheet
           lokasiAktif={areaAktif}
@@ -375,42 +298,6 @@ export default function BerandaPembeli({ loggedIn = false }) {
           onPilih={pilihArea}
           onClose={() => setAreaTerbuka(false)}
         />
-      ) : null}
-
-      {promptMasuk ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="judul-prompt-masuk"
-          className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/40 p-4"
-        >
-          <div className="w-full max-w-xs rounded-2xl bg-white p-5 shadow-xl">
-            <h2
-              id="judul-prompt-masuk"
-              className="text-base font-semibold text-zinc-900"
-            >
-              Masuk dulu
-            </h2>
-            <p className="mt-1 text-sm text-zinc-600">
-              Kamu perlu masuk untuk menambah warung.
-            </p>
-            <div className="mt-4 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setPromptMasuk(false)}
-                className="flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700"
-              >
-                Nanti
-              </button>
-              <Link
-                href="/masuk"
-                className="flex-1 rounded-lg bg-emerald-600 px-3 py-2 text-center text-sm font-semibold text-white"
-              >
-                Masuk
-              </Link>
-            </div>
-          </div>
-        </div>
       ) : null}
     </main>
   );

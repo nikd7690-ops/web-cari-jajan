@@ -2,6 +2,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import HeaderGate from "@/components/HeaderGate";
+import BottomNav from "@/components/BottomNav";
+import { getSession } from "@/lib/auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,7 +40,9 @@ export const viewport = {
   themeColor: "#059669",
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const session = await getSession();
+
   return (
     <html
       lang="id"
@@ -49,6 +53,7 @@ export default function RootLayout({ children }) {
           <SiteHeader />
         </HeaderGate>
         {children}
+        <BottomNav loggedIn={Boolean(session?.user?.id)} />
       </body>
     </html>
   );

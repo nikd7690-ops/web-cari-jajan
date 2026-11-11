@@ -49,7 +49,7 @@ export default async function EditWarungPage({ params }) {
   };
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-6">
+    <main className="mx-auto w-full max-w-2xl px-4 py-6 pb-24">
       <Link
         href="/dashboard"
         className="text-sm font-medium text-emerald-700 underline"

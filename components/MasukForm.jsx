@@ -39,7 +39,7 @@ export default function MasukForm() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-sm px-4 py-10">
+    <main className="mx-auto w-full max-w-sm px-4 py-10 pb-24">
       <h1 className="mb-1 text-2xl font-bold text-zinc-900">Masuk</h1>
       <p className="mb-6 text-sm text-zinc-600">
         Masuk untuk mengelola warungmu.
