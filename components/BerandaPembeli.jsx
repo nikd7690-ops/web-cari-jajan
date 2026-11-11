@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import PilihAreaSheet from "@/components/PilihAreaSheet";
-import { cekJembatan } from "@/lib/platform";
 
 const MapComponent = dynamic(() => import("@/components/MapComponent"), {
   ssr: false,
@@ -31,15 +30,6 @@ export default function BerandaPembeli() {
   const [geoLoading, setGeoLoading] = useState(false);
   const [pesanLokasi, setPesanLokasi] = useState("");
   const inputCariRef = useRef(null);
-  const [jembatan, setJembatan] = useState(null);
-
-  useEffect(() => {
-    async function cek() {
-      await Promise.resolve();
-      setJembatan(await cekJembatan());
-    }
-    cek();
-  }, []);
 
   useEffect(() => {
     if (cariTerbuka) {
@@ -186,14 +176,6 @@ export default function BerandaPembeli() {
 
   return (
     <main className="relative h-[100dvh] w-full overflow-hidden bg-zinc-100">
-      {jembatan && jembatan !== "web" ? (
-        <div
-          data-spike={jembatan}
-          className="absolute left-3 top-3 z-[1250] rounded-full bg-black/70 px-2 py-1 text-[10px] font-mono text-white"
-        >
-          SPIKE: {jembatan}
-        </div>
-      ) : null}
       <div className="peta-beranda absolute inset-0">
         <MapComponent
           center={pusat}
