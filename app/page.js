@@ -110,6 +110,22 @@ export default function Home() {
         <p className="text-sm text-zinc-600">
           Warung UMKM terdekat di sekitarmu, pesan langsung via WhatsApp.
         </p>
+        <p className="mt-1 text-xs text-zinc-500">
+          Punya warung?{" "}
+          <Link
+            href="/masuk"
+            className="font-medium text-emerald-700 underline"
+          >
+            Masuk
+          </Link>{" "}
+          atau{" "}
+          <Link
+            href="/daftar"
+            className="font-medium text-emerald-700 underline"
+          >
+            Daftar
+          </Link>
+        </p>
       </header>
 
       {lokasi ? (
