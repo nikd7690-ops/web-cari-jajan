@@ -24,6 +24,7 @@ const KAWASAN = [
 ];
 
 const RADIUS = 3000;
+const INDONESIA = { lat: -2.5, lng: 118 };
 
 function IkonPeta({ className = "h-5 w-5" }) {
   return (
@@ -150,20 +151,23 @@ export default function BerandaPembeli({ loggedIn = false }) {
   }, [vendors, query]);
 
   const targetAkun = loggedIn ? "/dashboard" : "/masuk";
+  const pusat = lokasi
+    ? [lokasi.lat, lokasi.lng]
+    : [INDONESIA.lat, INDONESIA.lng];
+  const zoomPeta = lokasi ? 15 : 5;
 
   return (
     <main className="relative h-[100dvh] w-full overflow-hidden bg-zinc-100">
-      {lokasi ? (
-        <div className="peta-beranda absolute inset-0">
-          <MapComponent
-            center={[lokasi.lat, lokasi.lng]}
-            userLocation={[lokasi.lat, lokasi.lng]}
-            vendors={vendorsTampil}
-            selectedId={selectedId}
-            onSelectVendor={setSelectedId}
-          />
-        </div>
-      ) : null}
+      <div className="peta-beranda absolute inset-0">
+        <MapComponent
+          center={pusat}
+          zoom={zoomPeta}
+          userLocation={lokasi ? [lokasi.lat, lokasi.lng] : undefined}
+          vendors={vendorsTampil}
+          selectedId={selectedId}
+          onSelectVendor={setSelectedId}
+        />
+      </div>
 
       <div className="absolute inset-x-0 top-0 z-[1050] p-3">
         <div className="mx-auto flex max-w-md items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-2 shadow-md">

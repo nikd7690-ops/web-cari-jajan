@@ -76,8 +76,21 @@ function FokusVendor({ vendors, selectedId }) {
   return null;
 }
 
+function PusatkanPeta({ center, zoom }) {
+  const map = useMap();
+  const lat = center[0];
+  const lng = center[1];
+
+  useEffect(() => {
+    map.flyTo([lat, lng], zoom ?? map.getZoom(), { duration: 0.6 });
+  }, [lat, lng, zoom, map]);
+
+  return null;
+}
+
 export default function MapComponent({
   center,
+  zoom = 15,
   vendors = [],
   userLocation,
   selectedId,
@@ -85,9 +98,8 @@ export default function MapComponent({
 }) {
   return (
     <MapContainer
-      key={`${center[0]},${center[1]}`}
       center={center}
-      zoom={15}
+      zoom={zoom}
       scrollWheelZoom={false}
       style={{ height: "100%", width: "100%" }}
       className="h-full w-full z-0"
@@ -97,6 +109,7 @@ export default function MapComponent({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
+      <PusatkanPeta center={center} zoom={zoom} />
       <FokusVendor vendors={vendors} selectedId={selectedId} />
 
       {userLocation ? (
