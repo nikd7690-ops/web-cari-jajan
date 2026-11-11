@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -13,15 +13,6 @@ const MapComponent = dynamic(() => import("@/components/MapComponent"), {
     </div>
   ),
 });
-
-const KAWASAN = [
-  { nama: "Alun-alun Jember", lat: -8.1689, lng: 113.702 },
-  { nama: "Tegal Boto", lat: -8.164, lng: 113.717 },
-  { nama: "Kaliwates", lat: -8.183, lng: 113.677 },
-  { nama: "Sumbersari", lat: -8.158, lng: 113.715 },
-  { nama: "Patrang", lat: -8.145, lng: 113.7 },
-  { nama: "Pasar Tanjung", lat: -8.175, lng: 113.708 },
-];
 
 const RADIUS = 3000;
 const INDONESIA = { lat: -2.5, lng: 118 };
@@ -65,32 +56,37 @@ function IkonAkun({ className = "h-5 w-5" }) {
 export default function BerandaPembeli({ loggedIn = false }) {
   const router = useRouter();
   const [lokasi, setLokasi] = useState(null);
-  const [butuhManual, setButuhManual] = useState(false);
   const [vendors, setVendors] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [query, setQuery] = useState("");
+  const [cariTerbuka, setCariTerbuka] = useState(false);
   const [promptMasuk, setPromptMasuk] = useState(false);
+  const inputCariRef = useRef(null);
+
+  useEffect(() => {
+    if (cariTerbuka) {
+      inputCariRef.current?.focus();
+    }
+  }, [cariTerbuka]);
 
   useEffect(() => {
     async function mintaLokasi() {
       await Promise.resolve();
 
       if (typeof navigator === "undefined" || !navigator.geolocation) {
-        setButuhManual(true);
         return;
       }
 
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          setButuhManual(false);
           setLoading(true);
           setLokasi({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         },
         () => {
-          setButuhManual(true);
+          // Izin ditolak/tidak tersedia: tetap di tampilan peta Indonesia.
         },
         { enableHighAccuracy: true, timeout: 10000 }
       );
@@ -136,12 +132,6 @@ export default function BerandaPembeli({ loggedIn = false }) {
     };
   }, [lokasi, reloadKey]);
 
-  const pilihLokasi = (titik) => {
-    setError("");
-    setLoading(true);
-    setLokasi(titik);
-  };
-
   const vendorsTampil = useMemo(() => {
     const kata = query.trim().toLowerCase();
     if (!kata) return vendors;
@@ -155,6 +145,11 @@ export default function BerandaPembeli({ loggedIn = false }) {
     ? [lokasi.lat, lokasi.lng]
     : [INDONESIA.lat, INDONESIA.lng];
   const zoomPeta = lokasi ? 15 : 5;
+
+  const toggleCari = () => {
+    if (cariTerbuka) setQuery("");
+    setCariTerbuka((terbuka) => !terbuka);
+  };
 
   return (
     <main className="relative h-[100dvh] w-full overflow-hidden bg-zinc-100">
@@ -170,61 +165,72 @@ export default function BerandaPembeli({ loggedIn = false }) {
       </div>
 
       <div className="absolute inset-x-0 top-0 z-[1050] p-3">
-        <div className="mx-auto flex max-w-md items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-2 shadow-md">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-4 w-4 shrink-0 text-zinc-500"
-            aria-hidden="true"
+        <div className="mx-auto flex max-w-md items-center justify-end">
+          <div
+            className={`flex items-center overflow-hidden transition-all duration-300 ${
+              cariTerbuka ? "mr-2 flex-1 opacity-100" : "w-0 opacity-0"
+            }`}
           >
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.5-3.5" />
-          </svg>
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Cari warung..."
-            aria-label="Cari warung"
-            className="w-full bg-transparent text-sm text-zinc-900 outline-none"
-          />
-          {query ? (
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              aria-label="Hapus pencarian"
-              className="shrink-0 rounded-full px-1 text-zinc-500"
-            >
-              x
-            </button>
-          ) : null}
-        </div>
-      </div>
-
-      {butuhManual ? (
-        <div className="absolute inset-x-0 top-20 z-[1040] px-3">
-          <div className="mx-auto max-w-md rounded-xl border border-zinc-200 bg-white/95 p-3 shadow-md">
-            <p className="mb-2 text-xs text-zinc-600">
-              Aktifkan lokasi, atau pilih kawasan manual:
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {KAWASAN.map((k) => (
+            <div className="flex w-full items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-2 shadow-md">
+              {query ? (
                 <button
-                  key={k.nama}
-                  onClick={() => pilihLokasi({ lat: k.lat, lng: k.lng })}
-                  className="rounded-full border border-zinc-300 bg-white px-3 py-1.5 text-xs text-zinc-700 active:bg-zinc-100"
+                  type="button"
+                  onClick={() => setQuery("")}
+                  aria-label="Hapus pencarian"
+                  className="shrink-0 rounded-full px-1 text-zinc-500"
                 >
-                  {k.nama}
+                  x
                 </button>
-              ))}
+              ) : null}
+              <input
+                ref={inputCariRef}
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Cari warung..."
+                aria-label="Cari warung"
+                className="w-full bg-transparent text-sm text-zinc-900 outline-none"
+              />
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={toggleCari}
+            aria-label={cariTerbuka ? "Tutup pencarian" : "Buka pencarian"}
+            aria-expanded={cariTerbuka}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-700 shadow-md active:bg-zinc-100"
+          >
+            {cariTerbuka ? (
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                className="h-5 w-5"
+                aria-hidden="true"
+              >
+                <path d="M6 6l12 12M18 6 6 18" />
+              </svg>
+            ) : (
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+            )}
+          </button>
         </div>
-      ) : null}
+      </div>
 
       {loading ? (
         <div className="absolute inset-0 z-[1020] flex items-center justify-center bg-white/70 text-sm text-zinc-600">
