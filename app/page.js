@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import dynamic from "next/dynamic";
 
 const MapComponent = dynamic(() => import("@/components/MapComponent"), {
@@ -24,72 +23,6 @@ const KAWASAN = [
 ];
 
 const RADIUS = 3000;
-
-function formatJarak(meter) {
-  if (meter < 1000) return `${Math.round(meter)} m`;
-  return `${(meter / 1000).toFixed(1)} km`;
-}
-
-function KartuVendor({ vendor, aktif, onPilih }) {
-  return (
-    <div
-      id={`kartu-${vendor._id}`}
-      onClick={() => onPilih(vendor._id)}
-      className={`w-60 shrink-0 snap-start cursor-pointer overflow-hidden rounded-xl border bg-white shadow-lg transition ${
-        aktif
-          ? "border-emerald-500 ring-2 ring-emerald-500"
-          : "border-zinc-200"
-      }`}
-    >
-      <div className="relative h-24 w-full bg-zinc-100">
-        {vendor.foto ? (
-          <Image
-            src={vendor.foto}
-            alt={`Foto ${vendor.namaToko}`}
-            fill
-            sizes="240px"
-            className="object-cover"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-xs text-zinc-400">
-            Tanpa foto
-          </div>
-        )}
-      </div>
-
-      <div className="p-3">
-        <div className="flex items-start justify-between gap-2">
-          <p className="line-clamp-1 text-sm font-semibold text-zinc-900">
-            {vendor.namaToko}
-          </p>
-          <span
-            className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-              vendor.buka
-                ? "bg-emerald-100 text-emerald-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
-            {vendor.buka ? "Buka" : "Tutup"}
-          </span>
-        </div>
-        <p className="text-xs text-zinc-500">
-          {vendor.kategori} - {formatJarak(vendor.jarak)}
-        </p>
-        <p className="line-clamp-1 text-xs text-zinc-600">
-          {vendor.alamatPatokan}
-        </p>
-
-        <Link
-          href={`/warung/${vendor._id}`}
-          onClick={(e) => e.stopPropagation()}
-          className="mt-2 inline-block rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white active:bg-emerald-700"
-        >
-          Lihat &amp; pesan
-        </Link>
-      </div>
-    </div>
-  );
-}
 
 export default function Home() {
   const [lokasi, setLokasi] = useState(null);
@@ -230,21 +163,6 @@ export default function Home() {
           {!loading && !error && vendors.length === 0 ? (
             <div className="absolute inset-0 z-[900] flex items-center justify-center bg-white/75 p-4 text-center text-sm text-zinc-600">
               Belum ada warung dalam radius {RADIUS / 1000} km.
-            </div>
-          ) : null}
-
-          {!loading && !error && vendors.length > 0 ? (
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1000] bg-gradient-to-t from-black/30 to-transparent pt-10">
-              <div className="pointer-events-auto flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {vendors.map((vendor) => (
-                  <KartuVendor
-                    key={vendor._id}
-                    vendor={vendor}
-                    aktif={selectedId === vendor._id}
-                    onPilih={setSelectedId}
-                  />
-                ))}
-              </div>
             </div>
           ) : null}
         </div>

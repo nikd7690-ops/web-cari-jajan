@@ -24,3 +24,15 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.cj-pin-card.leaflet-tooltip {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  white-space: normal;
+}
+
+.cj-pin-card.leaflet-tooltip::before {
+  display: none;
+}
