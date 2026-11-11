@@ -5,10 +5,12 @@ import { connectDB } from "../lib/mongodb.js";
 import User from "../models/User.js";
 import Vendor from "../models/Vendor.js";
 
-try {
-  process.loadEnvFile(".env");
-} catch {
-  // .env opsional, variabel bisa datang dari environment shell
+for (const file of [".env", ".env.local"]) {
+  try {
+    process.loadEnvFile(file);
+  } catch {
+    // file opsional, variabel bisa datang dari environment shell
+  }
 }
 
 const demoEmail = process.env.DEMO_EMAIL;
@@ -109,7 +111,7 @@ async function main() {
   const user = await User.findOneAndUpdate(
     { email: demoEmail.toLowerCase() },
     { name: "Penjual Demo", email: demoEmail.toLowerCase(), passwordHash },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
+    { upsert: true, returnDocument: "after", setDefaultsOnInsert: true }
   );
 
   await Vendor.deleteMany({ owner: user._id });

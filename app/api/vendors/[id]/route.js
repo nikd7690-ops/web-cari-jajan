@@ -97,7 +97,7 @@ export async function PATCH(request, { params }) {
     }
 
     const updated = await Vendor.findByIdAndUpdate(vendor._id, update, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     });
 
