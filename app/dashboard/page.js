@@ -6,6 +6,8 @@ import { connectDB } from "@/lib/mongodb";
 import Vendor from "@/models/Vendor";
 import LogoutButton from "@/components/LogoutButton";
 import DeleteWarungButton from "@/components/DeleteWarungButton";
+import KategoriIcon from "@/components/KategoriIcon";
+import { labelKategori } from "@/lib/kategori";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -71,8 +73,16 @@ export default async function DashboardPage() {
                         <p className="line-clamp-1 font-semibold text-zinc-900">
                           {vendor.namaToko}
                         </p>
-                        <p className="text-xs text-zinc-500">
-                          {vendor.kategori} - {vendor.jamBuka}-{vendor.jamTutup}
+                        <p className="flex items-center gap-1 text-xs text-zinc-500">
+                          <KategoriIcon
+                            kategori={vendor.kategori}
+                            className="h-3.5 w-3.5"
+                          />
+                          <span>
+                            {`${labelKategori(vendor.kategori)} - ${
+                              vendor.jamBuka
+                            }-${vendor.jamTutup}`}
+                          </span>
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center justify-end gap-2">

@@ -34,7 +34,7 @@ const VendorSchema = new mongoose.Schema(
     },
     kategori: {
       type: String,
-      enum: ["warung", "pkl", "cafe"],
+      enum: ["warung", "pkl", "rumah_makan", "keliling"],
       required: true,
     },
     lokasi: {

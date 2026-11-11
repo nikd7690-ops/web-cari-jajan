@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import FotoInput from "@/components/FotoInput";
+import { KATEGORI } from "@/lib/kategori";
 
 const PinMap = dynamic(() => import("@/components/PinMap"), {
   ssr: false,
@@ -302,9 +303,11 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
           onChange={(e) => setKategori(e.target.value)}
           className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-600"
         >
-          <option value="warung">Warung</option>
-          <option value="pkl">PKL</option>
-          <option value="cafe">Cafe</option>
+          {KATEGORI.map((item) => (
+            <option key={item.value} value={item.value}>
+              {item.label}
+            </option>
+          ))}
         </select>
       </div>
 

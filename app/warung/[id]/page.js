@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import KategoriIcon from "@/components/KategoriIcon";
+import { labelKategori } from "@/lib/kategori";
 import {
   buatTeksPesanan,
   formatRupiah,
@@ -116,8 +118,9 @@ export default function DetailWarung() {
 
       <header className="mt-3 mb-4">
         <h1 className="text-2xl font-bold text-zinc-900">{vendor.namaToko}</h1>
-        <p className="text-sm text-zinc-600">
-          {vendor.kategori} - {vendor.alamatPatokan}
+        <p className="flex items-center gap-1.5 text-sm text-zinc-600">
+          <KategoriIcon kategori={vendor.kategori} className="h-4 w-4" />
+          <span>{`${labelKategori(vendor.kategori)} - ${vendor.alamatPatokan}`}</span>
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <span

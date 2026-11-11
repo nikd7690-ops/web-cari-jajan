@@ -55,7 +55,7 @@ const WARUNG_CONTOH = [
   },
   {
     namaToko: "Cafe Kopi Rakyat",
-    kategori: "cafe",
+    kategori: "rumah_makan",
     coordinates: [113.699, -8.16],
     alamatPatokan: "Jl. Gajah Mada No. 12",
     jamBuka: "10:00",
@@ -99,6 +99,21 @@ const WARUNG_CONTOH = [
       { namaMenu: "Sate Ayam (10 tusuk)", harga: 20000, tersedia: true },
       { namaMenu: "Sate Kambing (10 tusuk)", harga: 35000, tersedia: true },
       { namaMenu: "Lontong", harga: 3000, tersedia: true },
+    ],
+  },
+  {
+    namaToko: "Bakso Keliling Pak Budi",
+    kategori: "keliling",
+    coordinates: [113.712, -8.168],
+    alamatPatokan: "Biasa mangkal di Jl. Jawa, dekat SD",
+    jamBuka: "15:00",
+    jamTutup: "21:00",
+    nomorWA: "081100000006",
+    layananAntar: false,
+    foto: "",
+    menus: [
+      { namaMenu: "Bakso Campur", harga: 12000, tersedia: true },
+      { namaMenu: "Mie Ayam", harga: 10000, tersedia: true },
     ],
   },
 ];
