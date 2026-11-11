@@ -40,3 +40,23 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# capacitor / android build artifacts (sumber android/ tetap di-commit)
+/android/.gradle
+/android/build
+/android/app/build
+/android/app/release
+/android/local.properties
+/android/captivate.properties
+
+# signing (jangan pernah di-commit)
+*.keystore
+*.jks
+keystore.properties
+
+# editor / OS
+.idea/
+.vscode/
+*.iml
+.gradle/
+local.properties
