@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
+import { useEffect } from "react";
 import Link from "next/link";
-import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
@@ -17,29 +16,45 @@ L.Icon.Default.mergeOptions({
   iconShadow: markerShadow.src || markerShadow,
 });
 
-const JARAK_MIN_PX = 72;
+const IKON = {
+  pkl: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16l-1.5 8h-13L4 8Z"/><path d="M4 8 3 4H1"/><circle cx="8" cy="19.5" r="1.5"/><circle cx="17" cy="19.5" r="1.5"/></svg>',
+  warung:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18"/><path d="M4.5 9 6 4h12l1.5 5"/><path d="M5 9v11h14V9"/><path d="M9.5 20v-6h5v6"/></svg>',
+  rumah_makan:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11h16"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M9 7c0-1 .8-1.4.8-2.5"/><path d="M13.2 7c0-1 .8-1.4.8-2.5"/></svg>',
+  keliling:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M6 17 10 9h4l4 8"/><path d="M9 9h5"/></svg>',
+};
 
-function idKartuTampak(map, vendors) {
-  const urut = [...vendors].sort((a, b) => (a.jarak ?? 0) - (b.jarak ?? 0));
-  const dipilih = [];
+function escapeHtml(nilai) {
+  return String(nilai).replace(/[&<>"']/g, (huruf) => {
+    const peta = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+    return peta[huruf];
+  });
+}
 
-  for (const vendor of urut) {
-    const titik = map.latLngToContainerPoint([
-      vendor.lokasi.coordinates[1],
-      vendor.lokasi.coordinates[0],
-    ]);
-    const terlaluDekat = dipilih.some((item) => {
-      const dx = item.titik.x - titik.x;
-      const dy = item.titik.y - titik.y;
-      return Math.hypot(dx, dy) < JARAK_MIN_PX;
-    });
+function buatIkon(vendor, aktif) {
+  const kunci = vendor.kategori === "cafe" ? "rumah_makan" : vendor.kategori;
+  const ikon = IKON[kunci] ?? IKON.warung;
+  const status = vendor.buka ? "buka" : "tutup";
 
-    if (!terlaluDekat) {
-      dipilih.push({ id: vendor._id, titik });
-    }
-  }
-
-  return new Set(dipilih.map((item) => item.id));
+  return L.divIcon({
+    className: `cj-pin-wrap cj-pin-wrap--${status}`,
+    html: `<div class="cj-pin cj-pin--${status}${
+      aktif ? " cj-pin--aktif" : ""
+    }"><span class="cj-pin__ikon">${ikon}</span><span class="cj-pin__nama">${escapeHtml(
+      vendor.namaToko
+    )}</span></div><span class="cj-pin__ekor"></span>`,
+    iconSize: [60, 70],
+    iconAnchor: [30, 70],
+    popupAnchor: [0, -66],
+  });
 }
 
 function FokusVendor({ vendors, selectedId }) {
@@ -61,25 +76,6 @@ function FokusVendor({ vendors, selectedId }) {
   return null;
 }
 
-function KartuTampak({ vendors, onChange }) {
-  const map = useMap();
-
-  useEffect(() => {
-    function hitung() {
-      onChange(idKartuTampak(map, vendors));
-    }
-
-    hitung();
-    map.on("moveend zoomend", hitung);
-
-    return () => {
-      map.off("moveend zoomend", hitung);
-    };
-  }, [map, vendors, onChange]);
-
-  return null;
-}
-
 export default function MapComponent({
   center,
   vendors = [],
@@ -87,8 +83,6 @@ export default function MapComponent({
   selectedId,
   onSelectVendor,
 }) {
-  const [kartuTampak, setKartuTampak] = useState(() => new Set());
-
   return (
     <MapContainer
       key={`${center[0]},${center[1]}`}
@@ -104,7 +98,6 @@ export default function MapComponent({
       />
 
       <FokusVendor vendors={vendors} selectedId={selectedId} />
-      <KartuTampak vendors={vendors} onChange={setKartuTampak} />
 
       {userLocation ? (
         <Marker position={userLocation}>
@@ -116,51 +109,11 @@ export default function MapComponent({
         <Marker
           key={vendor._id}
           position={[vendor.lokasi.coordinates[1], vendor.lokasi.coordinates[0]]}
+          icon={buatIkon(vendor, selectedId === vendor._id)}
           eventHandlers={{
             click: () => onSelectVendor?.(vendor._id),
           }}
         >
-          {kartuTampak.has(vendor._id) ? (
-            <Tooltip
-              permanent
-              direction="top"
-              offset={[0, -8]}
-              opacity={1}
-              className="cj-pin-card"
-            >
-              <div className="relative h-14 w-14">
-                <div
-                  className={`relative h-14 w-14 overflow-hidden rounded-full border-2 bg-zinc-100 shadow-md ${
-                    vendor.buka ? "border-emerald-500" : "border-red-500"
-                  }`}
-                >
-                  {vendor.foto ? (
-                    <Image
-                      src={vendor.foto}
-                      alt={`Foto ${vendor.namaToko}`}
-                      fill
-                      sizes="56px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-[10px] text-zinc-400">
-                      Foto
-                    </div>
-                  )}
-                </div>
-                <span
-                  className={`absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full px-1.5 py-0.5 text-[9px] font-semibold leading-none ${
-                    vendor.buka
-                      ? "bg-emerald-600 text-white"
-                      : "bg-red-600 text-white"
-                  }`}
-                >
-                  {vendor.buka ? "Buka" : "Tutup"}
-                </span>
-              </div>
-            </Tooltip>
-          ) : null}
-
           <Popup>
             <div className="space-y-1">
               <p className="font-semibold">{vendor.namaToko}</p>

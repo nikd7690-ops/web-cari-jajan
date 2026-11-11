@@ -25,14 +25,80 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.cj-pin-card.leaflet-tooltip {
+.cj-pin-wrap {
   background: transparent;
   border: none;
-  box-shadow: none;
-  padding: 0;
-  white-space: normal;
 }
 
-.cj-pin-card.leaflet-tooltip::before {
-  display: none;
+.cj-pin {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 60px;
+  height: 60px;
+  padding: 4px;
+  border: 3px solid #71717a;
+  border-radius: 9999px;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.cj-pin--buka {
+  border-color: #059669;
+}
+
+.cj-pin--tutup {
+  border-color: #dc2626;
+}
+
+.cj-pin--aktif {
+  box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.35), 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.cj-pin__ikon {
+  display: flex;
+  color: #3f3f46;
+}
+
+.cj-pin__ikon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.cj-pin__nama {
+  display: -webkit-box;
+  max-width: 50px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: #18181b;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.05;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.cj-pin__ekor {
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  width: 10px;
+  height: 10px;
+  border-right: 3px solid #71717a;
+  border-bottom: 3px solid #71717a;
+  background: #ffffff;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.cj-pin-wrap--buka .cj-pin__ekor {
+  border-color: #059669;
+}
+
+.cj-pin-wrap--tutup .cj-pin__ekor {
+  border-color: #dc2626;
 }
