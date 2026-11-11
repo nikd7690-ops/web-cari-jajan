@@ -10,6 +10,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Jangan pindai proyek native Android (hasil build/generated).
+    "android/**",
   ]),
 ]);
 
