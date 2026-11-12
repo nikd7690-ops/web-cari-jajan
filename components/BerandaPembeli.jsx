@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import PilihAreaSheet from "@/components/PilihAreaSheet";
 import { deteksiLokasi, mintaLokasi, pantauIzinLokasi } from "@/lib/geolokasi";
@@ -33,6 +33,7 @@ export default function BerandaPembeli() {
   const [statusLokasi, setStatusLokasi] = useState("");
   const [isNative, setIsNative] = useState(false);
   const [offline, setOffline] = useState(false);
+  const [onboarding, setOnboarding] = useState(true);
   const inputCariRef = useRef(null);
 
   useEffect(() => {
@@ -81,45 +82,51 @@ export default function BerandaPembeli() {
     return () => window.removeEventListener("carijajan:pilih-area", buka);
   }, []);
 
-  useEffect(() => {
-    let ignore = false;
+  const jalankanLokasi = useCallback(async () => {
+    const det = await deteksiLokasi();
+    setStatusLokasi(det.status);
+    setIsNative(det.native);
 
-    async function mulai() {
-      const det = await deteksiLokasi();
-      if (ignore) return;
-      setStatusLokasi(det.status);
-      setIsNative(det.native);
+    if (det.status === "insecure" || det.status === "unsupported") {
+      setAreaTerbuka(true);
+      return;
+    }
 
-      if (det.status === "insecure" || det.status === "unsupported") {
+    try {
+      const pos = await mintaLokasi();
+      setLoading(true);
+      setLokasi(pos);
+      setAreaAktif("Lokasi saya");
+      setStatusLokasi("granted");
+    } catch (e) {
+      const kode = e?.kode || "unavailable";
+      if (kode === "denied" || kode === "insecure" || kode === "unsupported") {
+        setStatusLokasi(kode);
         setAreaTerbuka(true);
+      } else {
+        setPesanLokasi(e?.message || "Gagal membaca lokasi. Coba lagi.");
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    async function init() {
+      await Promise.resolve();
+
+      const pernah = localStorage.getItem("cj:onboarding") === "1";
+      if (pernah) {
+        setOnboarding(false);
+        jalankanLokasi();
         return;
       }
 
-      try {
-        const pos = await mintaLokasi();
-        if (ignore) return;
-        setLoading(true);
-        setLokasi(pos);
-        setAreaAktif("Lokasi saya");
-        setStatusLokasi("granted");
-      } catch (e) {
-        if (ignore) return;
-        const kode = e?.kode || "unavailable";
-        if (kode === "denied" || kode === "insecure" || kode === "unsupported") {
-          setStatusLokasi(kode);
-          setAreaTerbuka(true);
-        } else {
-          setPesanLokasi(e?.message || "Gagal membaca lokasi. Coba lagi.");
-        }
-      }
+      const det = await deteksiLokasi();
+      setStatusLokasi(det.status);
+      setIsNative(det.native);
     }
 
-    mulai();
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
+    init();
+  }, [jalankanLokasi]);
 
   useEffect(() => {
     return pantauIzinLokasi(async (state) => {
@@ -215,6 +222,21 @@ export default function BerandaPembeli() {
     }
   };
 
+  const akhiriOnboarding = (izinkan) => {
+    try {
+      localStorage.setItem("cj:onboarding", "1");
+    } catch {
+      // abaikan bila storage diblokir
+    }
+    setOnboarding(false);
+
+    if (izinkan) {
+      jalankanLokasi();
+    } else {
+      setAreaTerbuka(true);
+    }
+  };
+
   const pusat = lokasi
     ? [lokasi.lat, lokasi.lng]
     : [INDONESIA.lat, INDONESIA.lng];
@@ -227,6 +249,48 @@ export default function BerandaPembeli() {
 
   return (
     <main className="relative h-[100dvh] w-full overflow-hidden bg-zinc-100">
+      {onboarding ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="judul-onboarding"
+          className="absolute inset-0 z-[1400] flex flex-col justify-between bg-emerald-700 px-6 py-10 text-white"
+        >
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-100">
+              Cari Jajan
+            </p>
+            <h2 id="judul-onboarding" className="mt-2 text-2xl font-bold">
+              Temukan warung terdekat
+            </h2>
+            <p className="mt-2 text-sm text-emerald-50">
+              Izinkan lokasi untuk melihat warung UMKM di sekitarmu otomatis,
+              atau pilih kawasan manual.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => akhiriOnboarding(true)}
+              className="w-full rounded-xl bg-white py-3 text-sm font-semibold text-emerald-700 active:bg-emerald-50"
+            >
+              Izinkan lokasi
+            </button>
+            <button
+              type="button"
+              onClick={() => akhiriOnboarding(false)}
+              className="w-full rounded-xl border border-white/40 py-3 text-sm font-medium text-white active:bg-white/10"
+            >
+              Lewati, pilih area manual
+            </button>
+            <p className="text-center text-[11px] text-emerald-100">
+              Lokasi hanya dipakai untuk mencari warung terdekat dan bisa diubah
+              kapan saja lewat menu Lokasi.
+            </p>
+          </div>
+        </div>
+      ) : null}
       <div className="peta-beranda absolute inset-0">
         <MapComponent
           center={pusat}
