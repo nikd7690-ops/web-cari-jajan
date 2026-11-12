@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import PilihAreaSheet from "@/components/PilihAreaSheet";
+import KategoriIcon from "@/components/KategoriIcon";
+import { labelKategori } from "@/lib/kategori";
 import { deteksiLokasi, mintaLokasi, pantauIzinLokasi } from "@/lib/geolokasi";
 
 const MapComponent = dynamic(() => import("@/components/MapComponent"), {
@@ -33,6 +36,7 @@ export default function BerandaPembeli() {
   const [statusLokasi, setStatusLokasi] = useState("");
   const [isNative, setIsNative] = useState(false);
   const [offline, setOffline] = useState(false);
+  const [petaGagal, setPetaGagal] = useState(false);
   const [onboarding, setOnboarding] = useState(true);
   const inputCariRef = useRef(null);
 
@@ -291,16 +295,66 @@ export default function BerandaPembeli() {
           </div>
         </div>
       ) : null}
-      <div className="peta-beranda absolute inset-0">
-        <MapComponent
-          center={pusat}
-          zoom={zoomPeta}
-          userLocation={lokasi ? [lokasi.lat, lokasi.lng] : undefined}
-          vendors={vendorsTampil}
-          selectedId={selectedId}
-          onSelectVendor={setSelectedId}
-        />
-      </div>
+      {petaGagal ? (
+        <div className="absolute inset-0 overflow-y-auto p-4 pb-24">
+          <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            Peta tidak dapat dimuat. Berikut daftar warung terdekat.
+          </p>
+          {vendorsTampil.length === 0 ? (
+            <p className="py-6 text-center text-sm text-zinc-500">
+              Belum ada warung.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {vendorsTampil.map((vendor) => (
+                <li key={vendor._id}>
+                  <Link
+                    href={`/warung/${vendor._id}`}
+                    className="block rounded-xl border border-zinc-200 bg-white p-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-semibold text-zinc-900">
+                        {vendor.namaToko}
+                      </p>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                          vendor.buka
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {vendor.buka ? "Buka" : "Tutup"}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 flex items-center gap-1 text-xs text-zinc-500">
+                      <KategoriIcon
+                        kategori={vendor.kategori}
+                        className="h-3.5 w-3.5"
+                      />
+                      <span>{labelKategori(vendor.kategori)}</span>
+                    </p>
+                    <p className="mt-1 text-sm text-zinc-600">
+                      {vendor.alamatPatokan}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : (
+        <div className="peta-beranda absolute inset-0">
+          <MapComponent
+            center={pusat}
+            zoom={zoomPeta}
+            userLocation={lokasi ? [lokasi.lat, lokasi.lng] : undefined}
+            vendors={vendorsTampil}
+            selectedId={selectedId}
+            onSelectVendor={setSelectedId}
+            onGagal={() => setPetaGagal(true)}
+          />
+        </div>
+      )}
 
       <div className="absolute inset-x-0 top-0 z-[1050] p-3">
         <div className="mx-auto flex max-w-md items-center justify-end">
