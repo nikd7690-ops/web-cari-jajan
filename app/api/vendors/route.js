@@ -79,7 +79,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const { user, response } = await requireUser();
+  const { user, response } = await requireUser(request);
   if (response) return response;
 
   let body;

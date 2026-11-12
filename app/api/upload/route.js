@@ -6,7 +6,7 @@ const TIPE_DIIZINKAN = ["image/jpeg", "image/png", "image/webp"];
 const MAX_BYTES = 2 * 1024 * 1024;
 
 export async function POST(request) {
-  const { user, response } = await requireUser();
+  const { user, response } = await requireUser(request);
   if (response) return response;
 
   let form;

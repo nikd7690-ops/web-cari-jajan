@@ -44,7 +44,7 @@ function ambilJson(teks) {
 }
 
 export async function POST(request) {
-  const { user, response } = await requireUser();
+  const { user, response } = await requireUser(request);
   if (response) return response;
 
   const batas = cekRateLimit(`menu-foto:${user.id}`, 5, 10 * 60 * 1000);
