@@ -239,6 +239,8 @@ export default function BerandaPembeli() {
     );
   }, [vendors, query]);
 
+  const tutupArea = useCallback(() => setAreaTerbuka(false), []);
+
   const pilihArea = (area) => {
     setError("");
     setLoading(true);
@@ -522,7 +524,7 @@ export default function BerandaPembeli() {
           isNative={isNative}
           onGunakanLokasi={mintaLokasiUlang}
           onPilih={pilihArea}
-          onClose={() => setAreaTerbuka(false)}
+          onClose={tutupArea}
         />
       ) : null}
     </main>

@@ -42,6 +42,32 @@ export default function PilihAreaSheet({
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (typeof window === "undefined" || !window.Capacitor) return;
+
+    let batal = false;
+    let hapus = () => {};
+
+    (async () => {
+      try {
+        const { App } = await import("@capacitor/app");
+        const listener = await App.addListener("backButton", () => onClose());
+        if (batal) {
+          listener.remove();
+        } else {
+          hapus = () => listener.remove();
+        }
+      } catch {
+        // abaikan bila plugin tidak tersedia
+      }
+    })();
+
+    return () => {
+      batal = true;
+      hapus();
+    };
+  }, [onClose]);
+
+  useEffect(() => {
     const kata = query.trim();
     let ignore = false;
 
