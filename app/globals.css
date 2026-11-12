@@ -103,11 +103,11 @@ body {
   border-color: #dc2626;
 }
 
-.peta-beranda .leaflet-bottom.leaflet-right {
+.peta-beranda .maplibregl-ctrl-bottom-right {
   bottom: 78px;
 }
 
-.peta-beranda .leaflet-control-attribution {
+.peta-beranda .maplibregl-ctrl-attrib {
   font-size: 10px;
 }
 
