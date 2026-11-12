@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { apakahAdmin } from "@/lib/admin";
+import User from "@/models/User";
 import Vendor from "@/models/Vendor";
 import LogoutButton from "@/components/LogoutButton";
 import DeleteWarungButton from "@/components/DeleteWarungButton";
@@ -34,7 +35,10 @@ export default async function DashboardPage() {
 
   await connectDB();
 
-  const admin = await apakahAdmin(session.user.id);
+  const [admin, progress] = await Promise.all([
+    apakahAdmin(session.user.id),
+    User.findById(session.user.id).select("xp level").lean(),
+  ]);
 
   const vendors = await Vendor.find({ owner: session.user.id })
     .sort({ createdAt: -1 })
@@ -48,6 +52,12 @@ export default async function DashboardPage() {
           <p className="text-sm text-zinc-600">
             Halo, {session.user.name || session.user.email}
           </p>
+          <div className="mt-1 flex items-center gap-2 text-xs">
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700">
+              Level {progress?.level ?? 1}
+            </span>
+            <span className="text-zinc-500">{progress?.xp ?? 0} XP</span>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {admin ? (
