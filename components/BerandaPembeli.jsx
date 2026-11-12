@@ -6,7 +6,12 @@ import Link from "next/link";
 import PilihAreaSheet from "@/components/PilihAreaSheet";
 import KategoriIcon from "@/components/KategoriIcon";
 import { labelKategori } from "@/lib/kategori";
-import { deteksiLokasi, mintaLokasi, pantauIzinLokasi } from "@/lib/geolokasi";
+import {
+  aturUlangIzinSesi,
+  deteksiLokasi,
+  mintaLokasi,
+  pantauIzinLokasi,
+} from "@/lib/geolokasi";
 
 const MapComponent = dynamic(() => import("@/components/MapComponent"), {
   ssr: false,
@@ -39,6 +44,11 @@ export default function BerandaPembeli() {
   const [petaGagal, setPetaGagal] = useState(false);
   const [onboarding, setOnboarding] = useState(true);
   const inputCariRef = useRef(null);
+  const lokasiRef = useRef(null);
+
+  useEffect(() => {
+    lokasiRef.current = lokasi;
+  }, [lokasi]);
 
   useEffect(() => {
     if (cariTerbuka) {
@@ -106,8 +116,10 @@ export default function BerandaPembeli() {
       const kode = e?.kode || "unavailable";
       if (kode === "denied" || kode === "insecure" || kode === "unsupported") {
         setStatusLokasi(kode);
+        setLoading(false);
         setAreaTerbuka(true);
       } else {
+        setLoading(false);
         setPesanLokasi(e?.message || "Gagal membaca lokasi. Coba lagi.");
       }
     }
@@ -147,6 +159,40 @@ export default function BerandaPembeli() {
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (!isNative) return;
+
+    let batal = false;
+    let hapus = () => {};
+
+    (async () => {
+      try {
+        const { App } = await import("@capacitor/app");
+        const listener = await App.addListener("appStateChange", async ({ isActive }) => {
+          if (!isActive || batal) return;
+          const det = await deteksiLokasi();
+          if (batal) return;
+          setStatusLokasi(det.status);
+          if (det.status === "granted" && !lokasiRef.current) {
+            jalankanLokasi();
+          }
+        });
+        if (batal) {
+          listener.remove();
+        } else {
+          hapus = () => listener.remove();
+        }
+      } catch {
+        // abaikan bila plugin tidak tersedia
+      }
+    })();
+
+    return () => {
+      batal = true;
+      hapus();
+    };
+  }, [isNative, jalankanLokasi]);
 
   useEffect(() => {
     if (!lokasi) return;
@@ -205,9 +251,10 @@ export default function BerandaPembeli() {
   const mintaLokasiUlang = async () => {
     setPesanLokasi("");
     setGeoLoading(true);
+    if (isNative) aturUlangIzinSesi();
 
     try {
-      const pos = await mintaLokasi();
+      const pos = await mintaLokasi({ retryPermission: true });
       setLoading(true);
       setLokasi(pos);
       setAreaAktif("Lokasi saya");
