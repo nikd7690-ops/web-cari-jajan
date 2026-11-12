@@ -3,6 +3,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
+import { apakahAdmin } from "@/lib/admin";
 import Vendor from "@/models/Vendor";
 import LogoutButton from "@/components/LogoutButton";
 import DeleteWarungButton from "@/components/DeleteWarungButton";
@@ -18,6 +19,8 @@ export default async function DashboardPage() {
 
   await connectDB();
 
+  const admin = await apakahAdmin(session.user.id);
+
   const vendors = await Vendor.find({ owner: session.user.id })
     .sort({ createdAt: -1 })
     .lean();
@@ -31,7 +34,17 @@ export default async function DashboardPage() {
             Halo, {session.user.name || session.user.email}
           </p>
         </div>
-        <LogoutButton />
+        <div className="flex items-center gap-2">
+          {admin ? (
+            <Link
+              href="/admin"
+              className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700"
+            >
+              Admin
+            </Link>
+          ) : null}
+          <LogoutButton />
+        </div>
       </header>
 
       <section>

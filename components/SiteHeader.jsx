@@ -25,6 +25,14 @@ export default async function SiteHeader() {
 
           {session?.user ? (
             <>
+              {session.user.role === "admin" ? (
+                <Link
+                  href="/admin"
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-700 active:bg-zinc-100"
+                >
+                  Admin
+                </Link>
+              ) : null}
               <Link
                 href="/dashboard"
                 className="rounded-lg px-3 py-2 text-sm font-medium text-emerald-700 active:bg-emerald-50"

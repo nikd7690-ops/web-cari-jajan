@@ -9,6 +9,7 @@ export default function HeaderGate({ children }) {
 
   if (TANPA_HEADER.includes(pathname)) return null;
   if (pathname.startsWith("/dashboard")) return null;
+  if (pathname.startsWith("/admin")) return null;
 
   return children;
 }
