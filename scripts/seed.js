@@ -133,6 +133,8 @@ async function main() {
 
   const vendors = WARUNG_CONTOH.map((warung) => ({
     owner: user._id,
+    submittedBy: user._id,
+    status: "approved",
     namaToko: warung.namaToko,
     kategori: warung.kategori,
     lokasi: { type: "Point", coordinates: warung.coordinates },

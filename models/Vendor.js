@@ -27,6 +27,20 @@ const VendorSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    submittedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      default: function () {
+        return this.owner;
+      },
+    },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+      index: true,
+    },
     namaToko: {
       type: String,
       required: true,
@@ -90,5 +104,6 @@ const VendorSchema = new mongoose.Schema(
 );
 
 VendorSchema.index({ lokasi: "2dsphere" });
+VendorSchema.index({ status: 1, createdAt: -1 });
 
 export default mongoose.models.Vendor || mongoose.model("Vendor", VendorSchema);
