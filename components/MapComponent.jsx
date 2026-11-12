@@ -119,10 +119,12 @@ export default function MapComponent({
       initialViewState={{ longitude: lng, latitude: lat, zoom }}
       style={{ height: "100%", width: "100%" }}
       className="h-full w-full z-0"
-      dragRotate={false}
+      dragPan={true}
+      dragRotate={true}
+      touchZoomRotate={true}
       touchPitch={false}
       pitchWithRotate={false}
-      cooperativeGestures={true}
+      cooperativeGestures={false}
       onLoad={() => {
         sudahLoad.current = true;
       }}
