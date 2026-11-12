@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import { connectDB } from "@/lib/mongodb";
 import Vendor from "@/models/Vendor";
 import { isBuka } from "@/lib/jam";
+import { getSession } from "@/lib/auth";
+import { apakahAdmin } from "@/lib/admin";
 import { requireUser, requireVendorOwner } from "@/lib/apiAuth";
 import { vendorUpdateSchema } from "@/lib/vendorSchema";
 
@@ -16,7 +18,7 @@ export async function GET(request, { params }) {
   try {
     await connectDB();
 
-    const vendor = await Vendor.findById(id).select("-owner").lean();
+    const vendor = await Vendor.findById(id).lean();
 
     if (!vendor) {
       return NextResponse.json(
@@ -25,9 +27,31 @@ export async function GET(request, { params }) {
       );
     }
 
-    return NextResponse.json({
-      data: { ...vendor, buka: isBuka(vendor.jamBuka, vendor.jamTutup) },
-    });
+    if (vendor.status !== "approved") {
+      const session = await getSession();
+      const userId = session?.user?.id;
+      const pemilik =
+        userId &&
+        (vendor.owner?.toString() === userId ||
+          vendor.submittedBy?.toString() === userId);
+      const admin = userId ? await apakahAdmin(userId) : false;
+
+      if (!pemilik && !admin) {
+        return NextResponse.json(
+          { error: "Warung tidak ditemukan" },
+          { status: 404 }
+        );
+      }
+    }
+
+    const data = {
+      ...vendor,
+      buka: isBuka(vendor.jamBuka, vendor.jamTutup),
+    };
+    delete data.owner;
+    delete data.submittedBy;
+
+    return NextResponse.json({ data });
   } catch (error) {
     console.error("GET /api/vendors/[id] gagal:", error);
     return NextResponse.json(
@@ -94,6 +118,11 @@ export async function PATCH(request, { params }) {
 
     if (d.lat !== undefined && d.lng !== undefined) {
       update.lokasi = { type: "Point", coordinates: [d.lng, d.lat] };
+    }
+
+    // Setiap perubahan oleh penjual wajib dikurasi ulang.
+    if (vendor.status !== "pending") {
+      update.status = "pending";
     }
 
     const updated = await Vendor.findByIdAndUpdate(vendor._id, update, {

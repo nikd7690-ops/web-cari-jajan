@@ -59,7 +59,8 @@ export async function GET(request) {
           spherical: true,
         },
       },
-      { $project: { owner: 0 } },
+      { $match: { status: "approved" } },
+      { $project: { owner: 0, submittedBy: 0 } },
     ]);
 
     const data = vendors.map((vendor) => ({
@@ -115,6 +116,8 @@ export async function POST(request) {
 
     const vendor = await Vendor.create({
       owner: user.id,
+      submittedBy: user.id,
+      status: "pending",
       namaToko: d.namaToko,
       kategori: d.kategori,
       lokasi: { type: "Point", coordinates: [d.lng, d.lat] },

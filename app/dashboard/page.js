@@ -10,6 +10,21 @@ import DeleteWarungButton from "@/components/DeleteWarungButton";
 import KategoriIcon from "@/components/KategoriIcon";
 import { labelKategori } from "@/lib/kategori";
 
+const STATUS_WARUNG = {
+  pending: {
+    label: "Menunggu kurasi",
+    className: "bg-amber-100 text-amber-700",
+  },
+  approved: {
+    label: "Tayang",
+    className: "bg-emerald-100 text-emerald-700",
+  },
+  rejected: {
+    label: "Ditolak",
+    className: "bg-red-100 text-red-700",
+  },
+};
+
 export default async function DashboardPage() {
   const session = await getSession();
 
@@ -83,9 +98,22 @@ export default async function DashboardPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="line-clamp-1 font-semibold text-zinc-900">
-                          {vendor.namaToko}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="line-clamp-1 font-semibold text-zinc-900">
+                            {vendor.namaToko}
+                          </p>
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                              (STATUS_WARUNG[vendor.status] ??
+                                STATUS_WARUNG.pending).className
+                            }`}
+                          >
+                            {
+                              (STATUS_WARUNG[vendor.status] ??
+                                STATUS_WARUNG.pending).label
+                            }
+                          </span>
+                        </div>
                         <p className="flex items-center gap-1 text-xs text-zinc-500">
                           <KategoriIcon
                             kategori={vendor.kategori}
