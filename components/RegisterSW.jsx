@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import StatusBarAndroid from "@/components/StatusBarAndroid";
 
 export default function RegisterSW() {
   useEffect(() => {
@@ -17,5 +18,5 @@ export default function RegisterSW() {
     return () => clearTimeout(timer);
   }, []);
 
-  return null;
+  return <StatusBarAndroid />;
 }
