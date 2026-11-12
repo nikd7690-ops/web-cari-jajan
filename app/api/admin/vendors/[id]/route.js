@@ -88,9 +88,20 @@ export async function PATCH(request, { params }) {
     }
 
     const pemilik = vendor.submittedBy || vendor.owner;
-    let hadiah = null;
+    if (!pemilik) {
+      await Vendor.updateOne(
+        { _id: vendor._id, status: "approved" },
+        { $set: { status: "pending" } }
+      );
+      return NextResponse.json(
+        { error: "Warung tidak memiliki user pengaju yang valid" },
+        { status: 409 }
+      );
+    }
 
-    if (pemilik) {
+    let hadiah;
+
+    try {
       hadiah = await User.findByIdAndUpdate(
         pemilik,
         [
@@ -121,6 +132,23 @@ export async function PATCH(request, { params }) {
           projection: { name: 1, xp: 1, level: 1 },
         }
       ).lean();
+    } catch (error) {
+      await Vendor.updateOne(
+        { _id: vendor._id, status: "approved" },
+        { $set: { status: "pending" } }
+      );
+      throw error;
+    }
+
+    if (!hadiah) {
+      await Vendor.updateOne(
+        { _id: vendor._id, status: "approved" },
+        { $set: { status: "pending" } }
+      );
+      return NextResponse.json(
+        { error: "User pengaju warung tidak ditemukan" },
+        { status: 409 }
+      );
     }
 
     return NextResponse.json({ data: { vendor, user: hadiah } });
