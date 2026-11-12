@@ -69,6 +69,11 @@ export default function BottomNav({ loggedIn = false }) {
   const diAkun =
     pathname.startsWith("/dashboard") || pathname === "/masuk";
 
+  function keMasuk() {
+    setPromptMasuk(false);
+    router.push("/masuk");
+  }
+
   function bukaLokasi() {
     if (diBeranda) {
       window.dispatchEvent(new Event("carijajan:pilih-area"));
@@ -156,14 +161,15 @@ export default function BottomNav({ loggedIn = false }) {
                 onClick={() => setPromptMasuk(false)}
                 className="flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700"
               >
-                Nanti
+                Nanti saja
               </button>
-              <Link
-                href="/masuk"
+              <button
+                type="button"
+                onClick={keMasuk}
                 className="flex-1 rounded-lg bg-emerald-600 px-3 py-2 text-center text-sm font-semibold text-white"
               >
                 Masuk
-              </Link>
+              </button>
             </div>
           </div>
         </div>
