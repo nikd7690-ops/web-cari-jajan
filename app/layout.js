@@ -4,6 +4,7 @@ import SiteHeader from "@/components/SiteHeader";
 import HeaderGate from "@/components/HeaderGate";
 import BottomNav from "@/components/BottomNav";
 import RegisterSW from "@/components/RegisterSW";
+import BackButtonAndroid from "@/components/BackButtonAndroid";
 import { getSession } from "@/lib/auth";
 
 const geistSans = Geist({
@@ -56,6 +57,7 @@ export default async function RootLayout({ children }) {
         {children}
         <BottomNav loggedIn={Boolean(session?.user?.id)} />
         <RegisterSW />
+        <BackButtonAndroid />
       </body>
     </html>
   );
