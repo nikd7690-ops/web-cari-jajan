@@ -32,6 +32,7 @@ export default function BerandaPembeli() {
   const [pesanLokasi, setPesanLokasi] = useState("");
   const [statusLokasi, setStatusLokasi] = useState("");
   const [isNative, setIsNative] = useState(false);
+  const [offline, setOffline] = useState(false);
   const inputCariRef = useRef(null);
 
   useEffect(() => {
@@ -39,6 +40,23 @@ export default function BerandaPembeli() {
       inputCariRef.current?.focus();
     }
   }, [cariTerbuka]);
+
+  useEffect(() => {
+    async function cek() {
+      await Promise.resolve();
+      setOffline(!navigator.onLine);
+    }
+    cek();
+
+    const online = () => setOffline(false);
+    const offlineHandler = () => setOffline(true);
+    window.addEventListener("online", online);
+    window.addEventListener("offline", offlineHandler);
+    return () => {
+      window.removeEventListener("online", online);
+      window.removeEventListener("offline", offlineHandler);
+    };
+  }, []);
 
   useEffect(() => {
     async function bukaDariQuery() {
@@ -287,6 +305,14 @@ export default function BerandaPembeli() {
           </button>
         </div>
       </div>
+
+      {offline ? (
+        <div className="absolute inset-x-0 top-16 z-[1100] px-3">
+          <p className="mx-auto max-w-md rounded-full bg-amber-500/95 px-3 py-1.5 text-center text-xs font-medium text-white shadow">
+            Mode offline: menampilkan data warung terakhir yang tersimpan.
+          </p>
+        </div>
+      ) : null}
 
       {loading ? (
         <div className="absolute inset-0 z-[1020] flex items-center justify-center bg-white/70 text-sm text-zinc-600">
