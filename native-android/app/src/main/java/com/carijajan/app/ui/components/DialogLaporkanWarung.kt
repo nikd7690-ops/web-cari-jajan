@@ -15,6 +15,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.RestaurantMenu
+import androidx.compose.material.icons.filled.Store
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -56,12 +62,13 @@ fun DialogLaporkanWarung(
     var sukses by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
 
+    data class OpsiAlasan(val key: String, val label: String, val icon: ImageVector)
     val daftarAlasan = listOf(
-        "lokasi_salah" to "📍 Titik lokasi tidak sesuai di peta",
-        "sudah_tutup" to "🚪 Toko / warung sudah tutup permanen",
-        "menu_salah" to "📋 Menu atau harga tidak akurat",
-        "duplikat" to "👥 Warung duplikat / ganda",
-        "lainnya" to "⚠️ Masalah informasi lainnya"
+        OpsiAlasan("lokasi_salah", "Titik lokasi tidak sesuai di peta", Icons.Default.Place),
+        OpsiAlasan("sudah_tutup", "Toko / warung sudah tutup permanen", Icons.Default.Store),
+        OpsiAlasan("menu_salah", "Menu atau harga tidak akurat", Icons.Default.RestaurantMenu),
+        OpsiAlasan("duplikat", "Warung duplikat / ganda", Icons.Default.Group),
+        OpsiAlasan("lainnya", "Masalah informasi lainnya", Icons.Default.Warning)
     )
 
     fun kirim() {
@@ -117,15 +124,16 @@ fun DialogLaporkanWarung(
 
                     // Pilihan Alasan
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        daftarAlasan.forEach { (key, label) ->
-                            val terpilih = (alasanTerpilih == key)
+                        daftarAlasan.forEach { opsi ->
+                            val terpilih = (alasanTerpilih == opsi.key)
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
                                 border = BorderStroke(1.dp, if (terpilih) MaterialTheme.colorScheme.primary else Color(0xFFE4E4E7)),
                                 color = if (terpilih) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { alasanTerpilih = key }
+                                    .bounceEffect()
+                                    .clickable { alasanTerpilih = opsi.key }
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -133,12 +141,19 @@ fun DialogLaporkanWarung(
                                 ) {
                                     RadioButton(
                                         selected = terpilih,
-                                        onClick = { alasanTerpilih = key },
+                                        onClick = { alasanTerpilih = opsi.key },
                                         modifier = Modifier.size(20.dp)
                                     )
                                     Spacer(Modifier.width(8.dp))
+                                    Icon(
+                                        imageVector = opsi.icon,
+                                        contentDescription = null,
+                                        tint = if (terpilih) MaterialTheme.colorScheme.primary else Color.Gray,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
                                     Text(
-                                        text = label,
+                                        text = opsi.label,
                                         fontSize = 12.sp,
                                         fontWeight = if (terpilih) FontWeight.Bold else FontWeight.Normal
                                     )

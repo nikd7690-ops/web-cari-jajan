@@ -21,13 +21,14 @@ object PinGenerator {
         context: Context,
         namaToko: String,
         kategori: String,
-        buka: Boolean
+        buka: Boolean,
+        diskonPersen: Int = 0
     ): Bitmap {
-        val key = "${namaToko}_${kategori}_$buka"
+        val key = "${namaToko}_${kategori}_${buka}_$diskonPersen"
         pinCache.get(key)?.let { return it }
 
         val density = context.resources.displayMetrics.density
-        val bitmap = gambarPin(namaToko, kategori, buka, density)
+        val bitmap = gambarPin(namaToko, kategori, buka, diskonPersen, density)
         pinCache.put(key, bitmap)
         return bitmap
     }
@@ -117,6 +118,7 @@ object PinGenerator {
         namaToko: String,
         kategori: String,
         buka: Boolean,
+        diskonPersen: Int,
         density: Float
     ): Bitmap {
         val dp = { value: Float -> value * density }
@@ -124,7 +126,7 @@ object PinGenerator {
         // Singkat nama toko jika terlalu panjang agar pin tetap proporsional di peta
         val namaTampil = if (namaToko.length > 18) namaToko.take(16) + "…" else namaToko
 
-        // Cat teks
+        // Cat teks nama warung
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.parseColor("#18181B")
             textSize = dp(11.5f)
@@ -133,7 +135,7 @@ object PinGenerator {
         val textWidth = textPaint.measureText(namaTampil)
         val fontMetrics = textPaint.fontMetrics
 
-        // Dimensi pin
+        // Dimensi pin utama
         val iconSize = dp(24f)
         val padX = dp(8f)
         val padY = dp(5f)
@@ -144,8 +146,33 @@ object PinGenerator {
 
         val bubbleW = padX + iconSize + gap + textWidth + padX + dp(4f)
         val bubbleH = padY + iconSize + padY
-        val totalW = bubbleW + dp(4f)
-        val totalH = bubbleH + arrowH + dp(4f)
+
+        // ── Komputasi Pop-Up Callout Diskon di Atas Pin ─────────────────────
+        val adaDiskon = diskonPersen > 0
+        val diskonTeks = "Diskon $diskonPersen%"
+        val diskonTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            textSize = dp(10f)
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }
+        val diskonTextWidth = if (adaDiskon) diskonTextPaint.measureText(diskonTeks) else 0f
+        val diskonMetrics = diskonTextPaint.fontMetrics
+
+        val badgePadX = dp(7f)
+        val badgeH = dp(18f)
+        val badgeIconSize = dp(11f)
+        val badgeGap = dp(4f)
+        val badgeW = if (adaDiskon) badgePadX + badgeIconSize + badgeGap + diskonTextWidth + badgePadX else 0f
+        val calloutArrowH = dp(4f)
+        val calloutArrowW = dp(6f)
+        val calloutGap = dp(3f)
+
+        // Tinggi ekstra di bagian atas kanvas untuk pop-up diskon
+        val extraTopH = if (adaDiskon) badgeH + calloutArrowH + calloutGap else 0f
+
+        val contentW = maxOf(bubbleW, badgeW)
+        val totalW = contentW + dp(8f)
+        val totalH = extraTopH + bubbleH + arrowH + dp(6f)
 
         val bitmap = Bitmap.createBitmap(
             totalW.toInt().coerceAtLeast(1),
@@ -154,19 +181,79 @@ object PinGenerator {
         )
         val canvas = Canvas(bitmap)
 
+        val centerX = totalW / 2f
         val warnaUtama = if (buka) Color.parseColor("#EA681E") else Color.parseColor("#78716C")
         val warnaBgIcon = if (buka) Color.parseColor("#FFEDD5") else Color.parseColor("#F5F5F4")
 
-        // 1. Gambar latar belakang gelembung pin + ekor panah
-        val bubbleRect = RectF(dp(2f), dp(2f), dp(2f) + bubbleW, dp(2f) + bubbleH)
+        // ── 1. Gambar Pop-Up Badge Diskon Mengambang di Atas Pin ────────────
+        if (adaDiskon) {
+            val badgeLeft = centerX - badgeW / 2f
+            val badgeTop = dp(3f)
+            val badgeBottom = badgeTop + badgeH
+            val badgeRect = RectF(badgeLeft, badgeTop, badgeLeft + badgeW, badgeBottom)
+
+            val popupPath = Path().apply {
+                addRoundRect(badgeRect, dp(9f), dp(9f), Path.Direction.CW)
+                // Panah kecil callout menunjuk ke gelembung pin di bawahnya
+                moveTo(centerX - calloutArrowW / 2f, badgeBottom - dp(0.5f))
+                lineTo(centerX, badgeBottom + calloutArrowH)
+                lineTo(centerX + calloutArrowW / 2f, badgeBottom - dp(0.5f))
+                close()
+            }
+
+            // Bayangan halus pada pop-up diskon
+            val popupFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.parseColor("#DC2626") // Merah Diskon Terang
+                style = Paint.Style.FILL
+                setShadowLayer(dp(3f), 0f, dp(1.5f), Color.parseColor("#44000000"))
+            }
+            canvas.drawPath(popupPath, popupFillPaint)
+
+            // Garis tepi putih tipis pada pop-up badge
+            val popupStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.WHITE
+                style = Paint.Style.STROKE
+                strokeWidth = dp(1.2f)
+                strokeJoin = Paint.Join.ROUND
+            }
+            canvas.drawPath(popupPath, popupStrokePaint)
+
+            // Ikon persen '%' dalam lingkaran putih kecil
+            val pIconCx = badgeLeft + badgePadX + badgeIconSize / 2f
+            val pIconCy = badgeTop + badgeH / 2f
+            val pIconCirclePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.WHITE
+                style = Paint.Style.FILL
+            }
+            canvas.drawCircle(pIconCx, pIconCy, badgeIconSize / 2f, pIconCirclePaint)
+
+            val pTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.parseColor("#DC2626")
+                textSize = dp(7.5f)
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                textAlign = Paint.Align.CENTER
+            }
+            val pTextY = pIconCy - ((pTextPaint.fontMetrics.ascent + pTextPaint.fontMetrics.descent) / 2f)
+            canvas.drawText("%", pIconCx, pTextY, pTextPaint)
+
+            // Teks Diskon
+            val diskonTextX = badgeLeft + badgePadX + badgeIconSize + badgeGap
+            val diskonTextY = pIconCy - ((diskonMetrics.ascent + diskonMetrics.descent) / 2f)
+            canvas.drawText(diskonTeks, diskonTextX, diskonTextY, diskonTextPaint)
+        }
+
+        // ── 2. Gambar Gelembung Pin Utama + Panah Lokasi Bawah ──────────────
+        val bubbleLeft = centerX - bubbleW / 2f
+        val bubbleTop = dp(3f) + extraTopH
+        val bubbleBottom = bubbleTop + bubbleH
+
+        val bubbleRect = RectF(bubbleLeft, bubbleTop, bubbleLeft + bubbleW, bubbleBottom)
         val bubblePath = Path().apply {
             addRoundRect(bubbleRect, radius, radius, Path.Direction.CW)
-            // Gambar ekor panah di bagian bawah tengah
-            val centerX = dp(2f) + bubbleW / 2f
-            val bottomY = dp(2f) + bubbleH
-            moveTo(centerX - arrowW / 2f, bottomY - dp(1f))
-            lineTo(centerX, bottomY + arrowH)
-            lineTo(centerX + arrowW / 2f, bottomY - dp(1f))
+            // Gambar ekor panah di bagian bawah tengah menunjuk ke titik GPS
+            moveTo(centerX - arrowW / 2f, bubbleBottom - dp(1f))
+            lineTo(centerX, bubbleBottom + arrowH)
+            lineTo(centerX + arrowW / 2f, bubbleBottom - dp(1f))
             close()
         }
 
@@ -187,16 +274,16 @@ object PinGenerator {
         }
         canvas.drawPath(bubblePath, strokePaint)
 
-        // 2. Gambar lingkaran latar ikon kategori
-        val iconCenterLeft = dp(2f) + padX + iconSize / 2f
-        val iconCenterTop = dp(2f) + padY + iconSize / 2f
+        // Lingkaran latar ikon kategori
+        val iconCenterLeft = bubbleLeft + padX + iconSize / 2f
+        val iconCenterTop = bubbleTop + padY + iconSize / 2f
         val iconBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = warnaBgIcon
             style = Paint.Style.FILL
         }
         canvas.drawCircle(iconCenterLeft, iconCenterTop, iconSize / 2f, iconBgPaint)
 
-        // 3. Gambar simbol ikon sesuai kategori
+        // Simbol ikon sesuai kategori
         gambarIkonKategori(
             canvas = canvas,
             kategori = kategori,
@@ -207,9 +294,9 @@ object PinGenerator {
             strokeWidth = dp(1.6f)
         )
 
-        // 4. Gambar teks nama warung
-        val textX = dp(2f) + padX + iconSize + gap
-        val textY = dp(2f) + padY + (iconSize / 2f) - ((fontMetrics.ascent + fontMetrics.descent) / 2f)
+        // Teks nama warung
+        val textX = bubbleLeft + padX + iconSize + gap
+        val textY = iconCenterTop - ((fontMetrics.ascent + fontMetrics.descent) / 2f)
         canvas.drawText(namaTampil, textX, textY, textPaint)
 
         return bitmap

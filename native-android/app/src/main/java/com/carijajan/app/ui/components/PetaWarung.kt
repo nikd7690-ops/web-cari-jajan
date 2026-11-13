@@ -244,11 +244,13 @@ fun PetaWarung(
         vendors.forEach { vendor ->
             if (vendor.lat == 0.0 && vendor.lng == 0.0) return@forEach
 
+            val diskon = if (vendor.zeroWaste?.aktif == true) (vendor.zeroWaste.diskonPersen.takeIf { it > 0 } ?: 30) else 0
             val pinBitmap = PinGenerator.dapatkanPin(
                 context = context,
                 namaToko = vendor.namaToko,
                 kategori = vendor.kategori,
-                buka = vendor.buka
+                buka = vendor.buka,
+                diskonPersen = diskon
             )
             val customIcon = iconFactory.fromBitmap(pinBitmap)
 

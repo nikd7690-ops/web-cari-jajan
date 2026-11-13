@@ -23,9 +23,21 @@ function webglDidukung() {
 
 function PinVendor({ vendor, aktif }) {
   const status = vendor.buka ? "buka" : "tutup";
+  const diskonPersen =
+    vendor.zeroWaste?.aktif && vendor.zeroWaste?.diskonPersen > 0
+      ? vendor.zeroWaste.diskonPersen
+      : 0;
 
   return (
-    <div className={`cj-pin-wrap cj-pin-wrap--${status}`}>
+    <div className={`cj-pin-wrap cj-pin-wrap--${status} flex flex-col items-center pointer-events-auto cursor-pointer`}>
+      {diskonPersen > 0 && (
+        <div className="mb-1.5 flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-md border border-white whitespace-nowrap animate-bounce">
+          <span className="flex h-3 w-3 items-center justify-center rounded-full bg-white text-[8px] font-black text-red-600 leading-none">
+            %
+          </span>
+          <span>Diskon {diskonPersen}%</span>
+        </div>
+      )}
       <div
         className={`cj-pin cj-pin--${status}${aktif ? " cj-pin--aktif" : ""}`}
       >
