@@ -95,7 +95,10 @@ fun MasukScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.bounceEffect()
+            ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
             }
             Spacer(Modifier.width(4.dp))
@@ -129,7 +132,7 @@ fun MasukScreen(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(com.carijajan.app.ui.theme.BrandOrange),
+                            .background(BrandOrange),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Filled.Storefront, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
@@ -146,7 +149,7 @@ fun MasukScreen(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(com.carijajan.app.ui.theme.BrandMaroon),
+                            .background(BrandMaroon),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Filled.VolunteerActivism, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))

@@ -172,12 +172,15 @@ fun DashboardScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            IconButton(onClick = {
-                scope.launch {
-                    container.authRepository.logout()
-                    onLogout()
-                }
-            }) {
+            IconButton(
+                onClick = {
+                    scope.launch {
+                        container.authRepository.logout()
+                        onLogout()
+                    }
+                },
+                modifier = Modifier.bounceEffect()
+            ) {
                 Icon(Icons.Filled.Logout, contentDescription = "Keluar", tint = MaterialTheme.colorScheme.error)
             }
         }
@@ -207,8 +210,8 @@ fun DashboardScreen(
                 item {
                     Surface(
                         shape = RoundedCornerShape(18.dp),
-                        color = com.carijajan.app.ui.theme.BrandOrangeSurface,
-                        border = BorderStroke(1.dp, com.carijajan.app.ui.theme.BrandOrangeLight),
+                        color = BrandOrangeSurface,
+                        border = BorderStroke(1.dp, BrandOrangeLight),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -222,7 +225,7 @@ fun DashboardScreen(
                                         modifier = Modifier
                                             .size(46.dp)
                                             .clip(CircleShape)
-                                            .background(com.carijajan.app.ui.theme.BrandOrange),
+                                            .background(BrandOrange),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
@@ -234,21 +237,21 @@ fun DashboardScreen(
                                     }
                                     Spacer(Modifier.width(12.dp))
                                     Column {
-                                        Text("Level $level", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = com.carijajan.app.ui.theme.BrandMaroon)
-                                        Text(gelar, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = com.carijajan.app.ui.theme.BrandOrange)
+                                        Text("Level $level", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = BrandMaroon)
+                                        Text(gelar, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandOrange)
                                     }
                                 }
 
                                 Surface(
                                     color = Color.White,
                                     shape = RoundedCornerShape(20.dp),
-                                    border = BorderStroke(1.dp, com.carijajan.app.ui.theme.BrandOrangeLight)
+                                    border = BorderStroke(1.dp, BrandOrangeLight)
                                 ) {
                                     Text(
                                         "$xp XP Total",
                                         fontWeight = FontWeight.ExtraBold,
                                         fontSize = 13.sp,
-                                        color = com.carijajan.app.ui.theme.BrandOrangeDark,
+                                        color = BrandOrangeDark,
                                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
                                     )
                                 }
@@ -259,14 +262,14 @@ fun DashboardScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Progres Level Berikutnya", fontSize = 11.sp, color = com.carijajan.app.ui.theme.BrandOrangeDark)
-                                Text("$sisaXp XP lagi menuju Level ${level + 1}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = com.carijajan.app.ui.theme.BrandMaroon)
+                                Text("Progres Level Berikutnya", fontSize = 11.sp, color = BrandOrangeDark)
+                                Text("$sisaXp XP lagi menuju Level ${level + 1}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = BrandMaroon)
                             }
                             Spacer(Modifier.height(6.dp))
                             LinearProgressIndicator(
                                 progress = { progress },
-                                color = com.carijajan.app.ui.theme.BrandOrange,
-                                trackColor = com.carijajan.app.ui.theme.BrandOrangeLight,
+                                color = BrandOrange,
+                                trackColor = BrandOrangeLight,
                                 modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp))
                             )
 
@@ -274,7 +277,7 @@ fun DashboardScreen(
                             Text(
                                 "🎁 Setiap warung baru yang Anda ajukan dan lolos verifikasi admin memberikan +50 XP!",
                                 fontSize = 11.sp,
-                                color = com.carijajan.app.ui.theme.BrandMaroon
+                                color = BrandMaroon
                             )
                         }
                     }
@@ -284,9 +287,12 @@ fun DashboardScreen(
                 item {
                     Button(
                         onClick = onAdd,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth().height(46.dp)
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .bounceEffect()
                     ) {
                         Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
@@ -359,12 +365,12 @@ fun DashboardScreen(
                 item {
                     Surface(
                         shape = RoundedCornerShape(18.dp),
-                        color = com.carijajan.app.ui.theme.BrandOrangeSurface,
-                        border = BorderStroke(1.dp, com.carijajan.app.ui.theme.BrandOrangeLight),
+                        color = BrandOrangeSurface,
+                        border = BorderStroke(1.dp, BrandOrangeLight),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Statistik Performa Warung", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = com.carijajan.app.ui.theme.BrandMaroon)
+                            Text("Statistik Performa Warung", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = BrandMaroon)
                             Spacer(Modifier.height(12.dp))
 
                             Row(
@@ -374,17 +380,17 @@ fun DashboardScreen(
                                 Surface(
                                     color = Color.White,
                                     shape = RoundedCornerShape(14.dp),
-                                    border = BorderStroke(1.dp, com.carijajan.app.ui.theme.BrandOrangeLight),
+                                    border = BorderStroke(1.dp, BrandOrangeLight),
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Column(modifier = Modifier.padding(12.dp)) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(Icons.Filled.Visibility, contentDescription = null, tint = com.carijajan.app.ui.theme.BrandOrange, modifier = Modifier.size(16.dp))
+                                            Icon(Icons.Filled.Visibility, contentDescription = null, tint = BrandOrange, modifier = Modifier.size(16.dp))
                                             Spacer(Modifier.width(6.dp))
-                                            Text("Dilihat Pembeli", fontSize = 11.sp, color = com.carijajan.app.ui.theme.BrandOrangeDark, fontWeight = FontWeight.SemiBold)
+                                            Text("Dilihat Pembeli", fontSize = 11.sp, color = BrandOrangeDark, fontWeight = FontWeight.SemiBold)
                                         }
                                         Spacer(Modifier.height(6.dp))
-                                        Text("$totalViews", fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = com.carijajan.app.ui.theme.BrandMaroon)
+                                        Text("$totalViews", fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = BrandMaroon)
                                         Text("kali dilihat", fontSize = 10.sp, color = Color(0xFF78716C))
                                     }
                                 }
@@ -392,17 +398,17 @@ fun DashboardScreen(
                                 Surface(
                                     color = Color.White,
                                     shape = RoundedCornerShape(14.dp),
-                                    border = BorderStroke(1.dp, com.carijajan.app.ui.theme.BrandOrangeLight),
+                                    border = BorderStroke(1.dp, BrandOrangeLight),
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Column(modifier = Modifier.padding(12.dp)) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(Icons.Filled.Radar, contentDescription = null, tint = com.carijajan.app.ui.theme.BrandMaroon, modifier = Modifier.size(16.dp))
+                                            Icon(Icons.Filled.Radar, contentDescription = null, tint = BrandMaroon, modifier = Modifier.size(16.dp))
                                             Spacer(Modifier.width(6.dp))
-                                            Text("Masuk Radar", fontSize = 11.sp, color = com.carijajan.app.ui.theme.BrandMaroon, fontWeight = FontWeight.SemiBold)
+                                            Text("Masuk Radar", fontSize = 11.sp, color = BrandMaroon, fontWeight = FontWeight.SemiBold)
                                         }
                                         Spacer(Modifier.height(6.dp))
-                                        Text("$totalRadar", fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = com.carijajan.app.ui.theme.BrandOrange)
+                                        Text("$totalRadar", fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = BrandOrange)
                                         Text("radius pembeli", fontSize = 10.sp, color = Color(0xFF78716C))
                                     }
                                 }
@@ -543,7 +549,7 @@ fun DashboardScreen(
                                         "1 / 1 Warung Aktif",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = com.carijajan.app.ui.theme.BrandOrangeDark,
+                                        color = BrandOrangeDark,
                                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                                     )
                                 }
@@ -563,7 +569,7 @@ fun DashboardScreen(
                 if (loading) {
                     item {
                         Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = com.carijajan.app.ui.theme.BrandOrange)
+                            CircularProgressIndicator(color = BrandOrange)
                         }
                     }
                 } else if (vendors.isEmpty()) {
@@ -640,7 +646,7 @@ fun DashboardScreen(
                 if (dialogRevisiTerkirim) {
                     Text(
                         "✓ Terima kasih! Usulan revisi untuk warung '${v.namaToko}' telah dikirim ke kurator admin & pemilik warung untuk ditinjau.",
-                        color = com.carijajan.app.ui.theme.BrandOrange,
+                        color = BrandOrange,
                         fontWeight = FontWeight.Medium
                     )
                 } else {

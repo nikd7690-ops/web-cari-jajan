@@ -508,7 +508,7 @@ fun AdminDashboardContent(
                                     Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                                         Surface(
                                             shape = CircleShape,
-                                            color = if (m.displayIsBanned) Color(0xFF991B1B) else if (m.displayRole == "admin") Color(0xFFDC2626) else if (m.displayTipeAkun == "mitra") com.carijajan.app.ui.theme.BrandOrange else com.carijajan.app.ui.theme.BrandMaroon,
+                                            color = if (m.displayIsBanned) Color(0xFF991B1B) else if (m.displayRole == "admin") Color(0xFFDC2626) else if (m.displayTipeAkun == "mitra") BrandOrange else BrandMaroon,
                                             modifier = Modifier.size(36.dp)
                                         ) {
                                             Box(contentAlignment = Alignment.Center) {
@@ -598,7 +598,7 @@ fun AdminDashboardContent(
                                 modifier = Modifier.padding(24.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = com.carijajan.app.ui.theme.BrandOrange, modifier = Modifier.size(36.dp))
+                                Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = BrandOrange, modifier = Modifier.size(36.dp))
                                 Spacer(Modifier.height(8.dp))
                                 Text("Semua Aman!", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                                 Text("Belum ada laporan ketidaksesuaian warung dari pengguna.", fontSize = 12.sp, color = Color(0xFF6B7280))
@@ -744,8 +744,9 @@ fun AdminDashboardContent(
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (aksiBlokir) Color(0xFFDC2626) else com.carijajan.app.ui.theme.BrandOrange
+                        containerColor = if (aksiBlokir) Color(0xFFDC2626) else BrandOrange
                     ),
+                    modifier = Modifier.bounceEffect(),
                     enabled = !banLoading
                 ) {
                     Text(if (banLoading) "Memproses..." else if (aksiBlokir) "Ya, Blokir" else "Buka Blokir")

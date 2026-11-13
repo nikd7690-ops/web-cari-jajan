@@ -77,6 +77,7 @@ fun CariJajanBottomBar(
             NavigationBarItem(
                 selected = petaSelected,
                 onClick = { onTabSelected("peta") },
+                modifier = Modifier.bounceEffect(),
                 icon = {
                     Box(modifier = Modifier.scale(petaScale)) {
                         Icon(
@@ -105,6 +106,7 @@ fun CariJajanBottomBar(
             NavigationBarItem(
                 selected = lokasiSelected,
                 onClick = { onTabSelected("lokasi") },
+                modifier = Modifier.bounceEffect(),
                 icon = {
                     Box(modifier = Modifier.scale(lokasiScale)) {
                         Icon(
@@ -133,6 +135,7 @@ fun CariJajanBottomBar(
             NavigationBarItem(
                 selected = tambahSelected,
                 onClick = { onTabSelected("tambah") },
+                modifier = Modifier.bounceEffect(),
                 icon = {
                     Box(
                         contentAlignment = Alignment.Center,
@@ -182,6 +185,7 @@ fun CariJajanBottomBar(
             NavigationBarItem(
                 selected = daftarSelected,
                 onClick = { onTabSelected("daftar") },
+                modifier = Modifier.bounceEffect(),
                 icon = {
                     Box(modifier = Modifier.scale(daftarScale)) {
                         Icon(
@@ -216,6 +220,7 @@ fun CariJajanBottomBar(
             NavigationBarItem(
                 selected = akunSelected,
                 onClick = { onTabSelected("akun") },
+                modifier = Modifier.bounceEffect(),
                 icon = {
                     Box(modifier = Modifier.scale(akunScale)) {
                         Icon(

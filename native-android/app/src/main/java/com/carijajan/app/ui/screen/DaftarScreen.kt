@@ -177,7 +177,7 @@ fun DaftarScreen(
                 Icon(
                     Icons.Filled.Email,
                     contentDescription = null,
-                    tint = com.carijajan.app.ui.theme.BrandOrange,
+                    tint = BrandOrange,
                     modifier = Modifier.size(36.dp)
                 )
             },
@@ -203,7 +203,7 @@ fun DaftarScreen(
                         text = registeredEmail,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
-                        color = com.carijajan.app.ui.theme.BrandOrange
+                        color = BrandOrange
                     )
 
                     // Banner Kode OTP untuk Kemudahan Penjurian Hackathon / Dev Mode
@@ -237,7 +237,7 @@ fun DaftarScreen(
                         Text(
                             text = otpPesan,
                             fontSize = 12.sp,
-                            color = com.carijajan.app.ui.theme.BrandOrange
+                            color = BrandOrange
                         )
                     }
 
@@ -326,7 +326,10 @@ fun DaftarScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.bounceEffect()
+            ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
             }
             Spacer(Modifier.width(4.dp))

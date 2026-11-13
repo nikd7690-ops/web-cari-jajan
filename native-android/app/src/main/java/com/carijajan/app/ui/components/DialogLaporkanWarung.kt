@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carijajan.app.AppContainer
+import com.carijajan.app.ui.theme.*
 import kotlinx.coroutines.launch
 
 @Composable
@@ -83,7 +84,7 @@ fun DialogLaporkanWarung(
             Icon(
                 imageVector = if (sukses) Icons.Filled.CheckCircle else Icons.Filled.Flag,
                 contentDescription = null,
-                tint = if (sukses) com.carijajan.app.ui.theme.BrandOrange else MaterialTheme.colorScheme.error,
+                tint = if (sukses) BrandOrange else MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(32.dp)
             )
         },
@@ -168,11 +169,15 @@ fun DialogLaporkanWarung(
         },
         confirmButton = {
             if (sukses) {
-                Button(onClick = onDismiss) { Text("Tutup") }
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.bounceEffect()
+                ) { Text("Tutup") }
             } else {
                 Button(
                     onClick = { kirim() },
                     enabled = !loading,
+                    modifier = Modifier.bounceEffect(),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
                     if (loading) {
@@ -185,7 +190,11 @@ fun DialogLaporkanWarung(
         },
         dismissButton = {
             if (!sukses) {
-                OutlinedButton(onClick = onDismiss, enabled = !loading) {
+                OutlinedButton(
+                    onClick = onDismiss,
+                    enabled = !loading,
+                    modifier = Modifier.bounceEffect()
+                ) {
                     Text("Batal")
                 }
             }

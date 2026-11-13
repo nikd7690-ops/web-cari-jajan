@@ -232,7 +232,8 @@ fun PilihTitikPetaDialog(
                                 mapRef?.animateCamera(CameraUpdateFactory.newLatLngZoom(target, 16.5), 600)
                             }
                         }
-                    }
+                    },
+                    modifier = Modifier.bounceEffect()
                 ) {
                     Icon(
                         imageVector = Icons.Default.MyLocation,
@@ -288,7 +289,9 @@ fun PilihTitikPetaDialog(
                             onPilih(currentLat, currentLng, alamatPreview)
                             onDismiss()
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .bounceEffect()
                     ) {
                         Icon(imageVector = Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))

@@ -419,7 +419,7 @@ fun BerandaScreen(
                     color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
                     tonalElevation = 4.dp,
                     shadowElevation = 3.dp,
-                    modifier = Modifier.clickable { areaTerbuka = true }
+                    modifier = Modifier.bounceClick { areaTerbuka = true }
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -573,6 +573,7 @@ fun BerandaScreen(
                         onClick = {
                             kategoriFilter = if (terpilih && idKat != "semua") "semua" else idKat
                         },
+                        modifier = Modifier.bounceEffect(),
                         label = {
                             Text(
                                 text = label,
@@ -602,7 +603,7 @@ fun BerandaScreen(
                 .align(Alignment.BottomEnd)
                 .padding(end = 16.dp, bottom = if (ruteAktifVendor != null) 175.dp else 105.dp)
                 .size(48.dp)
-                .clickable {
+                .bounceClick {
                     if (!izinLokasiDiberikan) {
                         mintaIzinLokasi()
                     }
@@ -699,8 +700,10 @@ fun BerandaScreen(
                         ) {
                             OutlinedButton(
                                 onClick = { onVendor(vendor.id) },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp)
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .bounceEffect(),
+                                shape = RoundedCornerShape(12.dp)
                             ) {
                                 Text("Buka Menu", fontSize = 12.sp)
                             }
@@ -709,8 +712,10 @@ fun BerandaScreen(
                                 onClick = {
                                     Navigasi.bukaNavigasi(context, vendor.lat, vendor.lng, vendor.namaToko)
                                 },
-                                modifier = Modifier.weight(1.4f),
-                                shape = RoundedCornerShape(10.dp)
+                                modifier = Modifier
+                                    .weight(1.4f)
+                                    .bounceEffect(),
+                                shape = RoundedCornerShape(12.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Navigation,
@@ -751,7 +756,7 @@ fun BerandaScreen(
                     Box(
                         modifier = Modifier
                             .size(10.dp)
-                            .background(com.carijajan.app.ui.theme.BrandOrange, CircleShape)
+                            .background(BrandOrange, CircleShape)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -763,7 +768,7 @@ fun BerandaScreen(
                     Text(
                         text = "• Lihat daftar ↗",
                         style = MaterialTheme.typography.labelSmall,
-                        color = com.carijajan.app.ui.theme.BrandOrange,
+                        color = BrandOrange,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -854,14 +859,14 @@ fun BerandaScreen(
                                     Icon(
                                         imageVector = Icons.Default.Person,
                                         contentDescription = null,
-                                        tint = com.carijajan.app.ui.theme.BrandMaroon,
+                                        tint = BrandMaroon,
                                         modifier = Modifier.size(13.dp)
                                     )
                                     Spacer(Modifier.width(4.dp))
                                     Text(
                                         text = "Diajukan oleh: ${preview.namaKontributor ?: "Warga Komunitas"}",
                                         fontSize = 11.sp,
-                                        color = com.carijajan.app.ui.theme.BrandMaroon,
+                                        color = BrandMaroon,
                                         fontWeight = FontWeight.SemiBold,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis

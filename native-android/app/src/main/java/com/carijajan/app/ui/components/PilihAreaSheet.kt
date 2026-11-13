@@ -412,7 +412,7 @@ fun PilihAreaContent(
                             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
+                                .bounceClick {
                                     onPilih(Titik(item.lat, item.lng, item.nama))
                                 }
                         ) {
@@ -528,7 +528,7 @@ fun PilihAreaContent(
                         color = MaterialTheme.colorScheme.surface,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
+                            .bounceClick {
                                 onPilih(Titik(tempat.lat, tempat.lng, "${tempat.nama}, ${tempat.kota}"))
                             }
                     ) {

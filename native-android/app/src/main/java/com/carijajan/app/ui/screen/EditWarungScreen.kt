@@ -80,6 +80,7 @@ import com.carijajan.app.ui.components.PesanError
 import com.carijajan.app.ui.components.PilihTitikPetaDialog
 import com.carijajan.app.ui.components.bounceClick
 import com.carijajan.app.ui.components.bounceEffect
+import com.carijajan.app.ui.theme.*
 import com.carijajan.app.util.Gambar
 import com.carijajan.app.util.Lokasi
 import kotlinx.coroutines.launch
@@ -548,7 +549,7 @@ fun EditWarungScreen(
                         modifier = Modifier.padding(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = com.carijajan.app.ui.theme.BrandOrange, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = BrandOrange, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
                         Text(pesanOtomatis, fontSize = 11.sp, color = Color(0xFF065F46), fontWeight = FontWeight.Medium)
                     }

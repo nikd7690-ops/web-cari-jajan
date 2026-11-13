@@ -4,8 +4,9 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,32 +22,36 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 /**
- * Memberikan animasi pantulan (bounce/spring) saat komponen ditekan.
- * Sangat interaktif, responsif, dan memberikan feedback visual yang memuaskan.
+ * Efek membal (iOS spring bounce) pada tombol atau komponen:
+ * - Menekan tombol membuat elemen mengecil halus (scale down ~0.94f)
+ * - Saat dilepas, elemen membal elastis dengan overshoot pegas khas iOS.
+ * - Menggunakan pointerInput dengan requireUnconsumed = false sehingga
+ *   tetap kompatibel dengan Button, Surface, TextButton, FilterChip, dsb tanpa memblokir onClick aslinya.
  */
-fun Modifier.bounceClick(
-    scaleDown: Float = 0.92f,
-    enabled: Boolean = true,
-    onClick: () -> Unit
+fun Modifier.bounceEffect(
+    scaleDown: Float = 0.94f,
+    enabled: Boolean = true
 ): Modifier = composed {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
+    var isPressed by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
         targetValue = if (isPressed && enabled) scaleDown else 1f,
         animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
+            dampingRatio = 0.55f, // Bouncy natural iOS spring damping
             stiffness = Spring.StiffnessMedium
         ),
-        label = "bounceAnim"
+        label = "iosBounceEffect"
     )
 
     this
@@ -54,35 +59,59 @@ fun Modifier.bounceClick(
             scaleX = scale
             scaleY = scale
         }
-        .clickable(
-            interactionSource = interactionSource,
-            indication = ripple(bounded = true, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
-            enabled = enabled,
-            onClick = onClick
-        )
+        .pointerInput(enabled) {
+            if (!enabled) return@pointerInput
+            awaitPointerEventScope {
+                while (true) {
+                    awaitFirstDown(requireUnconsumed = false)
+                    isPressed = true
+                    waitForUpOrCancellation()
+                    isPressed = false
+                }
+            }
+        }
 }
 
 /**
- * Memberikan efek visual bounce pada komponen yang sudah memiliki handling klik sendiri (mis. Card / Surface).
+ * Komponen mandiri yang dapat diklik dengan animasi membal pegas khas iOS.
  */
-fun Modifier.bounceEffect(
-    scaleDown: Float = 0.94f
+fun Modifier.bounceClick(
+    scaleDown: Float = 0.93f,
+    enabled: Boolean = true,
+    onClick: () -> Unit
 ): Modifier = composed {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
+    var isPressed by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) scaleDown else 1f,
+        targetValue = if (isPressed && enabled) scaleDown else 1f,
         animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
+            dampingRatio = 0.55f,
             stiffness = Spring.StiffnessMedium
         ),
-        label = "bounceEffectAnim"
+        label = "iosBounceClick"
     )
 
-    this.graphicsLayer {
-        scaleX = scale
-        scaleY = scale
-    }
+    this
+        .graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+        }
+        .pointerInput(enabled) {
+            if (!enabled) return@pointerInput
+            awaitPointerEventScope {
+                while (true) {
+                    awaitFirstDown(requireUnconsumed = false)
+                    isPressed = true
+                    waitForUpOrCancellation()
+                    isPressed = false
+                }
+            }
+        }
+        .clickable(
+            indication = ripple(bounded = true, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+            interactionSource = remember { MutableInteractionSource() },
+            enabled = enabled,
+            onClick = onClick
+        )
 }
 
 @Composable
