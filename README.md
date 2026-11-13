@@ -1,9 +1,8 @@
 # Cari Jajan
 
-Etalase hiperlokal UMKM — pembeli menemukan warung terdekat di peta dan memesan langsung lewat
-WhatsApp. Tanpa komisi, tanpa pembayaran di dalam aplikasi.
+Aplikasi mobile etalase hiperlokal UMKM — pembeli menemukan warung terdekat di peta interaktif, bernavigasi langsung, dan memesan tanpa perantara lewat WhatsApp. Tanpa komisi, tanpa potongan merchant, dan tanpa pembayaran di dalam aplikasi.
 
-> Kategori lomba: **Web** · Subtema: **Local MSME**
+> Kategori lomba: **Mobile Application** · Subtema: **Local MSME**
 
 ## Daftar Isi
 
@@ -48,17 +47,16 @@ Kami yang bertanda tangan di bawah ini menyatakan dengan sebenar-benarnya, serta
 
 | | |
 |---|---|
-| **Kategori** | Web |
-| **Nama aplikasi** | Cari Jajan |
-| **Tautan deployment** | [ISI URL] |
-| **Target pengguna** | Penjual UMKM mikro dan pembeli di lingkungan sekitar (RT/RW, komplek, area kampus) |
+| **Kategori Lomba** | Mobile Application |
+| **Nama Aplikasi** | Cari Jajan |
+| **Platform** | Android (Native Kotlin + Jetpack Compose) |
+| **Tautan Berkas APK** | [Tautan Unduh APK / Rilis GitHub] |
+| **Tautan Backend API** | https://web-cari-jajan.vercel.app |
+| **Target Pengguna** | Pelaku UMKM mikro (warung makan, pedagang kaki lima/PKL, penjual keliling) dan masyarakat pembeli/kontributor kuliner di lingkungan sekitar |
 
-**Masalah yang diangkat.** UMKM mikro — warung, PKL, dan kafe — sulit ditemukan pembeli di sekitarnya.
-Informasi lokasi dan menu tersebar dan tidak ada katalog sederhana yang bisa langsung dipakai untuk memesan.
+**Masalah yang diangkat.** UMKM mikro — seperti warung rumahan, pedagang kaki lima (PKL), dan penjual keliling — sangat sulit ditemukan oleh pembeli di lingkungan sekitarnya karena keterbatasan visibilitas digital. Tidak tersedianya katalog etalase yang praktis dan mahalnya potongan komisi merchant di aplikasi kurir besar (mencapai 20–30%) menjadi beban berat bagi pedagang kecil dan menaikkan harga beli bagi konsumen lokal.
 
-**Deskripsi solusi.** Penjual mendaftarkan warung beserta menu dan harga asli. Pembeli melihat warung
-terdekat pada peta OpenStreetMap, menyusun pesanan, lalu mengirimnya lewat WhatsApp tanpa perantara,
-tanpa komisi, dan tanpa pembayaran di dalam aplikasi.
+**Deskripsi solusi.** Cari Jajan hadir sebagai solusi aplikasi mobile (*native Android*) yang menghubungkan pembeli langsung dengan UMKM terdekat melalui peta interaktif berbasis OpenFreeMap dan GPS. Pembeli dapat menjelajah warung terdekat, melihat katalog menu dengan harga asli, mendapatkan navigasi rute turn-by-turn langsung ke lokasi, serta menyusun pesanan yang diteruskan langsung ke WhatsApp penjual tanpa perantara dan tanpa potongan komisi sepeser pun. Aplikasi juga dilengkapi fitur *Zero Waste Food* untuk menyelamatkan makanan berlebih jelang tutup serta sistem gamifikasi kontributor untuk pemetaan UMKM berbasis partisipasi warga.
 
 ## 4. Fitur Utama yang Sudah Berjalan
 
@@ -87,9 +85,9 @@ tanpa komisi, dan tanpa pembayaran di dalam aplikasi.
 - **Halaman Kurasi Admin:** Tinjauan warung baru yang didaftarkan penjual maupun diajukan pembeli sebelum ditayangkan ke publik.
 - **Distribusi XP Otomatis:** Pemberian +50 XP secara otomatis ke akun pengaju saat warung disetujui (*approved*).
 
-### D. Multi-Platform
-- **Web App / PWA:** Mobile-first, responsif, dan ringan berbasis Next.js App Router & Tailwind CSS.
-- **Aplikasi Native Android:** 100% Kotlin murni + Jetpack Compose tanpa WebView wrapper, terhubung langsung ke backend REST API.
+### D. Arsitektur Mobile & Multi-Platform
+- **Aplikasi Mobile Android (Klien Utama):** 100% Native Android (Kotlin murni + Jetpack Compose) tanpa wrapper WebView, menghasilkan performa rendering 60 FPS mulus, integrasi sensor rotasi kompas arah hadap, pelacakan GPS real-time, gestur peta MapLibre lengkap, dan integrasi Intent navigasi GPS.
+- **Backend REST API & Web Portal:** Layanan REST API berbasis Next.js App Router dan MongoDB Atlas untuk sinkronisasi data terpusat, autentikasi JWT, dan portal kurasi admin.
 
 ## 5. Rencana Pengembangan
 
@@ -104,111 +102,117 @@ Fitur yang direncanakan untuk iterasi berikutnya:
 
 | Lapisan | Teknologi | Lisensi |
 |---|---|---|
-| Web Framework | Next.js 16 (App Router), React 19 / React DOM 19 | MIT |
-| Mobile Native | Android (Kotlin, Jetpack Compose, Coroutines, Flow) | Apache-2.0 |
-| UI Styling | Tailwind CSS 4 (`@tailwindcss/turbopack`), Material Design 3 | MIT / Apache-2.0 |
-| Peta & Tile | MapLibre GL, react-map-gl, OpenFreeMap Liberty | BSD-3-Clause, 3-Clause BSD |
-| Data Peta | OpenStreetMap | ODbL |
+| Klien Mobile Native | Android SDK 37 (Kotlin 2, Jetpack Compose, Coroutines, Flow) | Apache-2.0 |
+| Peta & Tile Mobile | MapLibre Native Android SDK, OpenFreeMap Liberty | BSD-3-Clause, 3-Clause BSD |
+| Data Peta Geospasial | OpenStreetMap | ODbL |
 | Navigasi & Routing | OSRM (Open Source Routing Machine), Android Navigation Intent | BSD-2-Clause |
-| Database | MongoDB Atlas via Mongoose 9 (Indeks 2dsphere Spasial) | MIT |
-| Autentikasi | next-auth v4 (Credentials, JWT), bcryptjs | ISC, BSD-3-Clause |
-| Validasi | Zod 4 | MIT |
-| Pengujian | Vitest 5, ESLint 9 + eslint-config-next | MIT |
-| AI | Google Gemini API (dipanggil dari server) | — |
-| Penyimpanan Berkas | Vercel Blob (`@vercel/blob`) | Apache-2.0 |
-| Pesan | WhatsApp `wa.me` (protokol deep link) | — |
+| UI Design System | Material Design 3 (Compose Material3) | Apache-2.0 |
+| Jaringan & Serialisasi | Retrofit 2, OkHttp 3, kotlinx.serialization | Apache-2.0 |
+| Backend REST API | Next.js 16 (App Router), Node.js 20+ | MIT |
+| Database Spasial | MongoDB Atlas via Mongoose 9 (Indeks 2dsphere) | MIT |
+| Autentikasi | NextAuth v4 (Credentials, JWT Token), bcryptjs | ISC, BSD-3-Clause |
+| Validasi Skema | Zod 4 | MIT |
+| AI Integration | Google Gemini API (ekstraksi draf menu dari foto) | — |
+| Penyimpanan Media | Vercel Blob (`@vercel/blob`) | Apache-2.0 |
+| Komunikasi Langsung | WhatsApp Android Intent & `wa.me` deep link | — |
+| Pengujian Unit | Vitest 5, ESLint 9 | MIT |
 
 ## 7. Arsitektur Sistem
 
 ```mermaid
 flowchart LR
-  subgraph Browser["Peramban (PWA, mobile-first)"]
-    P1["Pembeli: peta, daftar warung, detail, pesan WhatsApp"]
-    P2["Penjual: daftar masuk, dashboard, form warung, foto, draf AI"]
+  subgraph MobileApp["Aplikasi Mobile Android (Kotlin + Jetpack Compose)"]
+    P1["Pembeli: Peta MapLibre, GPS real-time & kompas, rute OSRM, navigasi Google Maps, pesan WhatsApp, ajukan warung (+50 XP)"]
+    P2["Penjual: Masuk/daftar akun, dashboard performa & views, promo Zero Waste Food, kelola menu, foto kamera, draf AI"]
   end
 
-  subgraph Server["Next.js App Router (server)"]
+  subgraph Server["Backend REST API (Next.js Serverless)"]
     R1["API: vendors (GET/POST)"]
     R2["API: vendors/[id] (GET/PUT/PATCH/DELETE)"]
-    R3["API: register, upload, menu-dari-foto"]
-    R4["API: auth (next-auth)"]
-    H1["Helper: auth, apiAuth (kepemilikan), vendorSchema (zod), jam, keranjang"]
+    R3["API: register, login, session, upload, menu-dari-foto"]
+    R4["API: admin & kurasi status (+50 XP)"]
+    H1["Helper: auth JWT, gamifikasi level, vendorSchema (zod), jam operasional"]
   end
 
-  subgraph Data["Penyimpanan"]
-    M["MongoDB Atlas (Mongoose, indeks 2dsphere)"]
+  subgraph Data["Penyimpanan Basis Data"]
+    M["MongoDB Atlas (Mongoose, indeks 2dsphere spasial)"]
     B["Vercel Blob (foto warung)"]
   end
 
-  subgraph External["Layanan eksternal"]
-    G["Google Gemini API"]
-    O["Tile OpenStreetMap"]
-    W["WhatsApp wa.me"]
+  subgraph External["Layanan & Integrasi Eksternal"]
+    G["Google Gemini API (Ekstraksi Draf Menu)"]
+    O["Tile OpenFreeMap / OpenStreetMap"]
+    RO["OSRM (Routing & Jarak Tempuh)"]
+    GM["Google Maps App (Navigasi GPS)"]
+    W["WhatsApp App (Pemesanan Langsung)"]
   end
 
-  P1 -->|fetch JSON| R1
-  P1 -->|fetch JSON| R2
-  P2 -->|fetch JSON / form-data| R2
-  P2 -->|fetch JSON / form-data| R3
-  P2 -->|login/logout| R4
-  P1 -->|tile peta| O
-  P1 -->|buka tautan pesanan| W
+  P1 -->|HTTP REST JSON| R1
+  P1 -->|HTTP REST JSON| R2
+  P2 -->|HTTP REST JSON / Multipart| R2
+  P2 -->|HTTP REST JSON / Multipart| R3
+  P1 -->|tile vector| O
+  P1 -->|ambil rute| RO
+  P1 -->|buka navigasi turn-by-turn| GM
+  P1 -->|kirim pesanan format siap kirim| W
 
   R1 --> M
   R2 --> M
   R3 --> M
+  R4 --> M
   R3 -->|unggah foto| B
   R3 -->|baca foto menu| G
-  R4 --> M
   R1 -.-> H1
   R2 -.-> H1
   R3 -.-> H1
+  R4 -.-> H1
 ```
 
 ### Alur data pembeli
 
 ```mermaid
 sequenceDiagram
-  participant B as Pembeli
-  participant N as Next.js Server
-  participant DB as MongoDB
-  participant WA as WhatsApp
+  participant B as Pembeli (Aplikasi Android)
+  participant N as Backend Next.js API
+  participant DB as MongoDB Atlas
+  participant RO as OSRM Routing
+  participant WA as WhatsApp App
 
-  B->>B: Ambil lokasi (geolocation) atau pilih kawasan manual
+  B->>B: Pantau GPS real-time & orientasi sensor kompas
   B->>N: GET /api/vendors?lat&lng&radius=3000
-  N->>DB: $geoNear (2dsphere), proyeksi tanpa field owner
-  DB-->>N: Daftar warung + jarak (meter)
+  N->>DB: Query $geoNear (indeks 2dsphere)
+  DB-->>N: Daftar warung terdekat + jarak
   N-->>B: Daftar warung + status buka (isBuka)
-  B->>N: GET /api/vendors/[id]
-  N-->>B: Detail warung + menu
-  B->>B: Susun keranjang, hitung total (lib/keranjang.js)
-  B->>WA: Buka wa.me dengan teks pesanan terisi
+  B->>RO: GET rute jalan raya (titik pengguna ke warung)
+  RO-->>B: Garis rute polyline + estimasi durasi
+  B->>B: Susun keranjang menu, pilih ambil/antar
+  B->>WA: Intent WhatsApp kirim pesanan otomatis
 ```
 
 ### Alur data penjual (termasuk draf menu AI)
 
 ```mermaid
 sequenceDiagram
-  participant P as Penjual
-  participant N as Next.js Server
-  participant DB as MongoDB
+  participant P as Penjual (Aplikasi Android)
+  participant N as Backend Next.js API
+  participant DB as MongoDB Atlas
   participant G as Gemini API
   participant BL as Vercel Blob
 
-  P->>N: POST /api/auth (Credentials)
-  N->>DB: Cari user, bcrypt.compare
-  N-->>P: Sesi JWT
-  P->>N: POST /api/menu-dari-foto (foto menu)
-  N->>G: Kirim gambar + instruksi JSON
+  P->>N: POST /api/login (email, password)
+  N->>DB: Validasi user, bcrypt.compare
+  N-->>P: Token JWT & profil pengguna
+  P->>P: Ambil foto daftar menu dengan kamera HP
+  P->>N: POST /api/menu-dari-foto (multipart foto menu)
+  N->>G: Prompt Gemini Vision (ekstrak nama & harga menu)
   G-->>N: items [{namaMenu, harga, yakin}]
-  N->>N: Validasi zod, harga null menjadi yakin false
   N-->>P: Draf menu (label "Draf AI, periksa dulu")
-  P->>P: Periksa dan koreksi item
-  P->>N: POST /api/upload (foto warung)
-  N->>BL: Simpan foto
-  BL-->>N: URL foto
-  P->>N: POST /api/vendors (data warung + URL foto)
-  N->>DB: Simpan warung (owner = user login)
+  P->>P: Tinjau dan sesuaikan harga/menu
+  P->>N: POST /api/upload (kompresi JPEG foto warung)
+  N->>BL: Simpan ke Vercel Blob
+  BL-->>N: URL foto publik
+  P->>N: POST /api/vendors (data warung + URL foto, status pending)
+  N->>DB: Simpan warung (menunggu kurasi admin)
 ```
 
 ## 8. Referensi API
