@@ -1,0 +1,2 @@
+-dontwarn org.maplibre.**
+-keep class org.maplibre.** { *; }
