@@ -84,9 +84,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.maplibre.android.geometry.LatLng
 
-// Titik referensi pusat UMKM Jember agar semua warung contoh selalu ikut termuat
+// Titik referensi default awal
 private val JEMBER_PUSAT = LatLng(-8.1689, 113.702)
-private val INDONESIA = LatLng(-2.5, 118.0)
 private const val RADIUS_MAKS = 10000
 
 private val DAFTAR_KATEGORI = listOf(
@@ -111,9 +110,7 @@ fun BerandaScreen(
     val user by container.authRepository.user.collectAsStateWithLifecycle()
 
     var lokasi by remember { mutableStateOf<Titik?>(null) }
-    // Posisi real-time pengguna saat bergerak
     var userLocationRealtime by remember { mutableStateOf<LatLng?>(null) }
-    // Arah hadap (heading/compass) real-time (0..360°)
     var userHeading by remember { mutableFloatStateOf(0f) }
 
     var masterVendors by remember { mutableStateOf<Map<String, VendorDto>>(emptyMap()) }
@@ -125,10 +122,15 @@ fun BerandaScreen(
     var daftarWarungTerbuka by remember { mutableStateOf(false) }
     var geoLoading by remember { mutableStateOf(false) }
     var pesanLokasi by remember { mutableStateOf("") }
+
+    // Pemicu kontrol kamera eksplisit (mencegah rubbering saat user menggeser/zoom/rotasi)
+    var cameraMoveTrigger by remember { mutableIntStateOf(0) }
+    var cameraTarget by remember { mutableStateOf<LatLng?>(null) }
+    var cameraZoom by remember { mutableStateOf<Double?>(null) }
+    var initialLocationMoved by remember { mutableStateOf(false) }
+
     var bearingResetTrigger by remember { mutableIntStateOf(0) }
     var tabDipilih by remember { mutableStateOf("peta") }
-    var mapCameraCenter by remember { mutableStateOf(INDONESIA) }
-    var mapCameraZoom by remember { mutableStateOf(5.0) }
     var izinLokasiDiberikan by remember { mutableStateOf(Lokasi.punyaIzin(context)) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -139,8 +141,9 @@ fun BerandaScreen(
         } else {
             pesanLokasi = "Izin lokasi ditolak. Menampilkan area Jember."
             lokasi = Titik(JEMBER_PUSAT.latitude, JEMBER_PUSAT.longitude, "Pusat Jember")
-            mapCameraCenter = JEMBER_PUSAT
-            mapCameraZoom = 15.0
+            cameraTarget = JEMBER_PUSAT
+            cameraZoom = 15.0
+            cameraMoveTrigger++
         }
     }
 
@@ -170,28 +173,30 @@ fun BerandaScreen(
             val latLng = LatLng(loc.latitude, loc.longitude)
             userLocationRealtime = latLng
 
-            // Gunakan bearing dari GPS jika sedang bergerak cepat
+            // Gunakan bearing GPS jika bergerak cukup cepat
             if (loc.hasBearing() && loc.speed > 0.5f) {
                 userHeading = loc.bearing
             }
 
-            // Jika lokasi belum pernah diset, inisialisasi pusat peta
-            if (lokasi == null) {
+            // Gerakkan kamera ke lokasi pengguna SEKALI SAJA saat GPS pertama kali terkunci
+            if (!initialLocationMoved) {
+                initialLocationMoved = true
                 lokasi = Titik(loc.latitude, loc.longitude, "Lokasi saya")
-                mapCameraCenter = latLng
-                mapCameraZoom = 15.5
+                cameraTarget = latLng
+                cameraZoom = 15.5
+                cameraMoveTrigger++
             }
         }
     }
 
-    // ── 2. Pemantau Arah Hadap Kompas Real-Time (Sensor Rotation Vector) ──────
+    // ── 2. Pemantau Arah Hadap Kompas Real-Time (dengan filter getaran) ──────
     LaunchedEffect(Unit) {
         ArahKompas.pantauArah(context).collectLatest { heading ->
             userHeading = heading
         }
     }
 
-    // ── 3. Muat Data Warung (Lokasi Aktif + Kluster Jember) ───────────────────
+    // ── 3. Muat Data Warung Multi-Kawasan ────────────────────────────────────
     LaunchedEffect(lokasi) {
         val titik = lokasi ?: Titik(JEMBER_PUSAT.latitude, JEMBER_PUSAT.longitude, "Jember")
         loading = true
@@ -239,29 +244,33 @@ fun BerandaScreen(
         }
     }
 
-    // Kamera otomatis mengarah ke warung yang dicari
+    // Kamera meluncur ke warung yang dicari
     LaunchedEffect(query) {
         val kata = query.trim()
         if (kata.length >= 3) {
             val ketemu = vendorsTampil.firstOrNull()
             if (ketemu != null && ketemu.lat != 0.0 && ketemu.lng != 0.0) {
-                mapCameraCenter = LatLng(ketemu.lat, ketemu.lng)
-                mapCameraZoom = 16.0
+                cameraTarget = LatLng(ketemu.lat, ketemu.lng)
+                cameraZoom = 16.0
+                cameraMoveTrigger++
             }
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // ── Peta Penuh MapLibre dengan Posisi & Panah Real-Time ──────────────
+        // ── Peta Penuh MapLibre: Bebas Geser, Zoom, dan Rotasi Mulus ──────────
         PetaWarung(
             modifier = Modifier.fillMaxSize(),
-            center = mapCameraCenter,
-            zoom = mapCameraZoom,
+            initialCenter = JEMBER_PUSAT,
+            initialZoom = 14.5,
+            cameraTarget = cameraTarget,
+            cameraZoom = cameraZoom,
+            cameraMoveTrigger = cameraMoveTrigger,
+            bearingResetTrigger = bearingResetTrigger,
             userLocation = userLocationRealtime ?: lokasi?.let { LatLng(it.lat, it.lng) },
             userHeading = userHeading,
             vendors = vendorsTampil,
             selectedId = null,
-            bearingResetTrigger = bearingResetTrigger,
             onSelectVendor = onVendor
         )
 
@@ -476,8 +485,9 @@ fun BerandaScreen(
                     onClick = {
                         val pos = userLocationRealtime ?: lokasi?.let { LatLng(it.lat, it.lng) }
                         if (pos != null) {
-                            mapCameraCenter = pos
-                            mapCameraZoom = 16.0
+                            cameraTarget = pos
+                            cameraZoom = 16.0
+                            cameraMoveTrigger++
                         } else {
                             areaTerbuka = true
                         }
@@ -632,16 +642,18 @@ fun BerandaScreen(
                 val pos = userLocationRealtime
                 if (pos != null) {
                     lokasi = Titik(pos.latitude, pos.longitude, "Lokasi saya")
-                    mapCameraCenter = pos
-                    mapCameraZoom = 15.5
+                    cameraTarget = pos
+                    cameraZoom = 15.5
+                    cameraMoveTrigger++
                     areaTerbuka = false
                 }
             },
             onPilih = { titik ->
                 pesanLokasi = ""
                 lokasi = titik
-                mapCameraCenter = LatLng(titik.lat, titik.lng)
-                mapCameraZoom = 15.0
+                cameraTarget = LatLng(titik.lat, titik.lng)
+                cameraZoom = 15.0
+                cameraMoveTrigger++
                 areaTerbuka = false
             },
             onDismiss = { areaTerbuka = false }

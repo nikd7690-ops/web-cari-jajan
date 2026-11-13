@@ -40,13 +40,16 @@ import org.maplibre.android.maps.MapView
 @Composable
 fun PetaWarung(
     modifier: Modifier = Modifier,
-    center: LatLng,
-    zoom: Double,
+    initialCenter: LatLng,
+    initialZoom: Double,
+    cameraTarget: LatLng?,
+    cameraZoom: Double?,
+    cameraMoveTrigger: Int = 0,
+    bearingResetTrigger: Int = 0,
     userLocation: LatLng?,
     userHeading: Float = 0f,
     vendors: List<VendorDto>,
     selectedId: String?,
-    bearingResetTrigger: Int = 0,
     onSelectVendor: (String) -> Unit
 ) {
     val context = LocalContext.current
@@ -75,49 +78,60 @@ fun PetaWarung(
 
     var mapRef by remember { mutableStateOf<MapLibreMap?>(null) }
     var styleSiap by remember { mutableStateOf(false) }
+
+    // Referensi marker lokal agar pembaruan tidak saling menghapus
     var userMarkerRef by remember { mutableStateOf<Marker?>(null) }
+    val vendorMarkers = remember { mutableListOf<Marker>() }
 
     Box(modifier = modifier) {
         AndroidView(
-            factory = { mapView },
-            modifier = Modifier.fillMaxSize()
-        ) { view ->
-            view.getMapAsync { map ->
-                mapRef = map
-                map.cameraPosition = CameraPosition.Builder().target(center).zoom(zoom).build()
+            factory = { ctx ->
+                mapView.apply {
+                    getMapAsync { map ->
+                        mapRef = map
 
-                // Konfigurasi kompas bawaan MapLibre: sebelah kanan agak ke bawah
-                val density = context.resources.displayMetrics.density
-                map.uiSettings.isCompassEnabled = true
-                map.uiSettings.compassGravity = Gravity.BOTTOM or Gravity.END
-                map.uiSettings.setCompassMargins(0, 0, (16 * density).toInt(), (110 * density).toInt())
+                        // ── Aktifkan Gestur Penuh: Geser, Zoom, Rotasi, Tilt ───
+                        map.uiSettings.isScrollGesturesEnabled = true   // Geser bebas (pan)
+                        map.uiSettings.isZoomGesturesEnabled = true     // Zoom (cubit / pinch)
+                        map.uiSettings.isRotateGesturesEnabled = true   // Rotasi 2 jari bebas
+                        map.uiSettings.isTiltGesturesEnabled = true     // Kemiringan 2 jari (pitch)
+                        map.uiSettings.isDoubleTapGesturesEnabled = true
+                        map.uiSettings.isQuickZoomGesturesEnabled = true
 
-                map.setStyle(BuildConfig.MAP_STYLE_URL) { _ ->
-                    styleSiap = true
-                    userMarkerRef = updateSemuaMarker(
-                        context = context,
-                        map = map,
-                        vendors = vendors,
-                        userLocation = userLocation,
-                        userHeading = userHeading,
-                        selectedId = selectedId,
-                        currentUserMarker = userMarkerRef
-                    )
-                }
-                map.setOnMarkerClickListener { marker ->
-                    // Jangan trigger navigasi jika marker yang diklik adalah posisi user sendiri
-                    if (marker == userMarkerRef) return@setOnMarkerClickListener true
+                        // Atur posisi awal sekali saja saat peta pertama kali diinisialisasi
+                        map.cameraPosition = CameraPosition.Builder()
+                            .target(initialCenter)
+                            .zoom(initialZoom)
+                            .build()
 
-                    val found = vendors.firstOrNull { it.namaToko == marker.title }
-                    if (found != null) {
-                        onSelectVendor(found.id)
-                        true
-                    } else {
-                        false
+                        // Kompas bawaan MapLibre (sebelah kanan bawah)
+                        val density = ctx.resources.displayMetrics.density
+                        map.uiSettings.isCompassEnabled = true
+                        map.uiSettings.compassGravity = Gravity.BOTTOM or Gravity.END
+                        map.uiSettings.setCompassMargins(0, 0, (16 * density).toInt(), (110 * density).toInt())
+
+                        map.setStyle(BuildConfig.MAP_STYLE_URL) { _ ->
+                            styleSiap = true
+                        }
+
+                        map.setOnMarkerClickListener { marker ->
+                            // Abaikan klik pada titik lokasi pengguna sendiri
+                            if (marker == userMarkerRef) return@setOnMarkerClickListener true
+
+                            val found = vendors.firstOrNull { it.namaToko == marker.title }
+                            if (found != null) {
+                                onSelectVendor(found.id)
+                                true
+                            } else {
+                                false
+                            }
+                        }
                     }
                 }
-            }
-        }
+            },
+            modifier = Modifier.fillMaxSize()
+            // JANGAN gunakan lambda update di sini agar kamera tidak terus-menerus direset saat recompose!
+        )
 
         // Atribusi OpenStreetMap dan OpenFreeMap (wajib ada dan tidak boleh ditutupi)
         Text(
@@ -132,22 +146,41 @@ fun PetaWarung(
         )
     }
 
-    // ── Update marker warung saat data warung berubah ────────────────────────
-    LaunchedEffect(styleSiap, vendors, selectedId) {
+    // ── Update Marker Warung saat Data Berubah (Tanpa Mengganggu Posisi User) ─
+    LaunchedEffect(styleSiap, vendors) {
         val map = mapRef ?: return@LaunchedEffect
         if (!styleSiap) return@LaunchedEffect
-        userMarkerRef = updateSemuaMarker(
-            context = context,
-            map = map,
-            vendors = vendors,
-            userLocation = userLocation,
-            userHeading = userHeading,
-            selectedId = selectedId,
-            currentUserMarker = userMarkerRef
-        )
+
+        // Hapus marker warung yang lama
+        vendorMarkers.forEach { map.removeMarker(it) }
+        vendorMarkers.clear()
+
+        val iconFactory = IconFactory.getInstance(context)
+
+        // Pasang marker warung baru
+        vendors.forEach { vendor ->
+            if (vendor.lat == 0.0 && vendor.lng == 0.0) return@forEach
+
+            val pinBitmap = PinGenerator.dapatkanPin(
+                context = context,
+                namaToko = vendor.namaToko,
+                kategori = vendor.kategori,
+                buka = vendor.buka
+            )
+            val customIcon = iconFactory.fromBitmap(pinBitmap)
+
+            val m = map.addMarker(
+                MarkerOptions()
+                    .position(LatLng(vendor.lat, vendor.lng))
+                    .icon(customIcon)
+                    .title(vendor.namaToko)
+                    .snippet(Format.labelKategori(vendor.kategori))
+            )
+            vendorMarkers.add(m)
+        }
     }
 
-    // ── Update posisi user & arah panah hadap secara REAL-TIME ───────────────
+    // ── Update Posisi & Arah Panah Pengguna Real-Time (Tanpa Mereset Kamera) ──
     LaunchedEffect(styleSiap, userLocation, userHeading) {
         val map = mapRef ?: return@LaunchedEffect
         if (!styleSiap || userLocation == null) return@LaunchedEffect
@@ -170,65 +203,20 @@ fun PetaWarung(
         }
     }
 
-    LaunchedEffect(center, zoom) {
-        val map = mapRef ?: return@LaunchedEffect
-        if (!styleSiap) return@LaunchedEffect
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(center, zoom), 600)
+    // ── Animasi Kamera HANYA Berjalan saat Ada Pemicu Tindakan Eksplisit ──────
+    LaunchedEffect(cameraMoveTrigger) {
+        if (cameraMoveTrigger > 0 && cameraTarget != null) {
+            val map = mapRef ?: return@LaunchedEffect
+            val targetZoom = cameraZoom ?: map.cameraPosition.zoom
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(cameraTarget, targetZoom), 600)
+        }
     }
 
+    // ── Animasi Kompas Reset ke Utara ────────────────────────────────────────
     LaunchedEffect(bearingResetTrigger) {
         if (bearingResetTrigger > 0) {
             val map = mapRef ?: return@LaunchedEffect
             map.animateCamera(CameraUpdateFactory.bearingTo(0.0), 500)
         }
     }
-}
-
-private fun updateSemuaMarker(
-    context: android.content.Context,
-    map: MapLibreMap,
-    vendors: List<VendorDto>,
-    userLocation: LatLng?,
-    userHeading: Float,
-    selectedId: String?,
-    currentUserMarker: Marker?
-): Marker? {
-    map.clear()
-    val iconFactory = IconFactory.getInstance(context)
-
-    // 1. Gambar posisi pengguna dengan panah arah hadap
-    var newPuckMarker: Marker? = null
-    userLocation?.let { lokasi ->
-        val puckBitmap = PinGenerator.dapatkanPuckLokasi(context, userHeading)
-        val customPuck = iconFactory.fromBitmap(puckBitmap)
-        newPuckMarker = map.addMarker(
-            MarkerOptions()
-                .position(lokasi)
-                .icon(customPuck)
-                .title("Lokasi saya")
-        )
-    }
-
-    // 2. Gambar semua pin warung
-    vendors.forEach { vendor ->
-        if (vendor.lat == 0.0 && vendor.lng == 0.0) return@forEach
-
-        val pinBitmap = PinGenerator.dapatkanPin(
-            context = context,
-            namaToko = vendor.namaToko,
-            kategori = vendor.kategori,
-            buka = vendor.buka
-        )
-        val customIcon = iconFactory.fromBitmap(pinBitmap)
-
-        map.addMarker(
-            MarkerOptions()
-                .position(LatLng(vendor.lat, vendor.lng))
-                .icon(customIcon)
-                .title(vendor.namaToko)
-                .snippet(Format.labelKategori(vendor.kategori))
-        )
-    }
-
-    return newPuckMarker
 }

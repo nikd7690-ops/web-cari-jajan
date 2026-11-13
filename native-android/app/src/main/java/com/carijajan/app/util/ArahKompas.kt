@@ -8,11 +8,12 @@ import android.hardware.SensorManager
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlin.math.abs
 
 object ArahKompas {
     /**
      * Memantau arah hadap (azimuth/heading) perangkat secara real-time dalam derajat (0°..360°).
-     * 0° = Utara, 90° = Timur, 180° = Selatan, 270° = Barat.
+     * Dilengkapi filter threshold agar bebas getaran/jitter sensor halus sehingga rendering mulus.
      */
     fun pantauArah(context: Context): Flow<Float> = callbackFlow {
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
@@ -31,6 +32,17 @@ object ArahKompas {
         val lastMagnetometer = FloatArray(3)
         var lastAccelSet = false
         var lastMagnetSet = false
+        var lastEmittedHeading = -999f
+
+        fun emitIfChanged(degrees: Float) {
+            val normalized = (degrees % 360f + 360f) % 360f
+            val diff = abs(normalized - lastEmittedHeading)
+            // Hanya kirim jika perubahan sudut >= 2.5° agar tidak membebani UI thread saat diam
+            if (lastEmittedHeading < 0 || (diff >= 2.5f && (360f - diff) >= 2.5f)) {
+                lastEmittedHeading = normalized
+                trySend(normalized)
+            }
+        }
 
         val listener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
@@ -38,7 +50,7 @@ object ArahKompas {
                     SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
                     SensorManager.getOrientation(rotationMatrix, orientationAngles)
                     val degrees = (Math.toDegrees(orientationAngles[0].toDouble()) + 360) % 360
-                    trySend(degrees.toFloat())
+                    emitIfChanged(degrees.toFloat())
                 } else if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
                     System.arraycopy(event.values, 0, lastAccelerometer, 0, event.values.size)
                     lastAccelSet = true
@@ -51,7 +63,7 @@ object ArahKompas {
                     if (SensorManager.getRotationMatrix(rotationMatrix, null, lastAccelerometer, lastMagnetometer)) {
                         SensorManager.getOrientation(rotationMatrix, orientationAngles)
                         val degrees = (Math.toDegrees(orientationAngles[0].toDouble()) + 360) % 360
-                        trySend(degrees.toFloat())
+                        emitIfChanged(degrees.toFloat())
                     }
                 }
             }
