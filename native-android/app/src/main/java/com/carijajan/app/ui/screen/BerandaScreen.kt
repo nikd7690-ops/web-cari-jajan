@@ -362,12 +362,16 @@ fun BerandaScreen(
             userLocation = userLocationRealtime ?: lokasi?.let { LatLng(it.lat, it.lng) },
             userHeading = userHeading,
             vendors = vendorsTampil,
-            selectedId = null,
+            selectedId = vendorTerpilihPreview?.id,
             routePoints = ruteTitikList,
             onSelectVendor = { id ->
-                val v = masterVendors[id]
+                val v = masterVendors[id] ?: vendorsTampil.firstOrNull { it.id == id }
                 if (v != null) {
                     vendorTerpilihPreview = v
+                    if (v.lat != 0.0 && v.lng != 0.0) {
+                        cameraTarget = LatLng(v.lat, v.lng)
+                        cameraMoveTrigger++
+                    }
                 }
             }
         )
@@ -1162,6 +1166,7 @@ fun BerandaScreen(
                             },
                             onLihatDiPeta = {
                                 daftarWarungTerbuka = false
+                                vendorTerpilihPreview = vendor
                                 if (vendor.lat != 0.0 && vendor.lng != 0.0) {
                                     cameraTarget = LatLng(vendor.lat, vendor.lng)
                                     cameraZoom = 16.5

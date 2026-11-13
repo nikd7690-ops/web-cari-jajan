@@ -91,6 +91,8 @@ fun PetaWarung(
 
     val currentLoc by rememberUpdatedState(userLocation)
     val currentHeading by rememberUpdatedState(userHeading)
+    val currentVendors by rememberUpdatedState(vendors)
+    val currentOnSelectVendor by rememberUpdatedState(onSelectVendor)
 
     var mapRef by remember { mutableStateOf<MapLibreMap?>(null) }
     var styleSiap by remember { mutableStateOf(false) }
@@ -98,6 +100,7 @@ fun PetaWarung(
     // Referensi marker lokal
     var userMarkerRef by remember { mutableStateOf<Marker?>(null) }
     val vendorMarkers = remember { mutableListOf<Marker>() }
+    val markerIdToVendorId = remember { mutableMapOf<Long, String>() }
     var polylineRef by remember { mutableStateOf<Polyline?>(null) }
 
     // Cache icon puck untuk 120 sudut unik (tiap 3 derajat) untuk performa 60-120 FPS
@@ -193,9 +196,16 @@ fun PetaWarung(
                         map.setOnMarkerClickListener { marker ->
                             if (marker == userMarkerRef) return@setOnMarkerClickListener true
 
-                            val found = vendors.firstOrNull { it.namaToko == marker.title }
-                            if (found != null) {
-                                onSelectVendor(found.id)
+                            val activeList = currentVendors
+                            val foundId = markerIdToVendorId[marker.id]
+                                ?: activeList.firstOrNull { it.namaToko == marker.title }?.id
+                                ?: activeList.firstOrNull {
+                                    kotlin.math.abs(it.lat - marker.position.latitude) < 0.0001 &&
+                                    kotlin.math.abs(it.lng - marker.position.longitude) < 0.0001
+                                }?.id
+
+                            if (foundId != null) {
+                                currentOnSelectVendor(foundId)
                                 true
                             } else {
                                 false
@@ -227,6 +237,7 @@ fun PetaWarung(
 
         vendorMarkers.forEach { map.removeMarker(it) }
         vendorMarkers.clear()
+        markerIdToVendorId.clear()
 
         val iconFactory = IconFactory.getInstance(context)
 
@@ -248,7 +259,28 @@ fun PetaWarung(
                     .title(vendor.namaToko)
                     .snippet(Format.labelKategori(vendor.kategori))
             )
+            markerIdToVendorId[m.id] = vendor.id
             vendorMarkers.add(m)
+        }
+
+        // Pastikan listener klik marker terpasang dengan referensi terkini
+        map.setOnMarkerClickListener { marker ->
+            if (marker == userMarkerRef) return@setOnMarkerClickListener true
+
+            val activeList = currentVendors
+            val foundId = markerIdToVendorId[marker.id]
+                ?: activeList.firstOrNull { it.namaToko == marker.title }?.id
+                ?: activeList.firstOrNull {
+                    kotlin.math.abs(it.lat - marker.position.latitude) < 0.0001 &&
+                    kotlin.math.abs(it.lng - marker.position.longitude) < 0.0001
+                }?.id
+
+            if (foundId != null) {
+                currentOnSelectVendor(foundId)
+                true
+            } else {
+                false
+            }
         }
     }
 
