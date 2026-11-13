@@ -1,6 +1,7 @@
 package com.carijajan.app.ui.components
 
 import android.view.Gravity
+import androidx.collection.LruCache
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,7 +29,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.carijajan.app.BuildConfig
 import com.carijajan.app.data.VendorDto
 import com.carijajan.app.util.Format
+import kotlin.math.roundToInt
 import org.maplibre.android.MapLibre
+import org.maplibre.android.annotations.Icon
 import org.maplibre.android.annotations.IconFactory
 import org.maplibre.android.annotations.Marker
 import org.maplibre.android.annotations.MarkerOptions
@@ -39,6 +43,11 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
+
+private class UserPuckTracker(
+    var heading: Int = -1,
+    var position: LatLng? = null
+)
 
 @Composable
 fun PetaWarung(
@@ -80,6 +89,9 @@ fun PetaWarung(
         }
     }
 
+    val currentLoc by rememberUpdatedState(userLocation)
+    val currentHeading by rememberUpdatedState(userHeading)
+
     var mapRef by remember { mutableStateOf<MapLibreMap?>(null) }
     var styleSiap by remember { mutableStateOf(false) }
 
@@ -87,6 +99,59 @@ fun PetaWarung(
     var userMarkerRef by remember { mutableStateOf<Marker?>(null) }
     val vendorMarkers = remember { mutableListOf<Marker>() }
     var polylineRef by remember { mutableStateOf<Polyline?>(null) }
+
+    // Cache icon puck untuk 120 sudut unik (tiap 3 derajat) untuk performa 60-120 FPS
+    val puckIconCache = remember { LruCache<Int, Icon>(120) }
+    val puckTracker = remember { UserPuckTracker() }
+
+    val updatePuck = {
+        val map = mapRef
+        if (map != null && styleSiap) {
+            val loc = currentLoc
+            if (loc == null) {
+                userMarkerRef?.let { map.removeMarker(it) }
+                userMarkerRef = null
+                puckTracker.position = null
+                puckTracker.heading = -1
+            } else {
+                // Rotasi panah heading relatif terhadap rotasi kamera peta
+                // Ketika peta diputar bearing θ, panah di layar menyesuaikan (userHeading - bearing)
+                val mapBearing = map.cameraPosition.bearing.toFloat()
+                val relativeAngle = ((currentHeading - mapBearing) % 360f + 360f) % 360f
+                val quantized = (((relativeAngle / 3f).roundToInt() * 3) % 360 + 360) % 360
+
+                val posChanged = puckTracker.position != loc
+                val headingChanged = puckTracker.heading != quantized
+
+                if (posChanged || headingChanged || userMarkerRef == null) {
+                    var icon = puckIconCache.get(quantized)
+                    if (icon == null) {
+                        val puckBitmap = PinGenerator.dapatkanPuckLokasi(context, quantized.toFloat())
+                        icon = IconFactory.recreate("user_puck_$quantized", puckBitmap)
+                        puckIconCache.put(quantized, icon)
+                    }
+
+                    val existing = userMarkerRef
+                    if (existing != null) {
+                        if (posChanged) existing.position = loc
+                        if (headingChanged) existing.icon = icon
+                    } else {
+                        userMarkerRef = map.addMarker(
+                            MarkerOptions()
+                                .position(loc)
+                                .icon(icon)
+                                .title("Lokasi saya")
+                        )
+                    }
+
+                    puckTracker.position = loc
+                    puckTracker.heading = quantized
+                }
+            }
+        }
+    }
+
+    val updatePuckAction = rememberUpdatedState(updatePuck)
 
     Box(modifier = modifier) {
         AndroidView(
@@ -116,6 +181,11 @@ fun PetaWarung(
                         map.uiSettings.isCompassEnabled = true
                         map.uiSettings.compassGravity = Gravity.BOTTOM or Gravity.END
                         map.uiSettings.setCompassMargins(0, 0, (16 * density).toInt(), (110 * density).toInt())
+
+                        // Putar arah panah lokasi seketika saat peta diputar oleh dua jari pengguna
+                        map.addOnCameraMoveListener {
+                            updatePuckAction.value.invoke()
+                        }
 
                         map.setStyle(BuildConfig.MAP_STYLE_URL) { _ ->
                             styleSiap = true
@@ -185,25 +255,7 @@ fun PetaWarung(
 
     // ── Update Posisi & Arah Panah Pengguna Real-Time ────────────────────────
     LaunchedEffect(styleSiap, userLocation, userHeading) {
-        val map = mapRef ?: return@LaunchedEffect
-        if (!styleSiap || userLocation == null) return@LaunchedEffect
-
-        val iconFactory = IconFactory.getInstance(context)
-        val puckBitmap = PinGenerator.dapatkanPuckLokasi(context, userHeading)
-        val customPuck = iconFactory.fromBitmap(puckBitmap)
-
-        val existing = userMarkerRef
-        if (existing != null) {
-            existing.position = userLocation
-            existing.icon = customPuck
-        } else {
-            userMarkerRef = map.addMarker(
-                MarkerOptions()
-                    .position(userLocation)
-                    .icon(customPuck)
-                    .title("Lokasi saya")
-            )
-        }
+        updatePuck()
     }
 
     // ── Menggambar Garis Rute Navigasi (Polyline) ───────────────────────────
