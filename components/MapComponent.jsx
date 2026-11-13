@@ -30,7 +30,22 @@ function PinVendor({ vendor, aktif }) {
 
   return (
     <div className={`cj-pin-wrap cj-pin-wrap--${status} flex flex-col items-center pointer-events-auto cursor-pointer`}>
-      {diskonPersen > 0 && (
+      {/* Pop-up foto warung mengambang di atas pin saat diklik */}
+      {aktif && vendor.foto && (
+        <div className="mb-1.5 overflow-hidden rounded-xl border-2 border-white shadow-xl bg-white w-28 h-20 relative">
+          <img
+            src={vendor.foto}
+            alt={vendor.namaToko}
+            className="w-full h-full object-cover"
+          />
+          {diskonPersen > 0 && (
+            <div className="absolute top-1 left-1 rounded-md bg-red-600 px-1.5 py-0.5 text-[9px] font-bold text-white shadow">
+              Diskon {diskonPersen}%
+            </div>
+          )}
+        </div>
+      )}
+      {!aktif && diskonPersen > 0 && (
         <div className="mb-1.5 flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-md border border-white whitespace-nowrap animate-bounce">
           <span className="flex h-3 w-3 items-center justify-center rounded-full bg-white text-[8px] font-black text-red-600 leading-none">
             %

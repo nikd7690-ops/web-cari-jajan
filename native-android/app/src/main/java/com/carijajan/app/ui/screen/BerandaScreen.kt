@@ -208,12 +208,14 @@ fun BerandaScreen(
     var areaTerbuka by remember { mutableStateOf(false) }
     var daftarWarungTerbuka by remember { mutableStateOf(false) }
     var akunTerbuka by remember { mutableStateOf(false) }
+    var tambahTerbuka by remember { mutableStateOf(false) }
     var laporanWarungTarget by remember { mutableStateOf<VendorDto?>(null) }
     var geoLoading by remember { mutableStateOf(false) }
     var pesanLokasi by remember { mutableStateOf("") }
 
-    BackHandler(enabled = akunTerbuka) {
+    BackHandler(enabled = akunTerbuka || tambahTerbuka) {
         akunTerbuka = false
+        tambahTerbuka = false
     }
 
     // Fitur Navigasi Rute
@@ -858,33 +860,25 @@ fun BerandaScreen(
                             modifier = Modifier.weight(1f),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            // Foto Warung
+                            // Avatar Kategori Warung (Foto tampil di atas pin peta & di dalam menu profil)
                             Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                modifier = Modifier.size(68.dp)
+                                shape = RoundedCornerShape(14.dp),
+                                color = BrandOrangeSurface,
+                                border = BorderStroke(1.dp, BrandOrangeLight),
+                                modifier = Modifier.size(56.dp)
                             ) {
-                                if (preview.foto.isNotBlank()) {
-                                    AsyncImage(
-                                        model = preview.foto,
-                                        contentDescription = preview.namaToko,
-                                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                                        modifier = Modifier.fillMaxSize()
+                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = when (preview.kategori) {
+                                            "pkl" -> Icons.Default.Fastfood
+                                            "keliling" -> Icons.Default.TwoWheeler
+                                            "rumah_makan", "cafe" -> Icons.Default.Restaurant
+                                            else -> Icons.Default.Storefront
+                                        },
+                                        contentDescription = null,
+                                        tint = BrandOrange,
+                                        modifier = Modifier.size(28.dp)
                                     )
-                                } else {
-                                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            imageVector = when (preview.kategori) {
-                                                "pkl" -> Icons.Default.Fastfood
-                                                "keliling" -> Icons.Default.TwoWheeler
-                                                "rumah_makan", "cafe" -> Icons.Default.Restaurant
-                                                else -> Icons.Default.Storefront
-                                            },
-                                            contentDescription = null,
-                                            tint = BrandOrange,
-                                            modifier = Modifier.size(32.dp)
-                                        )
-                                    }
                                 }
                             }
 
@@ -1271,7 +1265,7 @@ fun BerandaScreen(
                         onBack = { akunTerbuka = false },
                         onAdd = {
                             akunTerbuka = false
-                            onAdd()
+                            tambahTerbuka = true
                         },
                         onEdit = { id ->
                             akunTerbuka = false
@@ -1290,10 +1284,61 @@ fun BerandaScreen(
             }
         }
 
+        // ── Layar Tambah Warung (Slide Masuk Halus dari Kanan, Bottom Bar Tetap Aman) ──
+        AnimatedVisibility(
+            visible = tambahTerbuka,
+            enter = slideInHorizontally(
+                initialOffsetX = { it },
+                animationSpec = tween(320)
+            ) + fadeIn(animationSpec = tween(320)),
+            exit = slideOutHorizontally(
+                targetOffsetX = { it },
+                animationSpec = tween(320)
+            ) + fadeOut(animationSpec = tween(320)),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                if (user == null) {
+                    MasukScreen(
+                        container = container,
+                        onSuccess = {
+                            // User otomatis login
+                        },
+                        onRegister = {
+                            tambahTerbuka = false
+                            onRegister()
+                        },
+                        onBack = { tambahTerbuka = false },
+                        tampilkanBottomBar = false
+                    )
+                } else {
+                    EditWarungScreen(
+                        container = container,
+                        vendorId = null,
+                        onSuccess = {
+                            tambahTerbuka = false
+                            scope.launch {
+                                val titik = lokasi ?: Titik(JEMBER_PUSAT.latitude, JEMBER_PUSAT.longitude, "Jember")
+                                val res = container.vendorRepository.nearby(titik.lat, titik.lng, RADIUS_MAKS)
+                                val data = res.getOrDefault(emptyList())
+                                masterVendors = data.associateBy { it.id }
+                            }
+                        },
+                        onBack = { tambahTerbuka = false },
+                        tampilkanBottomBar = false
+                    )
+                }
+            }
+        }
+
         // ── Bagian Bawah: Bottom Navigation Bar Utama (Selalu di Lapisan Paling Depan) ──
         CariJajanBottomBar(
             tabAktif = when {
                 akunTerbuka -> "akun"
+                tambahTerbuka -> "tambah"
                 daftarWarungTerbuka -> "daftar"
                 areaTerbuka -> "lokasi"
                 else -> "peta"
@@ -1304,16 +1349,19 @@ fun BerandaScreen(
                 when (tab) {
                     "peta" -> {
                         akunTerbuka = false
+                        tambahTerbuka = false
                         daftarWarungTerbuka = false
                         areaTerbuka = false
                     }
                     "lokasi" -> {
                         akunTerbuka = false
+                        tambahTerbuka = false
                         daftarWarungTerbuka = false
                         areaTerbuka = !areaTerbuka
                     }
                     "daftar" -> {
                         akunTerbuka = false
+                        tambahTerbuka = false
                         areaTerbuka = false
                         daftarWarungTerbuka = !daftarWarungTerbuka
                     }
@@ -1321,9 +1369,10 @@ fun BerandaScreen(
                         akunTerbuka = false
                         daftarWarungTerbuka = false
                         areaTerbuka = false
-                        onAdd()
+                        tambahTerbuka = !tambahTerbuka
                     }
                     "akun" -> {
+                        tambahTerbuka = false
                         daftarWarungTerbuka = false
                         areaTerbuka = false
                         akunTerbuka = !akunTerbuka

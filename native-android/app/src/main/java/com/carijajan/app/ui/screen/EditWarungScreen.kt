@@ -107,7 +107,8 @@ fun EditWarungScreen(
     container: AppContainer,
     vendorId: String?,   // null = mode tambah, non-null = mode edit
     onSuccess: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    tampilkanBottomBar: Boolean = true
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -978,20 +979,22 @@ fun EditWarungScreen(
         }
 
         // ── Bottom Navigation Bar Tetap Tampil di Depan ──
-        CariJajanBottomBar(
-            tabAktif = if (!isEdit) "tambah" else "peta",
-            sudahLogin = true,
-            modifier = Modifier.align(Alignment.BottomCenter),
-            onTabSelected = { tab ->
-                when (tab) {
-                    "peta" -> onBack()
-                    "lokasi" -> onBack()
-                    "daftar" -> onBack()
-                    "tambah" -> Unit
-                    "akun" -> onBack()
+        if (tampilkanBottomBar) {
+            CariJajanBottomBar(
+                tabAktif = if (!isEdit) "tambah" else "peta",
+                sudahLogin = true,
+                modifier = Modifier.align(Alignment.BottomCenter),
+                onTabSelected = { tab ->
+                    when (tab) {
+                        "peta" -> onBack()
+                        "lokasi" -> onBack()
+                        "daftar" -> onBack()
+                        "tambah" -> Unit
+                        "akun" -> onBack()
+                    }
                 }
-            }
-        )
+            )
+        }
     }
 
     // ── Dialog Kamera Langsung Tambah Warung (Foto + Auto GPS) ────────────────

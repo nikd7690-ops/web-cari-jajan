@@ -1,5 +1,7 @@
 package com.carijajan.app.ui.components
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.view.Gravity
 import androidx.collection.LruCache
 import androidx.compose.foundation.background
@@ -12,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -30,6 +33,8 @@ import com.carijajan.app.BuildConfig
 import com.carijajan.app.data.VendorDto
 import com.carijajan.app.util.Format
 import kotlin.math.roundToInt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.maplibre.android.MapLibre
 import org.maplibre.android.annotations.Icon
 import org.maplibre.android.annotations.IconFactory
@@ -102,6 +107,41 @@ fun PetaWarung(
     val vendorMarkers = remember { mutableListOf<Marker>() }
     val markerIdToVendorId = remember { mutableMapOf<Long, String>() }
     var polylineRef by remember { mutableStateOf<Polyline?>(null) }
+
+    // Cache foto warung untuk ditampilkan mengambang di atas pin saat diklik
+    val fotoCache = remember { LruCache<String, Bitmap>(32) }
+    var fotoUpdateTrigger by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(selectedId) {
+        if (selectedId != null) {
+            val target = currentVendors.firstOrNull { it.id == selectedId }
+            val url = target?.foto ?: ""
+            if (url.isNotBlank() && fotoCache.get(url) == null) {
+                val bmp = withContext(Dispatchers.IO) {
+                    try {
+                        if (url.startsWith("data:")) {
+                            val base64Str = url.substringAfter("base64,")
+                            val bytes = android.util.Base64.decode(base64Str, android.util.Base64.DEFAULT)
+                            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        } else if (url.startsWith("http://") || url.startsWith("https://")) {
+                            val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                            conn.connectTimeout = 6000
+                            conn.readTimeout = 6000
+                            conn.inputStream.use { input ->
+                                BitmapFactory.decodeStream(input)
+                            }
+                        } else null
+                    } catch (_: Exception) {
+                        null
+                    }
+                }
+                if (bmp != null) {
+                    fotoCache.put(url, bmp)
+                    fotoUpdateTrigger++
+                }
+            }
+        }
+    }
 
     // Cache icon puck untuk 120 sudut unik (tiap 3 derajat) untuk performa 60-120 FPS
     val puckIconCache = remember { LruCache<Int, Icon>(120) }
@@ -231,7 +271,7 @@ fun PetaWarung(
     }
 
     // ── Update Marker Warung ────────────────────────────────────────────────
-    LaunchedEffect(styleSiap, vendors) {
+    LaunchedEffect(styleSiap, vendors, selectedId, fotoUpdateTrigger) {
         val map = mapRef ?: return@LaunchedEffect
         if (!styleSiap) return@LaunchedEffect
 
@@ -241,16 +281,24 @@ fun PetaWarung(
 
         val iconFactory = IconFactory.getInstance(context)
 
-        vendors.forEach { vendor ->
+        // Urutkan agar warung yang sedang diklik/dipilih diletakkan paling akhir (di lapisan terdepan)
+        val sortedVendors = vendors.sortedBy { it.id == selectedId }
+
+        sortedVendors.forEach { vendor ->
             if (vendor.lat == 0.0 && vendor.lng == 0.0) return@forEach
 
+            val isSelected = (vendor.id == selectedId)
+            val fotoBmp = if (isSelected && vendor.foto.isNotBlank()) fotoCache.get(vendor.foto) else null
             val diskon = if (vendor.zeroWaste?.aktif == true) (vendor.zeroWaste.diskonPersen.takeIf { it > 0 } ?: 30) else 0
+
             val pinBitmap = PinGenerator.dapatkanPin(
                 context = context,
                 namaToko = vendor.namaToko,
                 kategori = vendor.kategori,
                 buka = vendor.buka,
-                diskonPersen = diskon
+                diskonPersen = diskon,
+                terpilih = isSelected,
+                fotoBitmap = fotoBmp
             )
             val customIcon = iconFactory.fromBitmap(pinBitmap)
 
