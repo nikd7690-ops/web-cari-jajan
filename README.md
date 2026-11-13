@@ -281,12 +281,17 @@ Perintah yang tersedia:
 | `npm test` | Jalankan rangkaian tes unit Vitest |
 | `npm run seed` | Isi akun demo + warung contoh di Jember |
 
-Untuk menjalankan aplikasi Native Android:
-Buka folder `native-android/` di Android Studio (Koala/Ladybug atau lebih baru) atau jalankan:
-```bash
-cd native-android
-./gradlew assembleDebug
-```
+Untuk menjalankan atau mengompilasi aplikasi Native Android:
+1. Masuk ke folder `native-android/` dan salin `.env.example` menjadi `.env` jika ingin mengubah URL backend, nama aplikasi, atau ikon launcher:
+   ```bash
+   cd native-android
+   cp .env.example .env
+   ```
+2. Jalankan build APK debug:
+   ```bash
+   ./gradlew assembleDebug
+   ```
+   Atau buka folder `native-android/` di Android Studio (Koala/Ladybug atau lebih baru).
 
 ## 11. Variabel Lingkungan
 

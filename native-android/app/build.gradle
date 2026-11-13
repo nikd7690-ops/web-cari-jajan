@@ -4,15 +4,45 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization'
 }
 
-def apiBaseUrl = System.getenv('NATIVE_API_BASE_URL') ?: 'https://web-cari-jajan.vercel.app'
-def mapStyleUrl = System.getenv('NEXT_PUBLIC_MAP_STYLE_URL') ?: 'https://tiles.openfreemap.org/styles/liberty'
+// ── Muat konfigurasi dari berkas .env / .env.local ──────────────────────────
+def envProps = new Properties()
+def envFiles = [
+    rootProject.file('native-android/.env'),
+    rootProject.file('native-android/.env.local'),
+    rootProject.file('.env'),
+    rootProject.file('.env.local'),
+    rootProject.file('local.properties')
+]
+
+envFiles.each { f ->
+    if (f.exists()) {
+        f.eachLine { line ->
+            def trimmed = line.trim()
+            if (trimmed && !trimmed.startsWith('#') && trimmed.contains('=')) {
+                def parts = trimmed.split('=', 2)
+                def key = parts[0].trim()
+                def value = parts[1].trim()
+                if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+                    value = value.substring(1, value.length() - 1)
+                }
+                envProps.setProperty(key, value)
+            }
+        }
+    }
+}
+
+def apiBaseUrl = System.getenv('NATIVE_API_BASE_URL') ?: envProps.getProperty('API_BASE_URL') ?: envProps.getProperty('NATIVE_API_BASE_URL') ?: envProps.getProperty('api.base.url') ?: 'https://web-cari-jajan.vercel.app'
+def mapStyleUrl = System.getenv('NEXT_PUBLIC_MAP_STYLE_URL') ?: envProps.getProperty('MAP_STYLE_URL') ?: envProps.getProperty('NEXT_PUBLIC_MAP_STYLE_URL') ?: envProps.getProperty('map.style.url') ?: 'https://tiles.openfreemap.org/styles/liberty'
+def appName = envProps.getProperty('APP_NAME') ?: 'Cari Jajan'
+def appIcon = envProps.getProperty('APP_ICON') ?: '@mipmap/ic_launcher'
+def customAppId = envProps.getProperty('APPLICATION_ID') ?: 'com.carijajan.app'
 
 android {
     namespace 'com.carijajan.app'
     compileSdk 37
 
     defaultConfig {
-        applicationId "com.carijajan.app"
+        applicationId customAppId
         minSdk 24
         targetSdk 37
         versionCode 1
@@ -24,6 +54,11 @@ android {
 
         buildConfigField "String", "API_BASE_URL", "\"${apiBaseUrl}\""
         buildConfigField "String", "MAP_STYLE_URL", "\"${mapStyleUrl}\""
+
+        manifestPlaceholders = [
+            appName: appName,
+            appIcon: appIcon
+        ]
     }
 
     buildTypes {
