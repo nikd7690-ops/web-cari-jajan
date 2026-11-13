@@ -139,6 +139,10 @@ export default function BerandaPembeli() {
       const det = await deteksiLokasi();
       setStatusLokasi(det.status);
       setIsNative(det.native);
+      if (det.status === "granted") {
+        setOnboarding(false);
+        jalankanLokasi();
+      }
     }
 
     init();

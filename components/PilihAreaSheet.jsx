@@ -144,18 +144,20 @@ export default function PilihAreaSheet({
           </button>
         </div>
 
-        <button
-          type="button"
-          onClick={onGunakanLokasi}
-          disabled={
-            loadingLokasi ||
-            statusLokasi === "insecure" ||
-            statusLokasi === "unsupported"
-          }
-          className="mt-3 w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white active:bg-emerald-700 disabled:opacity-60"
-        >
-          {loadingLokasi ? "Mengambil lokasi..." : "Gunakan lokasiku"}
-        </button>
+        {statusLokasi !== "granted" ? (
+          <button
+            type="button"
+            onClick={onGunakanLokasi}
+            disabled={
+              loadingLokasi ||
+              statusLokasi === "insecure" ||
+              statusLokasi === "unsupported"
+            }
+            className="mt-3 w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white active:bg-emerald-700 disabled:opacity-60"
+          >
+            {loadingLokasi ? "Mengambil lokasi..." : "Gunakan lokasiku"}
+          </button>
+        ) : null}
 
         {panduanIzin(statusLokasi, isNative) ? (
           <p className="mt-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">
