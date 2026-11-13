@@ -239,13 +239,13 @@ fun WarungDetailScreen(
 
                                 // Status Buka / Tutup Badge
                                 Surface(
-                                    color = if (toko.buka) BrandOrangeSurface else Color(0xFFFEE2E2),
+                                    color = if (toko.bukaAktif) BrandOrangeSurface else Color(0xFFFEE2E2),
                                     shape = RoundedCornerShape(20.dp),
-                                    border = BorderStroke(1.dp, if (toko.buka) BrandOrangeLight else Color(0xFFFECACA))
+                                    border = BorderStroke(1.dp, if (toko.bukaAktif) BrandOrangeLight else Color(0xFFFECACA))
                                 ) {
                                     Text(
-                                        text = if (toko.buka) "● Buka" else "○ Tutup",
-                                        color = if (toko.buka) BrandOrangeDark else Color(0xFFDC2626),
+                                        text = if (toko.bukaAktif) "● Buka" else "○ Tutup",
+                                        color = if (toko.bukaAktif) BrandOrangeDark else Color(0xFFDC2626),
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 11.sp,
                                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
@@ -269,7 +269,7 @@ fun WarungDetailScreen(
                                 )
                             }
 
-                            if (!toko.buka) {
+                            if (!toko.bukaAktif) {
                                 Spacer(Modifier.height(6.dp))
                                 Surface(
                                     color = Color(0xFFFEF2F2),

@@ -106,6 +106,35 @@ data class VendorDto(
         "rumah_makan" -> "Rumah Makan"
         else -> "Warung Tetap"
     }
+
+    /**
+     * Mengecek status operasional buka/tutup secara akurat menggunakan jam lokal perangkat (WIB/WITA/WIT).
+     * Jika sekarang jam 07:00 dan jam buka 07:00-12:00, warung dipastikan berstatus buka.
+     */
+    val bukaAktif: Boolean get() {
+        if (jamBuka.isBlank() || jamTutup.isBlank()) return buka
+        return try {
+            val partsBuka = jamBuka.split(":")
+            val partsTutup = jamTutup.split(":")
+            if (partsBuka.size < 2 || partsTutup.size < 2) return buka
+
+            val bMin = (partsBuka[0].trim().toIntOrNull() ?: 0) * 60 + (partsBuka[1].trim().toIntOrNull() ?: 0)
+            val tMin = (partsTutup[0].trim().toIntOrNull() ?: 0) * 60 + (partsTutup[1].trim().toIntOrNull() ?: 0)
+
+            if (bMin == tMin) return true // Warung buka 24 jam penuh
+
+            val cal = java.util.Calendar.getInstance()
+            val sMin = cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE)
+
+            if (tMin > bMin) {
+                sMin in bMin until tMin
+            } else {
+                sMin >= bMin || sMin < tMin
+            }
+        } catch (_: Exception) {
+            buka
+        }
+    }
 }
 
 @Serializable

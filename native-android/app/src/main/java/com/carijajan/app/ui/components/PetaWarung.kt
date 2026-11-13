@@ -295,7 +295,7 @@ fun PetaWarung(
                 context = context,
                 namaToko = vendor.namaToko,
                 kategori = vendor.kategori,
-                buka = vendor.buka,
+                buka = vendor.bukaAktif,
                 diskonPersen = diskon,
                 terpilih = isSelected,
                 fotoBitmap = fotoBmp

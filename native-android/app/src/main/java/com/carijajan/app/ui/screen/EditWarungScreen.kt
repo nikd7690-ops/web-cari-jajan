@@ -11,6 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,6 +48,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -84,6 +86,7 @@ import com.carijajan.app.ui.components.bounceEffect
 import com.carijajan.app.ui.theme.*
 import com.carijajan.app.util.Gambar
 import com.carijajan.app.util.Lokasi
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
 private val KATEGORI_LIST = listOf(
@@ -886,62 +889,141 @@ fun EditWarungScreen(
             )
         }
 
-        // ── Fitur Khusus Mitra: Zero Waste Food (Diskon Sewaktu-waktu) ───────
-        if (!isPengguna) {
-            JudulBagian("Zero Waste Food (Penyelamat Makanan)", icon = Icons.Default.Eco)
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = Color(0xFFFFFBEB),
-                border = BorderStroke(1.dp, Color(0xFFFDE68A)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // ── Fitur Promo & Zero Waste Food (Bisa diatur Penjual maupun Pembeli) ───────
+        JudulBagian("Zero Waste Food (Promo Diskon)", icon = Icons.Default.Eco)
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = Color(0xFFFFFBEB),
+            border = BorderStroke(1.dp, Color(0xFFFDE68A)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (isPengguna) "Info Diskon / Penyelamat Makanan" else "Promo Diskon Zero Waste",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = Color(0xFF92400E)
+                        )
+                        Text(
+                            text = if (isPengguna)
+                                "Bantu cantumkan jika warung ini sedang ada promo potongan harga (mulai 1% s/d 100%)."
+                            else
+                                "Beri diskon mendadak untuk porsi sisa sebelum tutup agar tidak mubazir dan laris manis.",
+                            fontSize = 11.sp,
+                            color = Color(0xFFB45309)
+                        )
+                    }
+                    Switch(
+                        checked = zeroWasteAktif,
+                        onCheckedChange = { zeroWasteAktif = it }
+                    )
+                }
+
+                if (zeroWasteAktif) {
+                    HorizontalDivider(color = Color(0xFFFDE68A))
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Promo Diskon Zero Waste", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF92400E))
-                            Text("Beri diskon mendadak sewaktu-waktu untuk sisa porsi sebelum warung tutup.", fontSize = 11.sp, color = Color(0xFFB45309))
+                        Text("Besaran Diskon:", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF92400E))
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFFDC2626),
+                            modifier = Modifier.padding(start = 8.dp)
+                        ) {
+                            Text(
+                                text = "Diskon -$zeroWasteDiskon%",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = Color.White,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
                         }
-                        Switch(
-                            checked = zeroWasteAktif,
-                            onCheckedChange = { zeroWasteAktif = it }
-                        )
                     }
 
-                    if (zeroWasteAktif) {
-                        HorizontalDivider(color = Color(0xFFFDE68A))
-                        Text("Pilih Besaran Diskon:", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF92400E))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            listOf(20, 30, 50).forEach { disc ->
-                                Surface(
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = if (zeroWasteDiskon == disc) Color(0xFFD97706) else Color.White,
-                                    border = BorderStroke(1.dp, if (zeroWasteDiskon == disc) Color(0xFFD97706) else Color(0xFFFDE68A)),
-                                    modifier = Modifier.bounceClick { zeroWasteDiskon = disc }
-                                ) {
-                                    Text(
-                                        text = "-$disc%",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp,
-                                        color = if (zeroWasteDiskon == disc) Color.White else Color(0xFF92400E),
-                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
-                                    )
-                                }
+                    // Preset Cepat Diskon
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf(1, 10, 20, 30, 50).forEach { disc ->
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (zeroWasteDiskon == disc) Color(0xFFD97706) else Color.White,
+                                border = BorderStroke(1.dp, if (zeroWasteDiskon == disc) Color(0xFFD97706) else Color(0xFFFDE68A)),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .bounceClick { zeroWasteDiskon = disc }
+                            ) {
+                                Text(
+                                    text = "-$disc%",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.5.sp,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    color = if (zeroWasteDiskon == disc) Color.White else Color(0xFF92400E),
+                                    modifier = Modifier.padding(vertical = 7.dp)
+                                )
                             }
                         }
-
-                        OutlinedTextField(
-                            value = zeroWasteKet,
-                            onValueChange = { zeroWasteKet = it },
-                            label = { Text("Keterangan Promo") },
-                            placeholder = { Text("Contoh: Promo jelang tutup porsi lezat diskon 30%") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
                     }
+
+                    // Kontrol Stepper & Input Kustom Persentase (Bebas dari 1% s/d 100%)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { if (zeroWasteDiskon > 1) zeroWasteDiskon-- },
+                            enabled = zeroWasteDiskon > 1,
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(0.dp),
+                            modifier = Modifier.size(38.dp).bounceEffect()
+                        ) {
+                            Text("–", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF92400E))
+                        }
+
+                        // Slider fleksibel 1% - 100%
+                        Slider(
+                            value = zeroWasteDiskon.toFloat(),
+                            onValueChange = { zeroWasteDiskon = it.roundToInt().coerceIn(1, 100) },
+                            valueRange = 1f..100f,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        OutlinedButton(
+                            onClick = { if (zeroWasteDiskon < 100) zeroWasteDiskon++ },
+                            enabled = zeroWasteDiskon < 100,
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(0.dp),
+                            modifier = Modifier.size(38.dp).bounceEffect()
+                        ) {
+                            Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF92400E))
+                        }
+                    }
+
+                    Text(
+                        text = "Tips: Anda bisa menggeser slider atau tombol +/- untuk diskon custom (misal 1%, 15%, 35%, dll).",
+                        fontSize = 10.5.sp,
+                        color = Color(0xFFB45309)
+                    )
+
+                    OutlinedTextField(
+                        value = zeroWasteKet,
+                        onValueChange = { zeroWasteKet = it },
+                        label = { Text("Keterangan Promo") },
+                        placeholder = { Text("Contoh: Diskon sisa porsi lezat sebelum warung tutup") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }

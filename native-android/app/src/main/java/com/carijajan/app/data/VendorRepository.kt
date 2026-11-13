@@ -119,6 +119,15 @@ class VendorRepository(private val api: ApiService) {
         Unit
     }
 
+    suspend fun adminDeleteVendor(id: String): Result<Unit> = call {
+        val res = api.adminDeleteVendor(id)
+        if (!res.isSuccessful) {
+            val fallback = api.deleteVendor(id)
+            if (!fallback.isSuccessful) throw ApiException(ApiErrors.message(res))
+        }
+        Unit
+    }
+
     suspend fun banMember(id: String, banned: Boolean, reason: String = ""): Result<Unit> = call {
         val res = api.banMember(id, AdminBanMemberRequest(banned, reason))
         if (!res.isSuccessful) throw ApiException(ApiErrors.message(res))

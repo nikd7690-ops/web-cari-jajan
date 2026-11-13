@@ -83,6 +83,9 @@ interface ApiService {
         @Body body: AdminVendorActionRequest
     ): Response<Unit>
 
+    @DELETE("api/admin/vendors/{id}")
+    suspend fun adminDeleteVendor(@Path("id") id: String): Response<Unit>
+
     @POST("api/admin/members/{id}/ban")
     suspend fun banMember(
         @Path("id") id: String,

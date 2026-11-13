@@ -376,9 +376,9 @@ fun AdminDashboardContent(
                                             IconButton(
                                                 onClick = {
                                                     scope.launch {
-                                                        val res = container.vendorRepository.delete(v.id)
+                                                        val res = container.vendorRepository.adminDeleteVendor(v.id)
                                                         res.onSuccess {
-                                                            pesanSukses = "Warung '${v.namaToko}' dihapus permanen."
+                                                            pesanSukses = "Warung '${v.namaToko}' berhasil dihapus permanen oleh admin."
                                                             refresh()
                                                         }.onFailure { err ->
                                                             errorPesan = "Gagal menghapus warung: ${err.message}"
@@ -387,7 +387,7 @@ fun AdminDashboardContent(
                                                 },
                                                 modifier = Modifier.size(32.dp).padding(start = 4.dp)
                                             ) {
-                                                Icon(Icons.Filled.Delete, contentDescription = "Hapus", tint = Color(0xFFEF4444), modifier = Modifier.size(16.dp))
+                                                Icon(Icons.Filled.Delete, contentDescription = "Hapus Warung", tint = Color(0xFFEF4444), modifier = Modifier.size(16.dp))
                                             }
                                         }
                                     }

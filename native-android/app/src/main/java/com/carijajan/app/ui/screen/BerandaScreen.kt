@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -428,27 +429,35 @@ fun BerandaScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Surface(
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(21.dp),
                     color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
                     tonalElevation = 4.dp,
                     shadowElevation = 3.dp,
-                    modifier = Modifier.bounceClick { areaTerbuka = true }
+                    modifier = Modifier
+                        .height(42.dp)
+                        .bounceClick { areaTerbuka = true }
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .padding(horizontal = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             imageVector = Icons.Default.LocationOn,
                             contentDescription = "Pilih Lokasi",
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(15.dp)
+                            modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Column(modifier = Modifier.widthIn(max = 110.dp)) {
+                        Spacer(modifier = Modifier.width(5.dp))
+                        Column(
+                            modifier = Modifier.widthIn(max = 110.dp),
+                            verticalArrangement = Arrangement.Center
+                        ) {
                             Text(
                                 text = "Lokasi Peta:",
                                 fontSize = 8.5.sp,
+                                lineHeight = 10.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
@@ -474,14 +483,17 @@ fun BerandaScreen(
 
                 // ── Tombol Filter Waktu: Pagi, Siang, Malam (Kit Pack Icons) ─────
                 Surface(
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(21.dp),
                     color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
                     tonalElevation = 4.dp,
-                    shadowElevation = 3.dp
+                    shadowElevation = 3.dp,
+                    modifier = Modifier.height(42.dp)
                 ) {
                     Row(
-                        modifier = Modifier.padding(3.dp),
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .padding(horizontal = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(3.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         listOf(
@@ -495,7 +507,7 @@ fun BerandaScreen(
                                 shape = CircleShape,
                                 color = if (terpilih) BrandOrange else Color.Transparent,
                                 modifier = Modifier
-                                    .size(30.dp)
+                                    .size(34.dp)
                                     .bounceClick { filterWaktu = key }
                             ) {
                                 Box(
@@ -506,7 +518,7 @@ fun BerandaScreen(
                                         imageVector = iconKit,
                                         contentDescription = label,
                                         tint = if (terpilih) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(15.dp)
+                                        modifier = Modifier.size(16.dp)
                                     )
                                 }
                             }
@@ -953,14 +965,14 @@ fun BerandaScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
-                                color = if (preview.buka) Color(0xFFDCFCE7) else Color(0xFFFEE2E2),
-                                border = BorderStroke(1.dp, if (preview.buka) Color(0xFF86EFAC) else Color(0xFFFECACA))
+                                color = if (preview.bukaAktif) Color(0xFFDCFCE7) else Color(0xFFFEE2E2),
+                                border = BorderStroke(1.dp, if (preview.bukaAktif) Color(0xFF86EFAC) else Color(0xFFFECACA))
                             ) {
                                 Text(
-                                    text = if (preview.buka) "● Sedang Buka" else "● Sudah Tutup",
+                                    text = if (preview.bukaAktif) "● Sedang Buka" else "● Sudah Tutup",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (preview.buka) Color(0xFF15803D) else Color(0xFFB91C1C),
+                                    color = if (preview.bukaAktif) Color(0xFF15803D) else Color(0xFFB91C1C),
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                                 )
                             }
@@ -1475,15 +1487,15 @@ private fun VendorRowTerdekat(
                 // Jarak & Status Buka/Tutup
                 Column(horizontalAlignment = Alignment.End) {
                     Surface(
-                        color = if (vendor.buka) MaterialTheme.colorScheme.primaryContainer
+                        color = if (vendor.bukaAktif) MaterialTheme.colorScheme.primaryContainer
                         else MaterialTheme.colorScheme.errorContainer,
                         shape = RoundedCornerShape(50)
                     ) {
                         Text(
-                            text = if (vendor.buka) "Buka" else "Tutup",
+                            text = if (vendor.bukaAktif) "Buka" else "Tutup",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = if (vendor.buka) MaterialTheme.colorScheme.onPrimaryContainer
+                            color = if (vendor.bukaAktif) MaterialTheme.colorScheme.onPrimaryContainer
                             else MaterialTheme.colorScheme.onErrorContainer,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                         )

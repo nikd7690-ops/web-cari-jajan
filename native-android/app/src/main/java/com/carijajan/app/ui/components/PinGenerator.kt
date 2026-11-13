@@ -195,11 +195,22 @@ object PinGenerator {
 
         val contentW = maxOf(bubbleW, if (adaFoto) fotoW else if (adaDiskon) badgeW else 0f)
         val totalW = contentW + dp(8f)
-        val totalH = extraTopH + bubbleH + arrowH + dp(6f)
+
+        // Titik ujung panah penunjuk koordinat GPS
+        val marginAtas = dp(3f)
+        val arrowTipY = marginAtas + extraTopH + bubbleH + arrowH
+
+        // Kunci stabilitas koordinat:
+        // MapLibre meletakkan custom marker pada titik Center (0.5, 0.5) dari bitmap.
+        // Dengan menjadikan arrowTipY tepat di tengah vertikal (totalH = arrowTipY * 2),
+        // maka ujung panah pin SELALU menancap 100% presisi di koordinat GPS warung,
+        // baik saat pin biasa, saat ada promo diskon, maupun saat foto warung mekar di atas pin.
+        // Tidak ada lagi pergeseran / membesar ke atas dan ke bawah.
+        val totalH = arrowTipY * 2f
 
         val bitmap = Bitmap.createBitmap(
-            totalW.toInt().coerceAtLeast(1),
-            totalH.toInt().coerceAtLeast(1),
+            totalW.roundToInt().coerceAtLeast(1),
+            totalH.roundToInt().coerceAtLeast(1),
             Bitmap.Config.ARGB_8888
         )
         val canvas = Canvas(bitmap)
