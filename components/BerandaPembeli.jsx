@@ -528,6 +528,7 @@ export default function BerandaPembeli() {
           </button>
         </div>
       </div>
+    </div>
 
       {offline ? (
         <div className="absolute inset-x-0 top-16 z-[1100] px-3">

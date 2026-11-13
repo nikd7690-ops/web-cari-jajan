@@ -128,6 +128,12 @@ class VendorRepository(private val api: ApiService) {
     private inline fun <T> call(block: () -> T): Result<T> = try {
         Result.success(block())
     } catch (e: Exception) {
-        Result.failure(e)
+        val errorMsg = e.message.orEmpty()
+        val friendlyEx = if (errorMsg.contains("<!DOCTYPE") || errorMsg.contains("<html") || errorMsg.contains("had '<' instead")) {
+            ApiException("Server belum memperbarui endpoint API ini. Mohon tunggu proses deploy server selesai.")
+        } else {
+            e
+        }
+        Result.failure(friendlyEx)
     }
 }
