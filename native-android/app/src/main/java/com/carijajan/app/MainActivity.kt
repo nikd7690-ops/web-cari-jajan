@@ -49,6 +49,13 @@ class MainActivity : ComponentActivity() {
                             container = container,
                             onLogin = { navController.navigate("masuk") },
                             onDashboard = { navController.navigate("dashboard") },
+                            onAdd = {
+                                if (container.authRepository.user.value != null) {
+                                    navController.navigate("edit-warung/new")
+                                } else {
+                                    navController.navigate("masuk")
+                                }
+                            },
                             onVendor = { id -> navController.navigate("vendor/$id") }
                         )
                     }

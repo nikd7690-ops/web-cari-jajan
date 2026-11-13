@@ -1,5 +1,6 @@
 package com.carijajan.app.ui.components
 
+import android.view.Gravity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,7 +34,6 @@ import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
-import org.maplibre.android.maps.Style
 
 @Composable
 fun PetaWarung(
@@ -43,6 +43,7 @@ fun PetaWarung(
     userLocation: LatLng?,
     vendors: List<VendorDto>,
     selectedId: String?,
+    bearingResetTrigger: Int = 0,
     onSelectVendor: (String) -> Unit
 ) {
     val context = LocalContext.current
@@ -80,7 +81,14 @@ fun PetaWarung(
             view.getMapAsync { map ->
                 mapRef = map
                 map.cameraPosition = CameraPosition.Builder().target(center).zoom(zoom).build()
-                map.setStyle(BuildConfig.MAP_STYLE_URL) { style ->
+
+                // Konfigurasi kompas bawaan MapLibre: sebelah kanan agak ke bawah
+                val density = context.resources.displayMetrics.density
+                map.uiSettings.isCompassEnabled = true
+                map.uiSettings.compassGravity = Gravity.BOTTOM or Gravity.END
+                map.uiSettings.setCompassMargins(0, 0, (16 * density).toInt(), (110 * density).toInt())
+
+                map.setStyle(BuildConfig.MAP_STYLE_URL) { _ ->
                     styleSiap = true
                     tampilkanMarker(map, vendors, userLocation, selectedId)
                 }
@@ -96,15 +104,16 @@ fun PetaWarung(
             }
         }
 
+        // Atribusi OpenStreetMap dan OpenFreeMap (wajib ada dan tidak boleh ditutupi)
         Text(
             text = "© kontributor OpenStreetMap · OpenFreeMap",
             color = Color(0xFF3F3F46),
             fontSize = 9.sp,
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(start = 6.dp, bottom = 4.dp)
-                .background(Color.White.copy(alpha = 0.75f), RoundedCornerShape(4.dp))
-                .padding(horizontal = 4.dp, vertical = 1.dp)
+                .padding(start = 10.dp, bottom = 90.dp)
+                .background(Color.White.copy(alpha = 0.85f), RoundedCornerShape(4.dp))
+                .padding(horizontal = 5.dp, vertical = 2.dp)
         )
     }
 
@@ -118,6 +127,13 @@ fun PetaWarung(
         val map = mapRef ?: return@LaunchedEffect
         if (!styleSiap) return@LaunchedEffect
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(center, zoom), 600)
+    }
+
+    LaunchedEffect(bearingResetTrigger) {
+        if (bearingResetTrigger > 0) {
+            val map = mapRef ?: return@LaunchedEffect
+            map.animateCamera(CameraUpdateFactory.bearingTo(0.0), 500)
+        }
     }
 }
 
