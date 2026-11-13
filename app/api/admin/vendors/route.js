@@ -4,26 +4,21 @@ import { connectDB } from "@/lib/mongodb";
 import Vendor from "@/models/Vendor";
 import { requireAdmin } from "@/lib/apiAuth";
 
-const statusSchema = z.enum(["pending", "approved", "rejected", "semua"]);
-
 export async function GET(request) {
   const { response } = await requireAdmin(request);
   if (response) return response;
 
-  const status = request.nextUrl.searchParams.get("status") ?? "semua";
-  const parsed = statusSchema.safeParse(status);
+  const rawStatus = request.nextUrl.searchParams.get("status")?.trim().toLowerCase();
 
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Status warung tidak valid" },
-      { status: 400 }
-    );
+  let filter = {};
+  if (rawStatus && rawStatus !== "semua" && rawStatus !== "all" && rawStatus !== "") {
+    if (["pending", "approved", "rejected"].includes(rawStatus)) {
+      filter = { status: rawStatus };
+    }
   }
 
   try {
     await connectDB();
-
-    const filter = parsed.data === "semua" ? {} : { status: parsed.data };
 
     const vendors = await Vendor.find(filter)
       .sort({ createdAt: -1 })

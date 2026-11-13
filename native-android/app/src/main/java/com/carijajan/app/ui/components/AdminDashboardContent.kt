@@ -102,7 +102,7 @@ fun AdminDashboardContent(
         loading = true
         errorPesan = ""
         scope.launch {
-            val resVendors = container.vendorRepository.adminVendors(filterStatusVendor)
+            val resVendors = container.vendorRepository.adminVendors("semua")
             val resMembers = container.vendorRepository.adminMembers()
             val resReports = container.vendorRepository.daftarLaporan()
 
