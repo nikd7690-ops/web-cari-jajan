@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Map
@@ -886,7 +887,7 @@ fun EditWarungScreen(
 
         // ── Fitur Khusus Mitra: Zero Waste Food (Diskon Sewaktu-waktu) ───────
         if (!isPengguna) {
-            JudulBagian("🌿 Zero Waste Food (Penyelamat Makanan)")
+            JudulBagian("Zero Waste Food (Penyelamat Makanan)", icon = Icons.Default.Eco)
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = Color(0xFFFFFBEB),

@@ -23,9 +23,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DeliveryDining
 import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -252,11 +254,20 @@ fun WarungDetailScreen(
                             }
 
                             Spacer(Modifier.height(8.dp))
-                            Text(
-                                text = "⏰ Jam Operasional: ${toko.jamBuka} - ${toko.jamTutup}",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = BrandMaroon.copy(alpha = 0.8f)
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Schedule,
+                                    contentDescription = null,
+                                    tint = BrandMaroon.copy(alpha = 0.8f),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text(
+                                    text = "Jam Operasional: ${toko.jamBuka} - ${toko.jamTutup}",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = BrandMaroon.copy(alpha = 0.8f)
+                                )
+                            }
 
                             if (!toko.buka) {
                                 Spacer(Modifier.height(6.dp))
@@ -339,7 +350,7 @@ fun WarungDetailScreen(
                                 Spacer(Modifier.width(12.dp))
                                 Column {
                                     Text(
-                                        "🌿 Promo Zero Waste Food (-$zeroWasteDiskon%)",
+                                        "Promo Zero Waste Food (-$zeroWasteDiskon%)",
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF92400E),
                                         fontSize = 13.sp
@@ -525,12 +536,23 @@ fun WarungDetailScreen(
                                 .fillMaxWidth()
                                 .padding(top = 8.dp)
                         ) {
-                            Text(
-                                text = "ℹ️ Warung ini melayani beli langsung di tempat (tanpa kontak WhatsApp online).",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = BrandOrangeDark,
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.padding(10.dp)
-                            )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = null,
+                                    tint = BrandOrangeDark,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(Modifier.width(6.dp))
+                                Text(
+                                    text = "Warung ini melayani beli langsung di tempat (tanpa kontak WhatsApp online).",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = BrandOrangeDark
+                                )
+                            }
                         }
                     }
                 }

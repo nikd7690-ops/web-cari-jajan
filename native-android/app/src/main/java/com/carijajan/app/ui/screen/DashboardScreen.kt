@@ -23,8 +23,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationSearching
 import androidx.compose.material.icons.filled.Logout
@@ -197,7 +201,7 @@ fun DashboardScreen(
                 modifier = Modifier.weight(1f)
             ) {
             // =========================================================================
-            // 🍲 TAMPILAN DASHBOARD PENGGUNA / MEMBER (KOMUNITAS)
+            // TAMPILAN DASHBOARD PENGGUNA / MEMBER (KOMUNITAS)
             // =========================================================================
             if (!isMitra) {
                 val xp = user?.xp ?: 0
@@ -274,11 +278,20 @@ fun DashboardScreen(
                             )
 
                             Spacer(Modifier.height(10.dp))
-                            Text(
-                                "🎁 Setiap warung baru yang Anda ajukan dan lolos verifikasi admin memberikan +50 XP!",
-                                fontSize = 11.sp,
-                                color = BrandMaroon
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.CardGiftcard,
+                                    contentDescription = null,
+                                    tint = BrandOrange,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text(
+                                    "Setiap warung baru yang Anda ajukan dan lolos verifikasi admin memberikan +50 XP!",
+                                    fontSize = 11.sp,
+                                    color = BrandMaroon
+                                )
+                            }
                         }
                     }
                 }
@@ -358,7 +371,7 @@ fun DashboardScreen(
             }
 
             // =========================================================================
-            // 🏪 TAMPILAN DASHBOARD PENJUAL / PEMILIK WARUNG
+            // TAMPILAN DASHBOARD PENJUAL / PEMILIK WARUNG
             // =========================================================================
             else {
                 // 1. Kartu Statistik Pengunjung & Radar
@@ -507,9 +520,15 @@ fun DashboardScreen(
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD97706)),
                                     shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth().bounceEffect()
                                 ) {
-                                    Text(if (zeroWasteDisimpan) "✓ Promo Berhasil Diaktifkan" else "Simpan Promo Zero Waste", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    if (zeroWasteDisimpan) {
+                                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                        Spacer(Modifier.width(6.dp))
+                                        Text("Promo Berhasil Diaktifkan", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    } else {
+                                        Text("Simpan Promo Zero Waste", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
                                 }
                             }
                         }
@@ -556,12 +575,25 @@ fun DashboardScreen(
                             }
                         }
                         if (sudahPunyaWarung) {
-                            Text(
-                                "📌 Ketentuan Mitra: 1 akun mitra mengelola 1 warung utama. Hubungi admin bila ingin mengajukan pendaftaran warung kedua/cabang.",
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            Row(
+                                verticalAlignment = Alignment.Top,
                                 modifier = Modifier.padding(top = 4.dp)
-                            )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier
+                                        .size(13.dp)
+                                        .padding(top = 1.dp)
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text(
+                                    "Ketentuan Mitra: 1 akun mitra mengelola 1 warung utama. Hubungi admin bila ingin mengajukan pendaftaran warung kedua/cabang.",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
@@ -640,12 +672,18 @@ fun DashboardScreen(
                 dialogRevisiWarung = null
                 dialogRevisiTerkirim = false
             },
-            icon = { Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = null, tint = Color(0xFF2563EB)) },
-            title = { Text("Ajukan Usulan Perubahan") },
+            icon = {
+                Icon(
+                    imageVector = if (dialogRevisiTerkirim) Icons.Default.CheckCircle else Icons.AutoMirrored.Filled.HelpOutline,
+                    contentDescription = null,
+                    tint = if (dialogRevisiTerkirim) BrandOrange else Color(0xFF2563EB)
+                )
+            },
+            title = { Text(if (dialogRevisiTerkirim) "Usulan Terkirim" else "Ajukan Usulan Perubahan") },
             text = {
                 if (dialogRevisiTerkirim) {
                     Text(
-                        "✓ Terima kasih! Usulan revisi untuk warung '${v.namaToko}' telah dikirim ke kurator admin & pemilik warung untuk ditinjau.",
+                        "Terima kasih! Usulan revisi untuk warung '${v.namaToko}' telah dikirim ke kurator admin & pemilik warung untuk ditinjau.",
                         color = BrandOrange,
                         fontWeight = FontWeight.Medium
                     )
@@ -775,22 +813,33 @@ private fun PembeliVendorCard(
                             isRejected -> Color(0xFFDC2626)
                             else -> Color(0xFFB45309)
                         }
-                        val labelStatus = when {
-                            isApproved -> "✓ Terverifikasi Admin (+50 XP)"
-                            isRejected -> "✕ Ditolak Kurasi"
-                            else -> "⏳ Menunggu Konfirmasi Admin"
+                        val (iconStatus, labelStatus) = when {
+                            isApproved -> Icons.Default.CheckCircle to "Terverifikasi Admin (+50 XP)"
+                            isRejected -> Icons.Default.Cancel to "Ditolak Kurasi"
+                            else -> Icons.Default.HourglassEmpty to "Menunggu Konfirmasi Admin"
                         }
                         Surface(
                             color = bgCol,
                             shape = RoundedCornerShape(50)
                         ) {
-                            Text(
-                                text = labelStatus,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = txtCol,
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            )
+                            ) {
+                                Icon(
+                                    imageVector = iconStatus,
+                                    contentDescription = null,
+                                    tint = txtCol,
+                                    modifier = Modifier.size(11.dp)
+                                )
+                                Spacer(Modifier.width(3.dp))
+                                Text(
+                                    text = labelStatus,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = txtCol
+                                )
+                            }
                         }
                     }
                 }
@@ -884,13 +933,24 @@ private fun PenjualVendorCard(
                             color = if (isApproved) Color(0xFFECFDF5) else Color(0xFFFEF3C7),
                             shape = RoundedCornerShape(50)
                         ) {
-                            Text(
-                                text = if (isApproved) "✓ Aktif di Peta" else "⏳ Menunggu Verifikasi",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isApproved) Color(0xFF047857) else Color(0xFFB45309),
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            )
+                            ) {
+                                Icon(
+                                    imageVector = if (isApproved) Icons.Default.CheckCircle else Icons.Default.HourglassEmpty,
+                                    contentDescription = null,
+                                    tint = if (isApproved) Color(0xFF047857) else Color(0xFFB45309),
+                                    modifier = Modifier.size(11.dp)
+                                )
+                                Spacer(Modifier.width(3.dp))
+                                Text(
+                                    text = if (isApproved) "Aktif di Peta" else "Menunggu Verifikasi",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isApproved) Color(0xFF047857) else Color(0xFFB45309)
+                                )
+                            }
                         }
 
                         // Badge Zero Waste jika aktif
@@ -900,13 +960,24 @@ private fun PenjualVendorCard(
                                 border = BorderStroke(1.dp, Color(0xFFFDE68A)),
                                 shape = RoundedCornerShape(50)
                             ) {
-                                Text(
-                                    "🌿 Zero Waste -$zeroWasteDiskon%",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFFD97706),
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Eco,
+                                        contentDescription = null,
+                                        tint = Color(0xFFD97706),
+                                        modifier = Modifier.size(11.dp)
+                                    )
+                                    Spacer(Modifier.width(3.dp))
+                                    Text(
+                                        "Zero Waste -$zeroWasteDiskon%",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFD97706)
+                                    )
+                                }
                             }
                         }
                     }

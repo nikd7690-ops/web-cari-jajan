@@ -100,11 +100,11 @@ data class VendorDto(
 ) {
     val lat: Double get() = lokasi?.coordinates?.getOrNull(1) ?: 0.0
     val lng: Double get() = lokasi?.coordinates?.getOrNull(0) ?: 0.0
-    val kategoriEmoji: String get() = when (kategori) {
-        "pkl" -> "🍢"
-        "keliling" -> "🚲"
-        "rumah_makan" -> "🍽️"
-        else -> "🏪"
+    val kategoriLabel: String get() = when (kategori) {
+        "pkl" -> "Gerobak PKL"
+        "keliling" -> "Keliling"
+        "rumah_makan" -> "Rumah Makan"
+        else -> "Warung Tetap"
     }
 }
 
@@ -254,11 +254,11 @@ data class LaporanDto(
     val createdAt: String? = null
 ) {
     val alasanLabel: String get() = when (alasan) {
-        "lokasi_salah" -> "📍 Titik lokasi tidak sesuai peta"
-        "sudah_tutup" -> "🚪 Toko sudah tutup permanen"
-        "menu_salah" -> "📋 Menu/harga tidak akurat"
-        "duplikat" -> "👥 Warung duplikat"
-        else -> "⚠️ Masalah lainnya"
+        "lokasi_salah" -> "Titik lokasi tidak sesuai peta"
+        "sudah_tutup" -> "Toko sudah tutup permanen"
+        "menu_salah" -> "Menu/harga tidak akurat"
+        "duplikat" -> "Warung duplikat"
+        else -> "Masalah lainnya"
     }
 }
 

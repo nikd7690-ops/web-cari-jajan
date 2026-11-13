@@ -51,6 +51,17 @@ import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.Fastfood
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.RestaurantMenu
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.TwoWheeler
+import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.material.icons.filled.WbTwilight
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Map
@@ -459,7 +470,7 @@ fun BerandaScreen(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // ── Tombol Filter Waktu: Pagi, Siang, Malam (Ikon Saja) ─────
+                // ── Tombol Filter Waktu: Pagi, Siang, Malam (Kit Pack Icons) ─────
                 Surface(
                     shape = RoundedCornerShape(20.dp),
                     color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
@@ -472,11 +483,11 @@ fun BerandaScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         listOf(
-                            Triple("semua", "Semua", "🕒"),
-                            Triple("pagi", "Pagi", "🌅"),
-                            Triple("siang", "Siang", "☀️"),
-                            Triple("malam", "Malam", "🌙")
-                        ).forEach { (key, label, emoji) ->
+                            Triple("semua", "Semua", Icons.Default.Schedule),
+                            Triple("pagi", "Pagi", Icons.Default.WbTwilight),
+                            Triple("siang", "Siang", Icons.Default.WbSunny),
+                            Triple("malam", "Malam", Icons.Default.DarkMode)
+                        ).forEach { (key, label, iconKit) ->
                             val terpilih = filterWaktu == key
                             Surface(
                                 shape = CircleShape,
@@ -489,9 +500,11 @@ fun BerandaScreen(
                                     contentAlignment = Alignment.Center,
                                     modifier = Modifier.fillMaxSize()
                                 ) {
-                                    Text(
-                                        text = emoji,
-                                        fontSize = 13.sp
+                                    Icon(
+                                        imageVector = iconKit,
+                                        contentDescription = label,
+                                        tint = if (terpilih) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(15.dp)
                                     )
                                 }
                             }
@@ -669,12 +682,45 @@ fun BerandaScreen(
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
-                                Text(
-                                    text = "Jarak ${Format.jarak(jarak)} • 🛵 ${Navigasi.estimasiWaktuMotor(jarak)} • 🚶 ${Navigasi.estimasiWaktuJalan(jarak)}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "Jarak ${Format.jarak(jarak)} • ",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Default.TwoWheeler,
+                                        contentDescription = "Motor",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Spacer(Modifier.width(2.dp))
+                                    Text(
+                                        text = Navigasi.estimasiWaktuMotor(jarak),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Text(
+                                        text = " • ",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Default.DirectionsWalk,
+                                        contentDescription = "Jalan",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Spacer(Modifier.width(2.dp))
+                                    Text(
+                                        text = Navigasi.estimasiWaktuJalan(jarak),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
                             }
                             IconButton(
                                 onClick = {
@@ -827,7 +873,17 @@ fun BerandaScreen(
                                     )
                                 } else {
                                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                        Text(preview.kategoriEmoji, fontSize = 28.sp)
+                                        Icon(
+                                            imageVector = when (preview.kategori) {
+                                                "pkl" -> Icons.Default.Fastfood
+                                                "keliling" -> Icons.Default.TwoWheeler
+                                                "rumah_makan", "cafe" -> Icons.Default.Restaurant
+                                                else -> Icons.Default.Storefront
+                                            },
+                                            contentDescription = null,
+                                            tint = BrandOrange,
+                                            modifier = Modifier.size(32.dp)
+                                        )
                                     }
                                 }
                             }
@@ -1334,10 +1390,10 @@ private fun VendorRowTerdekat(
                         ) {
                             Text(
                                 text = when (vendor.kategori) {
-                                    "pkl" -> "🛒 Gerobak PKL"
-                                    "keliling" -> "🛵 Keliling"
-                                    "warung" -> "🏠 Warung Tetap"
-                                    "rumah_makan", "cafe" -> "🍽️ Rumah Makan"
+                                    "pkl" -> "Gerobak PKL"
+                                    "keliling" -> "Keliling"
+                                    "warung" -> "Warung"
+                                    "rumah_makan", "cafe" -> "Rumah Makan"
                                     else -> Format.labelKategori(vendor.kategori)
                                 },
                                 style = MaterialTheme.typography.labelSmall,
@@ -1405,7 +1461,9 @@ private fun VendorRowTerdekat(
             ) {
                 OutlinedButton(
                     onClick = onMulaiRute,
-                    modifier = Modifier.height(32.dp),
+                    modifier = Modifier
+                        .height(32.dp)
+                        .bounceEffect(),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Icon(
@@ -1419,17 +1477,34 @@ private fun VendorRowTerdekat(
                 Spacer(modifier = Modifier.width(6.dp))
                 OutlinedButton(
                     onClick = onLihatDiPeta,
-                    modifier = Modifier.height(32.dp),
+                    modifier = Modifier
+                        .height(32.dp)
+                        .bounceEffect(),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Peta", fontSize = 11.sp)
+                    Icon(
+                        imageVector = Icons.Default.Place,
+                        contentDescription = "Peta",
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("Peta", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                 }
                 Spacer(modifier = Modifier.width(6.dp))
-                TextButton(
+                OutlinedButton(
                     onClick = onClick,
-                    modifier = Modifier.height(32.dp)
+                    modifier = Modifier
+                        .height(32.dp)
+                        .bounceEffect(),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Menu →", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Icon(
+                        imageVector = Icons.Default.RestaurantMenu,
+                        contentDescription = "Menu",
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("Menu", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
