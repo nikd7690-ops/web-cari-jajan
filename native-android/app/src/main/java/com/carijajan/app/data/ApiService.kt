@@ -53,4 +53,8 @@ interface ApiService {
     @Multipart
     @POST("api/upload")
     suspend fun upload(@Part file: MultipartBody.Part): Response<UploadResponse>
+
+    @Multipart
+    @POST("api/menu-dari-foto")
+    suspend fun scanMenuFoto(@Part file: MultipartBody.Part): Response<MenuScanAiResponse>
 }

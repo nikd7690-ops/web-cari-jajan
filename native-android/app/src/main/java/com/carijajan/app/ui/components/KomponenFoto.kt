@@ -133,7 +133,7 @@ fun KomponenFoto(
 }
 
 @Composable
-private fun KameraDialog(
+fun KameraDialog(
     onDismiss: () -> Unit,
     onBytes: (ByteArray) -> Unit
 ) {

@@ -1,5 +1,12 @@
 package com.carijajan.app.ui.screen
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,8 +21,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.VolunteerActivism
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -23,20 +41,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.VolunteerActivism
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,15 +59,24 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.carijajan.app.AppContainer
 import com.carijajan.app.data.MenuInput
 import com.carijajan.app.data.VendorInput
 import com.carijajan.app.ui.components.JudulBagian
+import com.carijajan.app.ui.components.KameraDialog
 import com.carijajan.app.ui.components.KomponenFoto
 import com.carijajan.app.ui.components.PesanError
+import com.carijajan.app.ui.components.PilihTitikPetaDialog
+import com.carijajan.app.util.Gambar
+import com.carijajan.app.util.Lokasi
 import kotlinx.coroutines.launch
 
 private val KATEGORI_LIST = listOf(
@@ -81,9 +102,11 @@ fun EditWarungScreen(
     onSuccess: () -> Unit,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val isEdit = vendorId != null
     val tipeAkun by container.authRepository.tipeAkun.collectAsStateWithLifecycle()
+    val bisaUbahKetersediaan = tipeAkun != "pembeli"
 
     // ── Form state ──────────────────────────────────────────────────────────────
     var namaToko by remember { mutableStateOf("") }
@@ -93,10 +116,26 @@ fun EditWarungScreen(
     var alamatPatokan by remember { mutableStateOf("") }
     var jamBuka by remember { mutableStateOf("07:00") }
     var jamTutup by remember { mutableStateOf("21:00") }
+    var adaWhatsApp by remember { mutableStateOf(true) }
     var nomorWA by remember { mutableStateOf("") }
     var layananAntar by remember { mutableStateOf(false) }
     var fotoUrl by remember { mutableStateOf("") }
     val menus = remember { mutableStateListOf<MenuBaris>() }
+
+    // ── Pilihan 2 Mode Tambah (Kamera Langsung vs Manual) ────────────────────────
+    var modeTambahKamera by remember { mutableStateOf(false) }
+    var kameraWarungTerbuka by remember { mutableStateOf(false) }
+    var gpsOtomatisLoading by remember { mutableStateOf(false) }
+    var pesanOtomatis by remember { mutableStateOf("") }
+
+    // ── Dialog Pilih Titik di Peta ──────────────────────────────────────────────
+    var petaPickerTerbuka by remember { mutableStateOf(false) }
+
+    // ── AI Scan Foto Menu ───────────────────────────────────────────────────────
+    var kameraMenuTerbuka by remember { mutableStateOf(false) }
+    var aiScanning by remember { mutableStateOf(false) }
+    var aiScanPesan by remember { mutableStateOf("") }
+    var aiDraftNotice by remember { mutableStateOf(false) }
 
     // ── Foto upload state ────────────────────────────────────────────────────────
     var fotoBytes by remember { mutableStateOf<ByteArray?>(null) }
@@ -108,6 +147,53 @@ fun EditWarungScreen(
     var loadingData by remember { mutableStateOf(isEdit) }
     var error by remember { mutableStateOf("") }
     var kategoriExpanded by remember { mutableStateOf(false) }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) kameraWarungTerbuka = true
+    }
+
+    val cameraMenuPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) kameraMenuTerbuka = true
+    }
+
+    val galleryMenuLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            val bytes = Gambar.kompresUri(context, uri)
+            if (bytes != null) {
+                // Panggil AI OCR Gemini
+                scope.launch {
+                    aiScanning = true
+                    aiScanPesan = "Gemini AI sedang membaca menu dari foto..."
+                    error = ""
+                    val res = container.vendorRepository.scanMenuFoto(bytes)
+                    aiScanning = false
+                    aiScanPesan = ""
+                    res.onSuccess { hasil ->
+                        if (hasil.isNotEmpty()) {
+                            menus.addAll(hasil.map {
+                                MenuBaris(
+                                    namaMenu = it.namaMenu,
+                                    harga = it.harga?.toLong()?.toString() ?: "",
+                                    tersedia = true
+                                )
+                            })
+                            aiDraftNotice = true
+                        } else {
+                            error = "AI tidak mendeteksi teks menu. Silakan tambahkan menu manual."
+                        }
+                    }.onFailure {
+                        error = "Gagal memindai foto: ${it.message}. Silakan tambahkan menu manual."
+                    }
+                }
+            }
+        }
+    }
 
     // ── Load data saat mode edit ────────────────────────────────────────────────
     LaunchedEffect(vendorId) {
@@ -123,6 +209,7 @@ fun EditWarungScreen(
             jamBuka = v.jamBuka
             jamTutup = v.jamTutup
             nomorWA = v.nomorWA
+            adaWhatsApp = v.nomorWA.isNotBlank()
             layananAntar = v.layananAntar
             fotoUrl = v.foto
             menus.clear()
@@ -131,14 +218,39 @@ fun EditWarungScreen(
         loadingData = false
     }
 
+    // ── Helper ambil GPS + Alamat Otomatis ───────────────────────────────────────
+    fun isiGpsDanAlamatOtomatis() {
+        gpsOtomatisLoading = true
+        scope.launch {
+            val loc = Lokasi.ambil(context)
+            if (loc != null) {
+                latStr = loc.latitude.toString()
+                lngStr = loc.longitude.toString()
+                val namaArea = Lokasi.dapatkanNamaArea(context, loc.latitude, loc.longitude)
+                if (alamatPatokan.isBlank()) {
+                    alamatPatokan = namaArea
+                }
+                pesanOtomatis = "Koordinat GPS ($namaArea) berhasil terisi otomatis!"
+            } else {
+                error = "Gagal mendeteksi sinyal GPS. Pastikan izin lokasi aktif."
+            }
+            gpsOtomatisLoading = false
+        }
+    }
+
     // ── Upload foto lalu simpan ─────────────────────────────────────────────────
     fun simpan() {
-        // Validasi dasar
         if (namaToko.isBlank()) { error = "Nama toko wajib diisi."; return }
         val lat = latStr.toDoubleOrNull()
         val lng = lngStr.toDoubleOrNull()
-        if (lat == null || lng == null) { error = "Koordinat latitude dan longitude harus berupa angka."; return }
-        if (nomorWA.isBlank()) { error = "Nomor WhatsApp wajib diisi."; return }
+        if (lat == null || lng == null) {
+            error = "Koordinat lokasi wajib diisi (gunakan GPS atau pilih titik di peta)."
+            return
+        }
+        if (adaWhatsApp && nomorWA.isBlank()) {
+            error = "Nomor WhatsApp wajib diisi jika opsi WhatsApp aktif, atau matikan opsi WhatsApp."
+            return
+        }
         if (jamBuka.isBlank() || jamTutup.isBlank()) { error = "Jam buka dan tutup wajib diisi."; return }
 
         loading = true
@@ -149,7 +261,7 @@ fun EditWarungScreen(
             var finalFotoUrl = fotoUrl
             if (fotoBytes != null) {
                 uploadProses = true
-                uploadPesan = "Mengunggah foto..."
+                uploadPesan = "Mengunggah foto warung..."
                 val uploadRes = container.vendorRepository.uploadJpeg(fotoBytes!!)
                 uploadProses = false
                 uploadPesan = ""
@@ -167,7 +279,7 @@ fun EditWarungScreen(
                     MenuInput(
                         namaMenu = baris.namaMenu.trim(),
                         harga = baris.harga.toDoubleOrNull() ?: 0.0,
-                        tersedia = baris.tersedia
+                        tersedia = if (bisaUbahKetersediaan) baris.tersedia else true
                     )
                 }
 
@@ -176,10 +288,10 @@ fun EditWarungScreen(
                 kategori = kategori,
                 lat = lat,
                 lng = lng,
-                alamatPatokan = alamatPatokan.trim(),
+                alamatPatokan = alamatPatokan.trim().ifBlank { "Lokasi terdaftar via Cari Jajan" },
                 jamBuka = jamBuka.trim(),
                 jamTutup = jamTutup.trim(),
-                nomorWA = nomorWA.trim(),
+                nomorWA = if (adaWhatsApp) nomorWA.trim() else "",
                 layananAntar = layananAntar,
                 foto = finalFotoUrl,
                 menus = menuInputs
@@ -197,7 +309,7 @@ fun EditWarungScreen(
         }
     }
 
-    // ── UI ───────────────────────────────────────────────────────────────────────
+    // ── UI Loading ──────────────────────────────────────────────────────────────
     if (loadingData) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -271,13 +383,115 @@ fun EditWarungScreen(
             }
         }
 
-        // ── Info dasar ──────────────────────────────────────────────────────────
-        JudulBagian("Info dasar")
+        // ── 2 Pilihan Metode Tambah: Kamera Langsung vs Manual (Khusus Tambah Baru) ──
+        if (!isEdit) {
+            JudulBagian("Pilih Cara Tambah Warung")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (modeTambahKamera) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    border = if (modeTambahKamera) androidx.compose.foundation.BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable {
+                            modeTambahKamera = true
+                            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                                kameraWarungTerbuka = true
+                            } else {
+                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                            }
+                        }
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = null,
+                            tint = if (modeTambahKamera) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "Langsung Kamera",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = if (modeTambahKamera) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Foto warung → GPS & alamat otomatis",
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (!modeTambahKamera) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    border = if (!modeTambahKamera) androidx.compose.foundation.BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { modeTambahKamera = false }
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = null,
+                            tint = if (!modeTambahKamera) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "Input Manual",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = if (!modeTambahKamera) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Ketik bertahap & pilih titik peta",
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+            }
+
+            if (pesanOtomatis.isNotBlank()) {
+                Surface(
+                    color = Color(0xFFECFDF5),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF059669), modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(pesanOtomatis, fontSize = 11.sp, color = Color(0xFF065F46), fontWeight = FontWeight.Medium)
+                    }
+                }
+            }
+        }
+
+        // ── Info Dasar ──────────────────────────────────────────────────────────
+        JudulBagian("Info Dasar")
 
         OutlinedTextField(
             value = namaToko,
             onValueChange = { namaToko = it },
-            label = { Text("Nama toko *") },
+            label = { Text("Nama toko / warung *") },
+            placeholder = { Text("Contoh: Nasi Goreng Pak Slamet") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -316,19 +530,49 @@ fun EditWarungScreen(
         OutlinedTextField(
             value = alamatPatokan,
             onValueChange = { alamatPatokan = it },
-            label = { Text("Patokan alamat") },
-            placeholder = { Text("Contoh: Depan Indomaret Jl. Kalimantan") },
+            label = { Text("Patokan Alamat") },
+            placeholder = { Text("Contoh: Depan Indomaret Jl. Kalimantan, Sumbersari") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
 
-        // ── Koordinat ───────────────────────────────────────────────────────────
-        JudulBagian("Koordinat lokasi *")
+        // ── Koordinat Lokasi & Pilihan Titik Manual ─────────────────────────────
+        JudulBagian("Titik Lokasi Warung *")
         Text(
-            "Buka Google Maps → tahan titik lokasi → salin angka latitude,longitude",
+            "Gunakan lokasi GPS saat ini atau pilih titik langsung di peta interaktif.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = { isiGpsDanAlamatOtomatis() },
+                enabled = !gpsOtomatisLoading,
+                modifier = Modifier.weight(1f)
+            ) {
+                if (gpsOtomatisLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(6.dp))
+                } else {
+                    Icon(imageVector = Icons.Default.MyLocation, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                }
+                Text("Isi GPS Saya", fontSize = 12.sp)
+            }
+
+            OutlinedButton(
+                onClick = { petaPickerTerbuka = true },
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(imageVector = Icons.Default.Map, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Pilih di Peta", fontSize = 12.sp)
+            }
+        }
+
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = latStr,
@@ -350,8 +594,8 @@ fun EditWarungScreen(
             )
         }
 
-        // ── Jam operasional ─────────────────────────────────────────────────────
-        JudulBagian("Jam operasional *")
+        // ── Jam Operasional ─────────────────────────────────────────────────────
+        JudulBagian("Jam Operasional *")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = jamBuka,
@@ -371,28 +615,64 @@ fun EditWarungScreen(
             )
         }
 
-        // ── Kontak & layanan ────────────────────────────────────────────────────
-        JudulBagian("Kontak & layanan")
+        // ── Opsi WhatsApp (Bisa Dihidupkan / Dimatikan) ──────────────────────────
+        JudulBagian("Kontak WhatsApp & Pemesanan")
 
-        OutlinedTextField(
-            value = nomorWA,
-            onValueChange = { nomorWA = it },
-            label = { Text("Nomor WhatsApp *") },
-            placeholder = { Text("08123456789") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-            singleLine = true,
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
             modifier = Modifier.fillMaxWidth()
-        )
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Sediakan Nomor WhatsApp",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                        Text(
+                            text = if (adaWhatsApp) "Pembeli dapat memesan via WhatsApp" else "Warung hanya melayani beli langsung di tempat",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = adaWhatsApp,
+                        onCheckedChange = {
+                            adaWhatsApp = it
+                            if (!it) nomorWA = ""
+                        }
+                    )
+                }
+
+                if (adaWhatsApp) {
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = nomorWA,
+                        onValueChange = { nomorWA = it },
+                        label = { Text("Nomor WhatsApp *") },
+                        placeholder = { Text("08123456789") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Layanan antar", modifier = Modifier.weight(1f))
+            Text("Layanan antar penjual", modifier = Modifier.weight(1f))
             Switch(checked = layananAntar, onCheckedChange = { layananAntar = it })
         }
 
-        // ── Foto ────────────────────────────────────────────────────────────────
+        // ── Foto Warung ─────────────────────────────────────────────────────────
         HorizontalDivider()
         KomponenFoto(
             fotoBytes = fotoBytes,
@@ -402,29 +682,98 @@ fun EditWarungScreen(
             onHapus = { fotoBytes = null; fotoUrl = "" }
         )
 
-        // ── Menu ────────────────────────────────────────────────────────────────
+        // ── Bagian Menu & Scan Foto AI ──────────────────────────────────────────
         HorizontalDivider()
-        JudulBagian("Menu (opsional)")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            JudulBagian("Menu Makanan & Minuman")
+        }
+
         Text(
-            "Tambahkan menu beserta harga aslinya. Harga tidak dipotong komisi.",
+            "Tambahkan menu secara manual atau gunakan AI untuk memindai daftar harga dari foto.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
+        // Tombol Aksi Tambah Menu & Scan Foto AI
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedButton(
+                onClick = { menus.add(MenuBaris()) },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("+ Menu Manual", fontSize = 12.sp)
+            }
+
+            Button(
+                onClick = {
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                        kameraMenuTerbuka = true
+                    } else {
+                        cameraMenuPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                },
+                enabled = !aiScanning,
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Scan Foto AI", fontSize = 12.sp)
+            }
+        }
+
+        TextButton(
+            onClick = {
+                galleryMenuLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            },
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        ) {
+            Text("Atau pilih foto daftar menu dari galeri", fontSize = 11.sp)
+        }
+
+        if (aiScanning) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(vertical = 4.dp)
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                Text(aiScanPesan, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+            }
+        }
+
+        // Label Draf AI Sesuai Aturan AGENTS.md
+        if (aiDraftNotice) {
+            Surface(
+                color = Color(0xFFFEF3C7),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            ) {
+                Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFD97706), modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Column {
+                        Text("Draf hasil AI, periksa dulu!", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color(0xFF92400E))
+                        Text("Silakan periksa atau sesuaikan nama menu dan harga hasil scan sebelum disimpan.", fontSize = 11.sp, color = Color(0xFFB45309))
+                    }
+                }
+            }
+        }
+
+        // Daftar Item Menu
         menus.forEachIndexed { i, baris ->
             MenuBarisForm(
                 index = i + 1,
                 baris = baris,
+                bisaUbahKetersediaan = bisaUbahKetersediaan,
                 onChange = { menus[i] = it },
                 onHapus = { menus.removeAt(i) }
             )
-        }
-
-        TextButton(
-            onClick = { menus.add(MenuBaris()) },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("+ Tambah menu")
         }
 
         // ── Error & Simpan ──────────────────────────────────────────────────────
@@ -436,7 +785,7 @@ fun EditWarungScreen(
 
         Button(
             onClick = { simpan() },
-            enabled = !loading && !uploadProses,
+            enabled = !loading && !uploadProses && !aiScanning,
             modifier = Modifier.fillMaxWidth()
         ) {
             if (loading) {
@@ -455,12 +804,75 @@ fun EditWarungScreen(
 
         Spacer(Modifier.height(16.dp))
     }
+
+    // ── Dialog Kamera Langsung Tambah Warung (Foto + Auto GPS) ────────────────
+    if (kameraWarungTerbuka) {
+        KameraDialog(
+            onDismiss = { kameraWarungTerbuka = false },
+            onBytes = { bytes ->
+                kameraWarungTerbuka = false
+                fotoBytes = bytes
+                // Otomatis isi GPS dan Alamat
+                isiGpsDanAlamatOtomatis()
+            }
+        )
+    }
+
+    // ── Dialog Kamera Scan Daftar Menu (AI Gemini OCR) ────────────────────────
+    if (kameraMenuTerbuka) {
+        KameraDialog(
+            onDismiss = { kameraMenuTerbuka = false },
+            onBytes = { bytes ->
+                kameraMenuTerbuka = false
+                scope.launch {
+                    aiScanning = true
+                    aiScanPesan = "Gemini AI sedang membaca daftar menu & harga dari foto..."
+                    error = ""
+                    val res = container.vendorRepository.scanMenuFoto(bytes)
+                    aiScanning = false
+                    aiScanPesan = ""
+                    res.onSuccess { hasil ->
+                        if (hasil.isNotEmpty()) {
+                            menus.addAll(hasil.map {
+                                MenuBaris(
+                                    namaMenu = it.namaMenu,
+                                    harga = it.harga?.toLong()?.toString() ?: "",
+                                    tersedia = true
+                                )
+                            })
+                            aiDraftNotice = true
+                        } else {
+                            error = "AI tidak mendeteksi teks menu. Silakan tambahkan menu manual."
+                        }
+                    }.onFailure {
+                        error = "Gagal memindai foto: ${it.message}. Silakan tambahkan menu manual."
+                    }
+                }
+            }
+        )
+    }
+
+    // ── Dialog Interaktif Pilih Titik di Peta ────────────────────────────────
+    if (petaPickerTerbuka) {
+        PilihTitikPetaDialog(
+            initialLat = latStr.toDoubleOrNull(),
+            initialLng = lngStr.toDoubleOrNull(),
+            onPilih = { lat, lng, alamat ->
+                latStr = lat.toString()
+                lngStr = lng.toString()
+                alamatPatokan = alamat
+                pesanOtomatis = "Titik lokasi berhasil dipilih dari peta!"
+            },
+            onDismiss = { petaPickerTerbuka = false }
+        )
+    }
 }
 
 @Composable
 private fun MenuBarisForm(
     index: Int,
     baris: MenuBaris,
+    bisaUbahKetersediaan: Boolean,
     onChange: (MenuBaris) -> Unit,
     onHapus: () -> Unit
 ) {
@@ -487,6 +899,7 @@ private fun MenuBarisForm(
             value = baris.namaMenu,
             onValueChange = { onChange(baris.copy(namaMenu = it)) },
             label = { Text("Nama menu") },
+            placeholder = { Text("Contoh: Es Teh Manis") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -499,17 +912,35 @@ private fun MenuBarisForm(
                 value = baris.harga,
                 onValueChange = { onChange(baris.copy(harga = it)) },
                 label = { Text("Harga (Rp)") },
+                placeholder = { Text("5000") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
                 modifier = Modifier.weight(1f)
             )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Tersedia", style = MaterialTheme.typography.bodySmall)
-                Switch(
-                    checked = baris.tersedia,
-                    onCheckedChange = { onChange(baris.copy(tersedia = it)) },
+
+            if (bisaUbahKetersediaan) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Tersedia", style = MaterialTheme.typography.bodySmall)
+                    Switch(
+                        checked = baris.tersedia,
+                        onCheckedChange = { onChange(baris.copy(tersedia = it)) },
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
+            } else {
+                Surface(
+                    color = Color(0xFFF1F5F9),
+                    shape = RoundedCornerShape(6.dp),
                     modifier = Modifier.padding(start = 4.dp)
-                )
+                ) {
+                    Text(
+                        text = "Tersedia",
+                        fontSize = 11.sp,
+                        color = Color(0xFF475569),
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+                    )
+                }
             }
         }
     }

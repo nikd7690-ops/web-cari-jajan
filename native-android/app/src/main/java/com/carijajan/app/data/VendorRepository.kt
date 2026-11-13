@@ -56,6 +56,14 @@ class VendorRepository(private val api: ApiService) {
         res.body()?.url ?: throw ApiException("Gagal mengunggah foto")
     }
 
+    suspend fun scanMenuFoto(bytes: ByteArray, fileName: String = "menu.jpg"): Result<List<AiMenuItemDto>> = call {
+        val body = bytes.toRequestBody("image/jpeg".toMediaType())
+        val part = MultipartBody.Part.createFormData("file", fileName, body)
+        val res = api.scanMenuFoto(part)
+        if (!res.isSuccessful) throw ApiException(ApiErrors.message(res))
+        res.body()?.items ?: emptyList()
+    }
+
     private inline fun <T> call(block: () -> T): Result<T> = try {
         Result.success(block())
     } catch (e: Exception) {

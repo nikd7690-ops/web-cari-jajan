@@ -225,15 +225,30 @@ fun WarungDetailScreen(
                     Text("${Keranjang.hitungJumlahItem(cart)} item", modifier = Modifier.weight(1f))
                     Text("Total: ${Format.rupiah(Keranjang.hitungTotal(cart))}", fontWeight = FontWeight.SemiBold)
                 }
-                Button(
-                    onClick = {
-                        val teks = Keranjang.buatTeksPesanan(toko.namaToko, cart, mode)
-                        WhatsApp.open(context, toko.nomorWA, teks)
-                    },
-                    enabled = cart.isNotEmpty(),
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-                ) {
-                    Text(if (cart.isEmpty()) "Pilih menu dulu" else "Pesan via WhatsApp")
+                if (toko.nomorWA.isNotBlank()) {
+                    Button(
+                        onClick = {
+                            val teks = Keranjang.buatTeksPesanan(toko.namaToko, cart, mode)
+                            WhatsApp.open(context, toko.nomorWA, teks)
+                        },
+                        enabled = cart.isNotEmpty(),
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                    ) {
+                        Text(if (cart.isEmpty()) "Pilih menu dulu" else "Pesan via WhatsApp")
+                    }
+                } else {
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                    ) {
+                        Text(
+                            text = "ℹ️ Warung ini hanya melayani beli langsung di tempat (tanpa pesanan online WhatsApp)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(10.dp)
+                        )
+                    }
                 }
             }
         }

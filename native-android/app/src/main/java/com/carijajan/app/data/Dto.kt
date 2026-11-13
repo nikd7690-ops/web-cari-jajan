@@ -111,3 +111,16 @@ data class VendorInput(
     val foto: String = "",
     val menus: List<MenuInput> = emptyList()
 )
+
+@Serializable
+data class AiMenuItemDto(
+    val namaMenu: String = "",
+    val harga: Double? = null,
+    val yakin: Boolean = true
+)
+
+@Serializable
+data class MenuScanAiResponse(
+    val items: List<AiMenuItemDto> = emptyList(),
+    val error: String? = null
+)

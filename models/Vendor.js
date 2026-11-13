@@ -84,7 +84,8 @@ const VendorSchema = new mongoose.Schema(
     },
     nomorWA: {
       type: String,
-      required: true,
+      required: false,
+      default: "",
       trim: true,
     },
     layananAntar: {
