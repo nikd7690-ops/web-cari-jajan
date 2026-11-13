@@ -100,6 +100,10 @@ const VendorSchema = new mongoose.Schema(
       type: [MenuSchema],
       default: [],
     },
+    jarakPengajuanMeter: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

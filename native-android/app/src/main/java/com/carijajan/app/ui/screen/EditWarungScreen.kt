@@ -257,6 +257,23 @@ fun EditWarungScreen(
         error = ""
 
         scope.launch {
+            // Ambil titik GPS fisik perangkat saat ini untuk validasi Proof of Presence (maksimal 50 meter)
+            var deviceLoc = Lokasi.ambil(context)
+            if (!isEdit && deviceLoc != null) {
+                val jarakMeter = Lokasi.hitungJarakKm(
+                    deviceLoc.latitude,
+                    deviceLoc.longitude,
+                    lat,
+                    lng
+                ) * 1000.0
+
+                if (jarakMeter > 50.0) {
+                    loading = false
+                    error = "Proof of Presence Gagal: Posisi Anda berada sejauh ${jarakMeter.toInt()} meter dari titik warung. Anda wajib berada maksimal 50 meter dari lokasi fisik warung untuk mendaftarkannya."
+                    return@launch
+                }
+            }
+
             // Upload foto jika ada bytes baru
             var finalFotoUrl = fotoUrl
             if (fotoBytes != null) {
@@ -294,7 +311,9 @@ fun EditWarungScreen(
                 nomorWA = if (adaWhatsApp) nomorWA.trim() else "",
                 layananAntar = layananAntar,
                 foto = finalFotoUrl,
-                menus = menuInputs
+                menus = menuInputs,
+                userLat = deviceLoc?.latitude ?: lat,
+                userLng = deviceLoc?.longitude ?: lng
             )
 
             val res = if (isEdit) {
@@ -592,6 +611,33 @@ fun EditWarungScreen(
                 singleLine = true,
                 modifier = Modifier.weight(1f)
             )
+        }
+
+        // Badge Proof of Presence
+        Surface(
+            color = Color(0xFFF0FDF4),
+            shape = RoundedCornerShape(8.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBBF7D0)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.padding(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.CheckCircle,
+                    contentDescription = null,
+                    tint = Color(0xFF16A34A),
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Keamanan Lokasi: Sistem Proof of Presence aktif. Pengajuan warung wajib berada maksimal 50 meter dari titik fisik GPS perangkat Anda.",
+                    fontSize = 11.sp,
+                    color = Color(0xFF15803D),
+                    lineHeight = 15.sp
+                )
+            }
         }
 
         // ── Jam Operasional ─────────────────────────────────────────────────────

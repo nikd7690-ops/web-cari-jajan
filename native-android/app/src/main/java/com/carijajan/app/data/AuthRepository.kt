@@ -43,12 +43,38 @@ class AuthRepository(
         email: String,
         password: String,
         tipeAkun: String = "penjual"
-    ): Result<Unit> = try {
+    ): Result<RegisterResponse> = try {
         val res = api.register(RegisterRequest(nama.trim(), email.trim().lowercase(), password))
         if (res.isSuccessful) {
             tokenStore.saveTipeAkun(tipeAkun)
             _tipeAkun.value = tipeAkun
-            Result.success(Unit)
+            Result.success(res.body() ?: RegisterResponse())
+        } else {
+            Result.failure(ApiException(ApiErrors.message(res)))
+        }
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    suspend fun kirimOtpEmail(email: String): Result<OtpActionResponse> = try {
+        val res = api.kirimOtpEmail(KirimOtpEmailRequest(email.trim().lowercase()))
+        if (res.isSuccessful) {
+            Result.success(res.body() ?: OtpActionResponse())
+        } else {
+            Result.failure(ApiException(ApiErrors.message(res)))
+        }
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    suspend fun verifikasiOtpEmail(email: String, kodeOtp: String): Result<OtpActionResponse> = try {
+        val res = api.verifikasiOtpEmail(VerifikasiOtpEmailRequest(email.trim().lowercase(), kodeOtp.trim()))
+        if (res.isSuccessful) {
+            val body = res.body() ?: OtpActionResponse()
+            if (body.user != null) {
+                _user.value = body.user
+            }
+            Result.success(body)
         } else {
             Result.failure(ApiException(ApiErrors.message(res)))
         }

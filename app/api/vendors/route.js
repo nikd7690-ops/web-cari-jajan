@@ -2,9 +2,24 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { connectDB } from "@/lib/mongodb";
 import Vendor from "@/models/Vendor";
+import User from "@/models/User";
 import { isBuka } from "@/lib/jam";
 import { requireUser } from "@/lib/apiAuth";
 import { vendorInputSchema } from "@/lib/vendorSchema";
+
+function hitungJarakMeter(lat1, lon1, lat2, lon2) {
+  const R = 6371000; // meter
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 const querySchema = z.object({
   lat: z.coerce
@@ -114,6 +129,42 @@ export async function POST(request) {
   try {
     await connectDB();
 
+    const userDb = await User.findById(user.id);
+    if (userDb && !userDb.emailVerified && userDb.role !== "admin") {
+      return NextResponse.json(
+        {
+          error:
+            "Akun wajib memverifikasi alamat @gmail.com terlebih dahulu sebelum mendaftarkan warung.",
+        },
+        { status: 403 }
+      );
+    }
+
+    // ── Validasi Proof of Presence (Maksimal Radius 50 Meter) ─────────────
+    let jarakPengajuanMeter = 0;
+    if (userDb?.role !== "admin") {
+      if (typeof d.userLat !== "number" || typeof d.userLng !== "number") {
+        return NextResponse.json(
+          {
+            error:
+              "Koordinat GPS perangkat fisik (Proof of Presence) wajib disertakan untuk memverifikasi lokasi nyata warung.",
+          },
+          { status: 400 }
+        );
+      }
+
+      const jarak = hitungJarakMeter(d.userLat, d.userLng, d.lat, d.lng);
+      if (jarak > 50.0) {
+        return NextResponse.json(
+          {
+            error: `Proof of Presence Gagal: Posisi GPS fisik Anda berjarak ${Math.round(jarak)} meter dari titik warung. Anda harus berada di lokasi fisik warung (maksimal radius 50 meter) demi mencegah pendaftaran fiktif.`,
+          },
+          { status: 400 }
+        );
+      }
+      jarakPengajuanMeter = Math.round(jarak);
+    }
+
     const vendor = await Vendor.create({
       owner: user.id,
       submittedBy: user.id,
@@ -128,6 +179,7 @@ export async function POST(request) {
       layananAntar: d.layananAntar,
       foto: d.foto,
       menus: d.menus,
+      jarakPengajuanMeter,
     });
 
     return NextResponse.json({ data: vendor }, { status: 201 });

@@ -48,7 +48,8 @@ data class UserDto(
     val email: String = "",
     val role: String = "user",
     val xp: Int = 0,
-    val level: Int = 1
+    val level: Int = 1,
+    val emailVerified: Boolean = false
 )
 
 @Serializable
@@ -64,7 +65,26 @@ data class LoginResponse(val token: String, val user: UserDto)
 data class SessionResponse(val user: UserDto? = null)
 
 @Serializable
-data class RegisterResponse(val data: UserDto? = null)
+data class RegisterResponse(
+    val data: UserDto? = null,
+    val pesan: String? = null,
+    val devOtp: String? = null
+)
+
+@Serializable
+data class KirimOtpEmailRequest(val email: String)
+
+@Serializable
+data class VerifikasiOtpEmailRequest(val email: String, val kodeOtp: String)
+
+@Serializable
+data class OtpActionResponse(
+    val message: String = "",
+    val emailVerified: Boolean = false,
+    val devOtp: String? = null,
+    val user: UserDto? = null,
+    val error: String? = null
+)
 
 @Serializable
 data class VendorListResponse(val data: List<VendorDto> = emptyList())
@@ -109,7 +129,9 @@ data class VendorInput(
     val nomorWA: String,
     val layananAntar: Boolean = false,
     val foto: String = "",
-    val menus: List<MenuInput> = emptyList()
+    val menus: List<MenuInput> = emptyList(),
+    val userLat: Double? = null,
+    val userLng: Double? = null
 )
 
 @Serializable

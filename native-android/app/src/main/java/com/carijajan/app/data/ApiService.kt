@@ -19,6 +19,12 @@ interface ApiService {
     @POST("api/register")
     suspend fun register(@Body body: RegisterRequest): Response<RegisterResponse>
 
+    @POST("api/auth/kirim-otp-email")
+    suspend fun kirimOtpEmail(@Body body: KirimOtpEmailRequest): Response<OtpActionResponse>
+
+    @POST("api/auth/verifikasi-otp-email")
+    suspend fun verifikasiOtpEmail(@Body body: VerifikasiOtpEmailRequest): Response<OtpActionResponse>
+
     @GET("api/session")
     suspend fun session(): Response<SessionResponse>
 

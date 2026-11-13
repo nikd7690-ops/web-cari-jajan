@@ -49,6 +49,7 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
     lat: initial?.lat ?? PUSAT_JEMBER.lat,
     lng: initial?.lng ?? PUSAT_JEMBER.lng,
   });
+  const [deviceCoords, setDeviceCoords] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [geoLoading, setGeoLoading] = useState(mode === "tambah");
@@ -81,7 +82,9 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           if (ignore) return;
-          setPin({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setDeviceCoords(coords);
+          setPin(coords);
           setLokasiInfo("Pin diisi dari lokasi kamu. Geser bila kurang tepat.");
           setGeoLoading(false);
         },
@@ -178,7 +181,9 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setPin({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setDeviceCoords(coords);
+        setPin(coords);
         setLokasiInfo("Pin diisi dari lokasi kamu. Geser bila kurang tepat.");
         setGeoLoading(false);
       },
@@ -251,6 +256,8 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
         foto: fotoUrl,
         lat: pin.lat,
         lng: pin.lng,
+        userLat: deviceCoords?.lat ?? pin.lat,
+        userLng: deviceCoords?.lng ?? pin.lng,
         menus: menuBersih,
       };
 
@@ -397,6 +404,12 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
         <p className="mt-1 text-xs text-zinc-500">
           Geser pin bila GPS meleset. Peta: &copy; OpenStreetMap contributors
         </p>
+        <div className="mt-2 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800">
+          <span>🛡️</span>
+          <span>
+            <strong>Proof of Presence Aktif:</strong> Pendaftaran warung wajib berada maksimal 50 meter dari titik fisik lokasi Anda untuk mencegah pemalsuan peta.
+          </span>
+        </div>
         {lokasiInfo ? (
           <p className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
             {lokasiInfo}
