@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -405,7 +406,7 @@ fun BerandaScreen(
                             modifier = Modifier.size(15.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Column {
+                        Column(modifier = Modifier.widthIn(max = 110.dp)) {
                             Text(
                                 text = "Lokasi Peta:",
                                 fontSize = 8.5.sp,
@@ -432,7 +433,7 @@ fun BerandaScreen(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // ── Tombol Filter Waktu: Pagi, Siang, Malam ────────────────
+                // ── Tombol Filter Waktu: Pagi, Siang, Malam (Ikon Saja) ─────
                 Surface(
                     shape = RoundedCornerShape(20.dp),
                     color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
@@ -440,7 +441,7 @@ fun BerandaScreen(
                     shadowElevation = 3.dp
                 ) {
                     Row(
-                        modifier = Modifier.padding(2.dp),
+                        modifier = Modifier.padding(3.dp),
                         horizontalArrangement = Arrangement.spacedBy(2.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -452,21 +453,19 @@ fun BerandaScreen(
                         ).forEach { (key, label, emoji) ->
                             val terpilih = filterWaktu == key
                             Surface(
-                                shape = RoundedCornerShape(16.dp),
+                                shape = CircleShape,
                                 color = if (terpilih) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                modifier = Modifier.clickable { filterWaktu = key }
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clickable { filterWaktu = key }
                             ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxSize()
                                 ) {
-                                    Text(emoji, fontSize = 9.sp)
-                                    Spacer(Modifier.width(2.dp))
                                     Text(
-                                        label,
-                                        fontSize = 9.5.sp,
-                                        fontWeight = if (terpilih) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (terpilih) Color.White else MaterialTheme.colorScheme.onSurface
+                                        text = emoji,
+                                        fontSize = 13.sp
                                     )
                                 }
                             }

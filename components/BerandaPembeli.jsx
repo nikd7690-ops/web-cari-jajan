@@ -437,7 +437,7 @@ export default function BerandaPembeli() {
 
       <div className="absolute inset-x-0 top-0 z-[1050] p-3">
         <div className="mx-auto flex max-w-md items-center justify-between gap-2">
-          {/* Filter Waktu: Pagi, Siang, Malam */}
+          {/* Filter Waktu: Pagi, Siang, Malam (Hanya Ikon) */}
           <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white/95 p-1 shadow-md backdrop-blur">
             {[
               { id: "semua", label: "Semua", icon: "🕒" },
@@ -449,14 +449,15 @@ export default function BerandaPembeli() {
                 key={t.id}
                 type="button"
                 onClick={() => setFilterWaktu(t.id)}
-                className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-all ${
+                title={t.label}
+                aria-label={t.label}
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-all ${
                   filterWaktu === t.id
                     ? "bg-emerald-600 text-white shadow-sm"
                     : "text-zinc-600 hover:bg-zinc-100"
                 }`}
               >
                 <span>{t.icon}</span>
-                <span>{t.label}</span>
               </button>
             ))}
           </div>
