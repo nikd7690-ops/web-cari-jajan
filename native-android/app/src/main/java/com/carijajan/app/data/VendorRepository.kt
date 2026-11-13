@@ -83,9 +83,34 @@ class VendorRepository(private val api: ApiService) {
     }
 
     suspend fun adminVendors(status: String = "semua"): Result<List<VendorDto>> = call {
-        val res = api.adminVendors(status)
-        if (!res.isSuccessful) throw ApiException(ApiErrors.message(res))
-        res.body()?.data ?: emptyList()
+        if (status == "semua") {
+            val res = api.adminVendors("semua")
+            if (res.isSuccessful && res.body()?.data != null) {
+                return@call res.body()!!.data
+            }
+
+            // Fallback backward-compatibility jika backend di Vercel belum dideploy
+            // dan masih menggunakan enum lama (hanya menerima pending, approved, rejected)
+            val pRes = api.adminVendors("pending")
+            val aRes = api.adminVendors("approved")
+            val rRes = api.adminVendors("rejected")
+
+            val combined = mutableListOf<VendorDto>()
+            pRes.body()?.data?.let { combined.addAll(it) }
+            aRes.body()?.data?.let { combined.addAll(it) }
+            rRes.body()?.data?.let { combined.addAll(it) }
+
+            if (combined.isNotEmpty() || (pRes.isSuccessful && aRes.isSuccessful)) {
+                return@call combined
+            }
+
+            if (!res.isSuccessful) throw ApiException(ApiErrors.message(res))
+            emptyList()
+        } else {
+            val res = api.adminVendors(status)
+            if (!res.isSuccessful) throw ApiException(ApiErrors.message(res))
+            res.body()?.data ?: emptyList()
+        }
     }
 
     suspend fun adminVendorAction(id: String, aksi: String): Result<Unit> = call {
