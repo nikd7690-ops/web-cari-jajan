@@ -32,9 +32,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.FormatListBulleted
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Person
@@ -196,7 +198,10 @@ fun BerandaScreen(
 
             if (!initialLocationMoved) {
                 initialLocationMoved = true
-                lokasi = Titik(loc.latitude, loc.longitude, "Lokasi saya")
+                scope.launch {
+                    val label = Lokasi.dapatkanNamaArea(context, loc.latitude, loc.longitude)
+                    lokasi = Titik(loc.latitude, loc.longitude, label)
+                }
                 cameraTarget = latLng
                 cameraZoom = 15.5
                 cameraMoveTrigger++
@@ -320,7 +325,7 @@ fun BerandaScreen(
             }
         )
 
-        // ── Bagian Atas: Pencarian & Baris Kategori ──────────────────────────
+        // ── Bagian Atas: Info Lokasi, Pencarian & Baris Kategori ─────────────
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -329,6 +334,57 @@ fun BerandaScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
+            // ── Baris Info Lokasi Aktif & Pemilih Kota / Daerah ──────────────
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 2.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                    tonalElevation = 4.dp,
+                    shadowElevation = 3.dp,
+                    modifier = Modifier.clickable { areaTerbuka = true }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Pilih Lokasi",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Column {
+                            Text(
+                                text = "Lokasi Peta:",
+                                fontSize = 9.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = lokasi?.label?.ifBlank { "Pilih Kota / Tempat" } ?: "Pilih Kota / Tempat",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+
             // Search Bar
             Surface(
                 shape = RoundedCornerShape(24.dp),
@@ -421,7 +477,7 @@ fun BerandaScreen(
             }
         }
 
-        // ── Tombol Kompas: Sebelah Kanan Agak ke Bawah ───────────────────────
+        // ── Tombol Kompas: Reset Arah ke Utara & Pusatkan ke Titik Pengguna ──
         Surface(
             shape = CircleShape,
             color = MaterialTheme.colorScheme.surface,
@@ -430,15 +486,24 @@ fun BerandaScreen(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(end = 16.dp, bottom = if (ruteAktifVendor != null) 175.dp else 105.dp)
-                .size(46.dp)
+                .size(48.dp)
                 .clickable {
+                    if (!izinLokasiDiberikan) {
+                        mintaIzinLokasi()
+                    }
+                    val pos = userLocationRealtime ?: lokasi?.let { LatLng(it.lat, it.lng) }
+                    if (pos != null) {
+                        cameraTarget = pos
+                        cameraZoom = 16.5
+                        cameraMoveTrigger++
+                    }
                     bearingResetTrigger++
                 }
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = Icons.Default.Explore,
-                    contentDescription = "Kompas (Reset ke Utara)",
+                    contentDescription = "Pusatkan ke Titik Pengguna & Reset Arah",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(26.dp)
                 )
@@ -626,23 +691,16 @@ fun BerandaScreen(
                     )
                 )
 
-                // 2. Lokasi
+                // 2. Pilih Lokasi & Kota/Daerah
                 NavigationBarItem(
-                    selected = false,
+                    selected = areaTerbuka,
                     onClick = {
-                        val pos = userLocationRealtime ?: lokasi?.let { LatLng(it.lat, it.lng) }
-                        if (pos != null) {
-                            cameraTarget = pos
-                            cameraZoom = 16.0
-                            cameraMoveTrigger++
-                        } else {
-                            areaTerbuka = true
-                        }
+                        areaTerbuka = true
                     },
                     icon = {
                         Icon(
                             imageVector = Icons.Outlined.LocationOn,
-                            contentDescription = "Lokasi Saya"
+                            contentDescription = "Pilih Lokasi & Daerah"
                         )
                     },
                     label = { Text("Lokasi", fontSize = 11.sp) }
@@ -849,21 +907,26 @@ fun BerandaScreen(
         }
     }
 
-    // ── Bottom Sheet: Pilih Area Manual ─────────────────────────────────────
+    // ── Bottom Sheet: Pilih Area Manual & Kota/Tempat Sekitar ───────────────
     if (areaTerbuka) {
         PilihAreaSheet(
             container = container,
             lokasiAktif = lokasi?.label.orEmpty(),
+            userLocation = userLocationRealtime ?: lokasi?.let { LatLng(it.lat, it.lng) },
             loadingLokasi = geoLoading,
             pesanLokasi = pesanLokasi,
             onGunakanLokasi = {
                 mintaIzinLokasi()
                 val pos = userLocationRealtime
                 if (pos != null) {
-                    lokasi = Titik(pos.latitude, pos.longitude, "Lokasi saya")
+                    scope.launch {
+                        val label = Lokasi.dapatkanNamaArea(context, pos.latitude, pos.longitude)
+                        lokasi = Titik(pos.latitude, pos.longitude, label)
+                    }
                     cameraTarget = pos
-                    cameraZoom = 15.5
+                    cameraZoom = 16.0
                     cameraMoveTrigger++
+                    bearingResetTrigger++
                     areaTerbuka = false
                 }
             },
@@ -871,7 +934,7 @@ fun BerandaScreen(
                 pesanLokasi = ""
                 lokasi = titik
                 cameraTarget = LatLng(titik.lat, titik.lng)
-                cameraZoom = 15.0
+                cameraZoom = 15.5
                 cameraMoveTrigger++
                 areaTerbuka = false
             },

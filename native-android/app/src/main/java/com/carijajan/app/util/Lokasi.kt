@@ -162,4 +162,45 @@ object Lokasi {
             manager.removeUpdates(listener)
         }
     }
+
+    /**
+     * Mendapatkan nama kelurahan/kecamatan/kota dari koordinat GPS menggunakan Geocoder Android.
+     */
+    suspend fun dapatkanNamaArea(context: Context, lat: Double, lng: Double): String = withContext(Dispatchers.IO) {
+        try {
+            if (android.location.Geocoder.isPresent()) {
+                val geocoder = android.location.Geocoder(context, java.util.Locale("id", "ID"))
+                @Suppress("DEPRECATION")
+                val list = geocoder.getFromLocation(lat, lng, 1)
+                if (!list.isNullOrEmpty()) {
+                    val addr = list[0]
+                    val subLocality = addr.subLocality ?: addr.thoroughfare
+                    val locality = addr.locality
+                    val subAdmin = addr.subAdminArea
+                    return@withContext when {
+                        !subLocality.isNullOrBlank() && !subAdmin.isNullOrBlank() -> "$subLocality, $subAdmin"
+                        !locality.isNullOrBlank() && !subAdmin.isNullOrBlank() -> "$locality, $subAdmin"
+                        !subAdmin.isNullOrBlank() -> subAdmin
+                        !locality.isNullOrBlank() -> locality
+                        else -> "Lokasi Saya"
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+        return@withContext "Lokasi Saya"
+    }
+
+    /**
+     * Menghitung jarak garis lurus (haversine) dalam kilometer.
+     */
+    fun hitungJarakKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val r = 6371.0
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2)
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        return r * c
+    }
 }

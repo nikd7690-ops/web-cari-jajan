@@ -178,9 +178,8 @@ fun PetaWarung(
                             .build()
 
                         val density = ctx.resources.displayMetrics.density
-                        map.uiSettings.isCompassEnabled = true
-                        map.uiSettings.compassGravity = Gravity.BOTTOM or Gravity.END
-                        map.uiSettings.setCompassMargins(0, 0, (16 * density).toInt(), (110 * density).toInt())
+                        // Nonaktifkan kompas kecil bawaan MapLibre agar digantikan oleh FAB Kompas navigasi utama
+                        map.uiSettings.isCompassEnabled = false
 
                         // Putar arah panah lokasi seketika saat peta diputar oleh dua jari pengguna
                         map.addOnCameraMoveListener {
@@ -294,11 +293,19 @@ fun PetaWarung(
         }
     }
 
-    // ── Kompas Reset ke Utara ────────────────────────────────────────────────
+    // ── Kompas Reset ke Utara & Pusatkan Langsung ke Titik Pengguna ──────────
     LaunchedEffect(bearingResetTrigger) {
         if (bearingResetTrigger > 0) {
             val map = mapRef ?: return@LaunchedEffect
-            map.animateCamera(CameraUpdateFactory.bearingTo(0.0), 500)
+            val target = userLocation ?: cameraTarget ?: map.cameraPosition.target
+            val targetZoom = if (userLocation != null) 16.5.coerceAtLeast(map.cameraPosition.zoom) else map.cameraPosition.zoom
+            val pos = CameraPosition.Builder()
+                .target(target)
+                .bearing(0.0)
+                .tilt(0.0)
+                .zoom(targetZoom)
+                .build()
+            map.animateCamera(CameraUpdateFactory.newCameraPosition(pos), 650)
         }
     }
 }
