@@ -34,7 +34,8 @@ envFiles.each { f ->
 def apiBaseUrl = System.getenv('NATIVE_API_BASE_URL') ?: envProps.getProperty('API_BASE_URL') ?: envProps.getProperty('NATIVE_API_BASE_URL') ?: envProps.getProperty('api.base.url') ?: 'https://web-cari-jajan.vercel.app'
 def mapStyleUrl = System.getenv('NEXT_PUBLIC_MAP_STYLE_URL') ?: envProps.getProperty('MAP_STYLE_URL') ?: envProps.getProperty('NEXT_PUBLIC_MAP_STYLE_URL') ?: envProps.getProperty('map.style.url') ?: 'https://tiles.openfreemap.org/styles/liberty'
 def appName = envProps.getProperty('APP_NAME') ?: 'Cari Jajan'
-def appIcon = envProps.getProperty('APP_ICON') ?: '@mipmap/ic_launcher'
+def defaultIcon = file('src/main/res/drawable/icon.png').exists() ? '@drawable/icon' : '@mipmap/ic_launcher'
+def appIcon = envProps.getProperty('APP_ICON') ?: defaultIcon
 def customAppId = envProps.getProperty('APPLICATION_ID') ?: 'com.carijajan.app'
 
 android {
