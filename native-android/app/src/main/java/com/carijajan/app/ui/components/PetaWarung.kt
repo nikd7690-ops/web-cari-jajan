@@ -28,6 +28,7 @@ import com.carijajan.app.BuildConfig
 import com.carijajan.app.data.VendorDto
 import com.carijajan.app.util.Format
 import org.maplibre.android.MapLibre
+import org.maplibre.android.annotations.IconFactory
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -90,7 +91,7 @@ fun PetaWarung(
 
                 map.setStyle(BuildConfig.MAP_STYLE_URL) { _ ->
                     styleSiap = true
-                    tampilkanMarker(map, vendors, userLocation, selectedId)
+                    tampilkanMarker(context, map, vendors, userLocation, selectedId)
                 }
                 map.setOnMarkerClickListener { marker ->
                     val found = vendors.firstOrNull { it.namaToko == marker.title }
@@ -117,10 +118,10 @@ fun PetaWarung(
         )
     }
 
-    LaunchedEffect(styleSiap, vendors, userLocation, selectedId, center, zoom) {
+    LaunchedEffect(styleSiap, vendors, userLocation, selectedId) {
         val map = mapRef ?: return@LaunchedEffect
         if (!styleSiap) return@LaunchedEffect
-        tampilkanMarker(map, vendors, userLocation, selectedId)
+        tampilkanMarker(context, map, vendors, userLocation, selectedId)
     }
 
     LaunchedEffect(center, zoom) {
@@ -138,12 +139,15 @@ fun PetaWarung(
 }
 
 private fun tampilkanMarker(
+    context: android.content.Context,
     map: MapLibreMap,
     vendors: List<VendorDto>,
     userLocation: LatLng?,
     selectedId: String?
 ) {
     map.clear()
+    val iconFactory = IconFactory.getInstance(context)
+
     userLocation?.let { lokasi ->
         map.addMarker(
             MarkerOptions()
@@ -151,11 +155,23 @@ private fun tampilkanMarker(
                 .title("Lokasi saya")
         )
     }
+
     vendors.forEach { vendor ->
         if (vendor.lat == 0.0 && vendor.lng == 0.0) return@forEach
+
+        // Buat pin kustom berisi ikon kategori dan nama warung
+        val pinBitmap = PinGenerator.dapatkanPin(
+            context = context,
+            namaToko = vendor.namaToko,
+            kategori = vendor.kategori,
+            buka = vendor.buka
+        )
+        val customIcon = iconFactory.fromBitmap(pinBitmap)
+
         map.addMarker(
             MarkerOptions()
                 .position(LatLng(vendor.lat, vendor.lng))
+                .icon(customIcon)
                 .title(vendor.namaToko)
                 .snippet(Format.labelKategori(vendor.kategori))
         )
