@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import Vendor from "@/models/Vendor";
+import AdminMemberList from "@/components/AdminMemberList";
 
 export const metadata = {
   title: "Admin Member - Cari Jajan",
@@ -50,7 +51,7 @@ export default async function AdminMembersPage() {
   // 2. Daftar semua member
   const members = await User.find({})
     .sort({ createdAt: -1 })
-    .select("name email role tipeAkun xp level createdAt")
+    .select("name email role tipeAkun xp level createdAt isBanned")
     .lean();
 
   const vendorCounts = await Vendor.aggregate([
@@ -62,11 +63,23 @@ export default async function AdminMembersPage() {
     vendorCountMap.set(item._id.toString(), item.total);
   }
 
+  const membersData = members.map((m) => ({
+    _id: m._id.toString(),
+    name: m.name || "",
+    email: m.email || "",
+    role: m.role || "user",
+    tipeAkun: m.tipeAkun || "pengguna",
+    xp: m.xp || 0,
+    level: m.level || 1,
+    isBanned: Boolean(m.isBanned),
+    totalWarung: vendorCountMap.get(m._id.toString()) || 0,
+  }));
+
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-5">
       <h1 className="text-xl font-bold text-zinc-900">Member & Kontributor</h1>
       <p className="mt-0.5 text-sm text-zinc-600">
-        Kelola dan pantau pengguna, mitra warung, dan kontributor teraktif.
+        Kelola dan pantau pengguna, mitra warung, moderasi akun, dan kontributor teraktif.
       </p>
 
       {/* TOP KONTRIBUTOR PENGAJU WARUNG */}
@@ -126,54 +139,15 @@ export default async function AdminMembersPage() {
         )}
       </section>
 
-      {/* SEMUA MEMBER */}
+      {/* SEMUA MEMBER & MODERASI */}
       <section className="mt-8">
-        <div className="flex items-center justify-between">
+        <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-zinc-800">
-            Daftar Semua Member ({members.length})
+            Daftar Semua Member & Moderasi ({members.length})
           </h2>
         </div>
 
-        <div className="mt-3 divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
-          {members.map((m) => {
-            const warungCount = vendorCountMap.get(m._id.toString()) || 0;
-            return (
-              <div key={m._id.toString()} className="flex items-center justify-between p-3">
-                <div className="min-w-0 flex-1 pr-3">
-                  <div className="flex items-center gap-1.5">
-                    <p className="truncate text-sm font-medium text-zinc-900">
-                      {m.name || "Tanpa Nama"}
-                    </p>
-                    {m.role === "admin" && (
-                      <span className="rounded bg-rose-100 px-1.5 py-0.2 text-[10px] font-semibold text-rose-700">
-                        Admin
-                      </span>
-                    )}
-                    <span
-                      className={`rounded px-1.5 py-0.2 text-[10px] font-medium ${
-                        m.tipeAkun === "mitra"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-blue-100 text-blue-700"
-                      }`}
-                    >
-                      {m.tipeAkun === "mitra" ? "Mitra" : "Member"}
-                    </span>
-                  </div>
-                  <p className="truncate text-xs text-zinc-500">{m.email}</p>
-                </div>
-
-                <div className="shrink-0 text-right">
-                  <p className="text-xs font-semibold text-zinc-800">
-                    {warungCount} warung
-                  </p>
-                  <p className="text-[10px] text-zinc-500">
-                    Lv {m.level || 1} • {m.xp || 0} XP
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <AdminMemberList initialMembers={membersData} />
       </section>
     </main>
   );

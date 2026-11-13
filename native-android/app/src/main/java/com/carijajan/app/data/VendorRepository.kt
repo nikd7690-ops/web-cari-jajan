@@ -94,6 +94,12 @@ class VendorRepository(private val api: ApiService) {
         Unit
     }
 
+    suspend fun banMember(id: String, banned: Boolean, reason: String = ""): Result<Unit> = call {
+        val res = api.banMember(id, AdminBanMemberRequest(banned, reason))
+        if (!res.isSuccessful) throw ApiException(ApiErrors.message(res))
+        Unit
+    }
+
     private inline fun <T> call(block: () -> T): Result<T> = try {
         Result.success(block())
     } catch (e: Exception) {

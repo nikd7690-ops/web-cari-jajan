@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.WorkspacePremium
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -43,6 +44,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -88,22 +90,41 @@ fun AdminDashboardContent(
 
     var loading by remember { mutableStateOf(true) }
     var pesanSukses by remember { mutableStateOf("") }
+    var errorPesan by remember { mutableStateOf("") }
     var filterStatusVendor by remember { mutableStateOf("semua") }
+
+    // Dialog aksi Ban Member
+    var dialogBanTarget by remember { mutableStateOf<UserDto?>(null) }
+    var banReason by remember { mutableStateOf("") }
+    var banLoading by remember { mutableStateOf(false) }
 
     fun refresh() {
         loading = true
+        errorPesan = ""
         scope.launch {
-            val resVendors = container.vendorRepository.adminVendors("semua")
+            val resVendors = container.vendorRepository.adminVendors(filterStatusVendor)
             val resMembers = container.vendorRepository.adminMembers()
             val resReports = container.vendorRepository.daftarLaporan()
 
-            vendors = resVendors.getOrDefault(emptyList())
-            val memData = resMembers.getOrNull()
-            if (memData != null) {
+            resVendors.onSuccess {
+                vendors = it
+            }.onFailure {
+                errorPesan = "Gagal memuat warung: ${it.message}"
+            }
+
+            resMembers.onSuccess { memData ->
                 members = memData.members
                 topKontributor = memData.topKontributor
+            }.onFailure {
+                if (errorPesan.isBlank()) errorPesan = "Gagal memuat member: ${it.message}"
             }
-            reports = resReports.getOrDefault(emptyList())
+
+            resReports.onSuccess {
+                reports = it
+            }.onFailure {
+                if (errorPesan.isBlank()) errorPesan = "Gagal memuat laporan: ${it.message}"
+            }
+
             loading = false
         }
     }
@@ -174,6 +195,27 @@ fun AdminDashboardContent(
                     Text(pesanSukses, color = Color(0xFF166534), fontSize = 12.sp, modifier = Modifier.weight(1f))
                     IconButton(onClick = { pesanSukses = "" }, modifier = Modifier.size(20.dp)) {
                         Icon(Icons.Filled.Close, contentDescription = null, tint = Color(0xFF15803D), modifier = Modifier.size(14.dp))
+                    }
+                }
+            }
+        }
+
+        if (errorPesan.isNotBlank()) {
+            Surface(
+                color = Color(0xFFFEE2E2),
+                shape = RoundedCornerShape(8.dp),
+                border = BorderStroke(1.dp, Color(0xFFFCA5A5)),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Filled.Close, contentDescription = null, tint = Color(0xFFDC2626), modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(errorPesan, color = Color(0xFF991B1B), fontSize = 12.sp, modifier = Modifier.weight(1f))
+                    IconButton(onClick = { errorPesan = "" }, modifier = Modifier.size(20.dp)) {
+                        Icon(Icons.Filled.Close, contentDescription = null, tint = Color(0xFFDC2626), modifier = Modifier.size(14.dp))
                     }
                 }
             }
@@ -433,11 +475,11 @@ fun AdminDashboardContent(
                             )
                         }
 
-                        items(members, key = { it.id }) { m ->
+                        items(members, key = { it.displayId }) { m ->
                             Surface(
                                 shape = RoundedCornerShape(10.dp),
-                                border = BorderStroke(1.dp, Color(0xFFE4E4E7)),
-                                color = Color.White,
+                                border = BorderStroke(1.dp, if (m.isBanned) Color(0xFFFCA5A5) else Color(0xFFE4E4E7)),
+                                color = if (m.isBanned) Color(0xFFFFF5F5) else Color.White,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Row(
@@ -448,7 +490,7 @@ fun AdminDashboardContent(
                                     Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                                         Surface(
                                             shape = CircleShape,
-                                            color = if (m.role == "admin") Color(0xFFDC2626) else if (m.tipeAkun == "mitra") Color(0xFF059669) else Color(0xFF2563EB),
+                                            color = if (m.isBanned) Color(0xFF991B1B) else if (m.role == "admin") Color(0xFFDC2626) else if (m.tipeAkun == "mitra") Color(0xFF059669) else Color(0xFF2563EB),
                                             modifier = Modifier.size(36.dp)
                                         ) {
                                             Box(contentAlignment = Alignment.Center) {
@@ -470,9 +512,36 @@ fun AdminDashboardContent(
                                                         Text("ADMIN", color = Color(0xFFDC2626), fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 4.dp))
                                                     }
                                                 }
+                                                if (m.isBanned) {
+                                                    Spacer(Modifier.width(4.dp))
+                                                    Surface(color = Color(0xFFFEE2E2), shape = RoundedCornerShape(4.dp)) {
+                                                        Text("DIBLOKIR", color = Color(0xFFDC2626), fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 4.dp))
+                                                    }
+                                                }
                                             }
                                             Text(m.email, fontSize = 11.sp, color = Color(0xFF71717A), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                            Text("Peran: ${m.tipeAkun.capitalize()} • Level ${m.level} (${m.xp} XP)", fontSize = 10.sp, color = Color(0xFF3F3F46))
+                                            val tipeLabel = m.tipeAkun.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                                            Text("Peran: $tipeLabel • ${m.totalPengajuan} Warung • Lv ${m.level} (${m.xp} XP)", fontSize = 10.sp, color = Color(0xFF3F3F46))
+                                        }
+                                    }
+
+                                    if (m.role != "admin") {
+                                        Button(
+                                            onClick = {
+                                                dialogBanTarget = m
+                                                banReason = ""
+                                            },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = if (m.isBanned) Color(0xFF059669) else Color(0xFFDC2626)
+                                            ),
+                                            modifier = Modifier.height(30.dp),
+                                            shape = RoundedCornerShape(6.dp)
+                                        ) {
+                                            Text(
+                                                if (m.isBanned) "Buka Blokir" else "Blokir",
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
                                         }
                                     }
                                 }
@@ -587,5 +656,74 @@ fun AdminDashboardContent(
                 }
             }
         }
+    }
+
+    // ── Dialog Konfirmasi Banned / Unbanned Member ──
+    dialogBanTarget?.let { target ->
+        val aksiBlokir = !target.isBanned
+        AlertDialog(
+            onDismissRequest = { if (!banLoading) dialogBanTarget = null },
+            title = {
+                Text(if (aksiBlokir) "Blokir Akun Member?" else "Buka Blokir Member?")
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        if (aksiBlokir)
+                            "Member '${target.name}' (${target.email}) tidak akan dapat login atau mengajukan warung selama akun diblokir."
+                        else
+                            "Pulihkan akses akun untuk '${target.name}' (${target.email}) agar dapat login kembali."
+                    )
+                    if (aksiBlokir) {
+                        OutlinedTextField(
+                            value = banReason,
+                            onValueChange = { banReason = it },
+                            label = { Text("Alasan pemblokiran (opsional)") },
+                            placeholder = { Text("Misal: Melanggar ketentuan, spam") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        banLoading = true
+                        scope.launch {
+                            val res = container.vendorRepository.banMember(
+                                target.displayId,
+                                aksiBlokir,
+                                banReason.trim()
+                            )
+                            banLoading = false
+                            res.onSuccess {
+                                pesanSukses = if (aksiBlokir)
+                                    "Akun '${target.name}' berhasil diblokir."
+                                else
+                                    "Blokir akun '${target.name}' berhasil dicabut."
+                                dialogBanTarget = null
+                                refresh()
+                            }.onFailure {
+                                errorPesan = it.message ?: "Gagal memproses status banned"
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (aksiBlokir) Color(0xFFDC2626) else Color(0xFF059669)
+                    ),
+                    enabled = !banLoading
+                ) {
+                    Text(if (banLoading) "Memproses..." else if (aksiBlokir) "Ya, Blokir" else "Buka Blokir")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { dialogBanTarget = null },
+                    enabled = !banLoading
+                ) {
+                    Text("Batal")
+                }
+            }
+        )
     }
 }

@@ -60,6 +60,16 @@ export async function POST(request) {
       );
     }
 
+    if (user.isBanned) {
+      return NextResponse.json(
+        {
+          error:
+            "Akun Anda telah ditangguhkan/diblokir oleh admin karena melanggar ketentuan komunitas.",
+        },
+        { status: 403 }
+      );
+    }
+
     const token = buatToken({
       id: user._id,
       name: user.name,

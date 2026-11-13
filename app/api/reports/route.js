@@ -86,7 +86,27 @@ export async function GET(request) {
       .populate("vendorId", "namaToko alamatPatokan lokasi foto")
       .lean();
 
-    return NextResponse.json({ data: reports });
+    const formatted = reports.map((r) => {
+      let vendorIdStr = null;
+      let namaToko = r.namaToko || "Warung";
+
+      if (r.vendorId && typeof r.vendorId === "object") {
+        vendorIdStr = r.vendorId._id ? r.vendorId._id.toString() : null;
+        namaToko = r.vendorId.namaToko || namaToko;
+      } else if (r.vendorId) {
+        vendorIdStr = r.vendorId.toString();
+      }
+
+      return {
+        ...r,
+        _id: r._id.toString(),
+        vendorId: vendorIdStr,
+        namaToko,
+        createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : null,
+      };
+    });
+
+    return NextResponse.json({ data: formatted });
   } catch (error) {
     console.error("GET /api/reports gagal:", error);
     return NextResponse.json({ error: "Gagal memuat daftar laporan" }, { status: 500 });

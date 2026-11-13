@@ -58,6 +58,7 @@ data class VendorDto(
 
 @Serializable
 data class UserDto(
+    @SerialName("_id") val mongoId: String? = null,
     val id: String = "",
     val name: String = "",
     val email: String = "",
@@ -65,8 +66,12 @@ data class UserDto(
     val tipeAkun: String = "pengguna",
     val xp: Int = 0,
     val level: Int = 1,
-    val emailVerified: Boolean = false
-)
+    val emailVerified: Boolean = false,
+    val isBanned: Boolean = false,
+    val totalPengajuan: Int = 0
+) {
+    val displayId: String get() = id.ifBlank { mongoId.orEmpty() }
+}
 
 @Serializable
 data class LoginRequest(val email: String, val password: String)
@@ -223,3 +228,9 @@ data class AdminMembersResponse(val data: AdminMembersData? = null)
 
 @Serializable
 data class AdminVendorActionRequest(val aksi: String)
+
+@Serializable
+data class AdminBanMemberRequest(
+    val banned: Boolean,
+    val reason: String = ""
+)

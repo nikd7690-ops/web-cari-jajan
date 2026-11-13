@@ -7,9 +7,14 @@ import User from "@/models/User";
 import { requireAdmin } from "@/lib/apiAuth";
 import { XP_PER_APPROVAL, XP_PER_LEVEL } from "@/lib/gamifikasi";
 
-const aksiSchema = z.object({
-  aksi: z.enum(["approve", "reject"]),
-});
+const aksiSchema = z
+  .object({
+    aksi: z.enum(["approve", "reject"]).optional(),
+    action: z.enum(["approve", "reject"]).optional(),
+  })
+  .refine((data) => data.aksi || data.action, {
+    message: "Aksi harus approve atau reject",
+  });
 
 export async function PATCH(request, { params }) {
   const { response } = await requireAdmin(request);
@@ -44,12 +49,14 @@ export async function PATCH(request, { params }) {
     );
   }
 
+  const aksi = parsed.data.aksi || parsed.data.action;
+
   try {
     await connectDB();
 
-    if (parsed.data.aksi === "reject") {
+    if (aksi === "reject") {
       const vendor = await Vendor.findOneAndUpdate(
-        { _id: id, status: "pending" },
+        { _id: id, status: { $ne: "rejected" } },
         { $set: { status: "rejected" } },
         { returnDocument: "after" }
       );
@@ -59,7 +66,7 @@ export async function PATCH(request, { params }) {
         return NextResponse.json(
           {
             error: ada
-              ? "Hanya warung berstatus pending yang bisa ditolak"
+              ? "Warung sudah berstatus ditolak"
               : "Warung tidak ditemukan",
           },
           { status: ada ? 409 : 404 }

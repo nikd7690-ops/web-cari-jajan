@@ -2,11 +2,15 @@ package com.carijajan.app.ui.screen
 
 import android.Manifest
 import android.location.Location
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
@@ -164,10 +168,12 @@ private fun apakahBukaDiWaktu(jamBuka: String, jamTutup: String, waktu: String):
 @Composable
 fun BerandaScreen(
     container: AppContainer,
-    onLogin: () -> Unit,
-    onDashboard: () -> Unit,
+    onLogin: () -> Unit = {},
+    onDashboard: () -> Unit = {},
     onAdd: () -> Unit,
-    onVendor: (String) -> Unit
+    onVendor: (String) -> Unit,
+    onRegister: () -> Unit = {},
+    onEdit: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -186,9 +192,14 @@ fun BerandaScreen(
     var vendorTerpilihPreview by remember { mutableStateOf<VendorDto?>(null) }
     var areaTerbuka by remember { mutableStateOf(false) }
     var daftarWarungTerbuka by remember { mutableStateOf(false) }
+    var akunTerbuka by remember { mutableStateOf(false) }
     var laporanWarungTarget by remember { mutableStateOf<VendorDto?>(null) }
     var geoLoading by remember { mutableStateOf(false) }
     var pesanLokasi by remember { mutableStateOf("") }
+
+    BackHandler(enabled = akunTerbuka) {
+        akunTerbuka = false
+    }
 
     // Fitur Navigasi Rute
     var ruteAktifVendor by remember { mutableStateOf<VendorDto?>(null) }
@@ -713,7 +724,7 @@ fun BerandaScreen(
 
         // ── Pill Akses Cepat Warung Terdekat (Tampil jika Tidak Ada Rute & Tidak Ada Preview)
         AnimatedVisibility(
-            visible = vendorsDenganJarak.isNotEmpty() && ruteAktifVendor == null && vendorTerpilihPreview == null && !daftarWarungTerbuka && !areaTerbuka,
+            visible = vendorsDenganJarak.isNotEmpty() && ruteAktifVendor == null && vendorTerpilihPreview == null && !daftarWarungTerbuka && !areaTerbuka && !akunTerbuka,
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier
@@ -1144,9 +1155,65 @@ fun BerandaScreen(
             )
         }
 
+        // ── Panel Akun: Masuk / Dashboard Terbuka di Atas Beranda (Bottom Bar Tetap Stay) ──
+        AnimatedVisibility(
+            visible = akunTerbuka,
+            enter = slideInHorizontally(
+                initialOffsetX = { it },
+                animationSpec = tween(320)
+            ) + fadeIn(animationSpec = tween(320)),
+            exit = slideOutHorizontally(
+                targetOffsetX = { it },
+                animationSpec = tween(320)
+            ) + fadeOut(animationSpec = tween(320)),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                if (user == null) {
+                    MasukScreen(
+                        container = container,
+                        onSuccess = {
+                            // User otomatis terefresh via collectAsStateWithLifecycle
+                        },
+                        onRegister = {
+                            akunTerbuka = false
+                            onRegister()
+                        },
+                        onBack = { akunTerbuka = false },
+                        tampilkanBottomBar = false
+                    )
+                } else {
+                    DashboardScreen(
+                        container = container,
+                        onBack = { akunTerbuka = false },
+                        onAdd = {
+                            akunTerbuka = false
+                            onAdd()
+                        },
+                        onEdit = { id ->
+                            akunTerbuka = false
+                            onEdit(id)
+                        },
+                        onVendor = { id ->
+                            akunTerbuka = false
+                            onVendor(id)
+                        },
+                        onLogout = {
+                            // Sesi dibersihkan, berganti ke MasukScreen
+                        },
+                        tampilkanBottomBar = false
+                    )
+                }
+            }
+        }
+
         // ── Bagian Bawah: Bottom Navigation Bar Utama (Selalu di Lapisan Paling Depan) ──
         CariJajanBottomBar(
             tabAktif = when {
+                akunTerbuka -> "akun"
                 daftarWarungTerbuka -> "daftar"
                 areaTerbuka -> "lokasi"
                 else -> "peta"
@@ -1156,18 +1223,22 @@ fun BerandaScreen(
             onTabSelected = { tab ->
                 when (tab) {
                     "peta" -> {
+                        akunTerbuka = false
                         daftarWarungTerbuka = false
                         areaTerbuka = false
                     }
                     "lokasi" -> {
+                        akunTerbuka = false
                         daftarWarungTerbuka = false
                         areaTerbuka = !areaTerbuka
                     }
                     "daftar" -> {
+                        akunTerbuka = false
                         areaTerbuka = false
                         daftarWarungTerbuka = !daftarWarungTerbuka
                     }
                     "tambah" -> {
+                        akunTerbuka = false
                         daftarWarungTerbuka = false
                         areaTerbuka = false
                         onAdd()
@@ -1175,7 +1246,7 @@ fun BerandaScreen(
                     "akun" -> {
                         daftarWarungTerbuka = false
                         areaTerbuka = false
-                        if (user == null) onLogin() else onDashboard()
+                        akunTerbuka = !akunTerbuka
                     }
                 }
             }

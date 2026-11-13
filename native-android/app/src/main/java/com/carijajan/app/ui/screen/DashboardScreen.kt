@@ -88,7 +88,8 @@ fun DashboardScreen(
     onAdd: () -> Unit,
     onEdit: (String) -> Unit,
     onVendor: (String) -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    tampilkanBottomBar: Boolean = true
 ) {
     val scope = rememberCoroutineScope()
     val user by container.authRepository.user.collectAsStateWithLifecycle()
@@ -145,7 +146,7 @@ fun DashboardScreen(
                 .fillMaxSize()
                 .statusBarsPadding()
                 .padding(horizontal = 16.dp)
-                .padding(bottom = 76.dp)
+                .padding(bottom = if (tampilkanBottomBar) 76.dp else 16.dp)
         ) {
         // ── Header Bar ────────────────────────────────────────────────────────
         Row(
@@ -602,20 +603,22 @@ fun DashboardScreen(
 }
 
     // ── Bottom Navigation Bar Tetap Tampil di Depan ──
-    CariJajanBottomBar(
-        tabAktif = "akun",
-        sudahLogin = (user != null),
-        modifier = Modifier.align(Alignment.BottomCenter),
-        onTabSelected = { tab ->
-            when (tab) {
-                "peta" -> onBack()
-                "lokasi" -> onBack()
-                "daftar" -> onBack()
-                "tambah" -> onAdd()
-                "akun" -> Unit
+    if (tampilkanBottomBar) {
+        CariJajanBottomBar(
+            tabAktif = "akun",
+            sudahLogin = (user != null),
+            modifier = Modifier.align(Alignment.BottomCenter),
+            onTabSelected = { tab ->
+                when (tab) {
+                    "peta" -> onBack()
+                    "lokasi" -> onBack()
+                    "daftar" -> onBack()
+                    "tambah" -> onAdd()
+                    "akun" -> Unit
+                }
             }
-        }
-    )
+        )
+    }
 }
 
     // ── Dialog Usul Revisi untuk Pembeli ──────────────────────────────────────

@@ -56,7 +56,8 @@ fun MasukScreen(
     container: AppContainer,
     onSuccess: () -> Unit,
     onRegister: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    tampilkanBottomBar: Boolean = true
 ) {
     val scope = rememberCoroutineScope()
     var email by remember { mutableStateOf("") }
@@ -222,19 +223,21 @@ fun MasukScreen(
         }
     }
 
-        CariJajanBottomBar(
-            tabAktif = "akun",
-            sudahLogin = false,
-            modifier = Modifier.align(Alignment.BottomCenter),
-            onTabSelected = { tab ->
-                when (tab) {
-                    "peta" -> onBack()
-                    "lokasi" -> onBack()
-                    "daftar" -> onBack()
-                    "tambah" -> onBack()
-                    "akun" -> Unit
+        if (tampilkanBottomBar) {
+            CariJajanBottomBar(
+                tabAktif = "akun",
+                sudahLogin = false,
+                modifier = Modifier.align(Alignment.BottomCenter),
+                onTabSelected = { tab ->
+                    when (tab) {
+                        "peta" -> onBack()
+                        "lokasi" -> onBack()
+                        "daftar" -> onBack()
+                        "tambah" -> onBack()
+                        "akun" -> Unit
+                    }
                 }
-            }
-        )
+            )
+        }
     }
 }

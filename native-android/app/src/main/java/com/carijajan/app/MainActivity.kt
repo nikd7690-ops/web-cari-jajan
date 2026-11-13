@@ -84,7 +84,9 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate("masuk")
                                 }
                             },
-                            onVendor = { id -> navController.navigate("vendor/$id") }
+                            onVendor = { id -> navController.navigate("vendor/$id") },
+                            onRegister = { navController.navigate("daftar") },
+                            onEdit = { id -> navController.navigate("edit-warung/$id") }
                         )
                     }
 

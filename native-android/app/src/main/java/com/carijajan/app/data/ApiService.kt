@@ -82,4 +82,10 @@ interface ApiService {
         @Path("id") id: String,
         @Body body: AdminVendorActionRequest
     ): Response<Unit>
+
+    @POST("api/admin/members/{id}/ban")
+    suspend fun banMember(
+        @Path("id") id: String,
+        @Body body: AdminBanMemberRequest
+    ): Response<Unit>
 }

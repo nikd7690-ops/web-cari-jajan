@@ -13,7 +13,7 @@ export async function GET(request) {
 
     // 1. Ambil daftar semua member
     const users = await User.find({})
-      .select("name email role tipeAkun xp level createdAt emailVerified")
+      .select("name email role tipeAkun xp level createdAt emailVerified isBanned")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -74,19 +74,43 @@ export async function GET(request) {
     // Map total pengajuan ke setiap user di list member
     const mapPengajuan = new Map();
     kontributorStats.forEach((k) => {
-      if (k.userId) mapPengajuan.set(k.userId.toString(), k.totalPengajuan);
+      const idStr = k.userId ? k.userId.toString() : (k._id ? k._id.toString() : "");
+      if (idStr) mapPengajuan.set(idStr, k.totalPengajuan);
     });
 
-    const membersDenganPengajuan = users.map((u) => ({
-      ...u,
-      _id: u._id.toString(),
-      totalPengajuan: mapPengajuan.get(u._id.toString()) || 0,
+    const membersDenganPengajuan = users.map((u) => {
+      const idStr = u._id.toString();
+      return {
+        _id: idStr,
+        id: idStr,
+        name: u.name || "Member Cari Jajan",
+        email: u.email || "",
+        role: u.role || "user",
+        tipeAkun: u.tipeAkun || "pengguna",
+        xp: Number(u.xp) || 0,
+        level: Number(u.level) || 1,
+        emailVerified: Boolean(u.emailVerified),
+        isBanned: Boolean(u.isBanned),
+        totalPengajuan: mapPengajuan.get(idStr) || 0,
+        createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : null,
+      };
+    });
+
+    const topKontributorFormatted = kontributorStats.map((k) => ({
+      userId: k.userId ? k.userId.toString() : (k._id ? k._id.toString() : ""),
+      name: k.name || "Warga Komunitas",
+      email: k.email || "-",
+      xp: Number(k.xp) || 0,
+      level: Number(k.level) || 1,
+      totalPengajuan: Number(k.totalPengajuan) || 0,
+      diterima: Number(k.diterima) || 0,
+      menunggu: Number(k.menunggu) || 0,
     }));
 
     return NextResponse.json({
       data: {
         members: membersDenganPengajuan,
-        topKontributor: kontributorStats,
+        topKontributor: topKontributorFormatted,
       },
     });
   } catch (error) {
