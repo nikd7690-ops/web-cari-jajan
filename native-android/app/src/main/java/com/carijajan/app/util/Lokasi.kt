@@ -12,6 +12,9 @@ import androidx.core.content.ContextCompat
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.resume
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
@@ -28,6 +31,9 @@ object Lokasi {
         return fine || coarse
     }
 
+    /**
+     * Mengambil lokasi sekali (one-shot).
+     */
     suspend fun ambil(context: Context): Location? = withContext(Dispatchers.IO) {
         if (!punyaIzin(context)) return@withContext null
 
@@ -93,6 +99,67 @@ object Lokasi {
                 manager.removeUpdates(listener)
                 handler.removeCallbacksAndMessages(null)
             }
+        }
+    }
+
+    /**
+     * Memantau lokasi pengguna secara REAL-TIME.
+     * Mengirimkan koordinat setiap kali perangkat berpindah (interval 1000ms / 1 meter).
+     */
+    fun pantauLokasi(context: Context): Flow<Location> = callbackFlow {
+        if (!punyaIzin(context)) {
+            close()
+            return@callbackFlow
+        }
+        val manager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+        if (manager == null) {
+            close()
+            return@callbackFlow
+        }
+
+        // Kirim lokasi terakhir yang diketahui segera agar tidak menunggu GPS lock pertama
+        val lastGps = runCatching { manager.getLastKnownLocation(LocationManager.GPS_PROVIDER) }.getOrNull()
+        val lastNet = runCatching { manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER) }.getOrNull()
+        val best = if (lastGps != null && (lastNet == null || lastGps.time > lastNet.time)) lastGps else lastNet
+        if (best != null) {
+            trySend(best)
+        }
+
+        val listener = object : LocationListener {
+            override fun onLocationChanged(location: Location) {
+                trySend(location)
+            }
+
+            override fun onProviderEnabled(provider: String) {}
+            override fun onProviderDisabled(provider: String) {}
+        }
+
+        try {
+            if (manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                manager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER,
+                    1000L,
+                    1f,
+                    listener,
+                    Looper.getMainLooper()
+                )
+            }
+            if (manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                manager.requestLocationUpdates(
+                    LocationManager.NETWORK_PROVIDER,
+                    1000L,
+                    1f,
+                    listener,
+                    Looper.getMainLooper()
+                )
+            }
+        } catch (_: SecurityException) {
+            close()
+            return@callbackFlow
+        }
+
+        awaitClose {
+            manager.removeUpdates(listener)
         }
     }
 }

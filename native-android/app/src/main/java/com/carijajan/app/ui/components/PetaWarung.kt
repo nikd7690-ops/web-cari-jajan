@@ -29,6 +29,7 @@ import com.carijajan.app.data.VendorDto
 import com.carijajan.app.util.Format
 import org.maplibre.android.MapLibre
 import org.maplibre.android.annotations.IconFactory
+import org.maplibre.android.annotations.Marker
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -42,6 +43,7 @@ fun PetaWarung(
     center: LatLng,
     zoom: Double,
     userLocation: LatLng?,
+    userHeading: Float = 0f,
     vendors: List<VendorDto>,
     selectedId: String?,
     bearingResetTrigger: Int = 0,
@@ -73,6 +75,7 @@ fun PetaWarung(
 
     var mapRef by remember { mutableStateOf<MapLibreMap?>(null) }
     var styleSiap by remember { mutableStateOf(false) }
+    var userMarkerRef by remember { mutableStateOf<Marker?>(null) }
 
     Box(modifier = modifier) {
         AndroidView(
@@ -91,9 +94,20 @@ fun PetaWarung(
 
                 map.setStyle(BuildConfig.MAP_STYLE_URL) { _ ->
                     styleSiap = true
-                    tampilkanMarker(context, map, vendors, userLocation, selectedId)
+                    userMarkerRef = updateSemuaMarker(
+                        context = context,
+                        map = map,
+                        vendors = vendors,
+                        userLocation = userLocation,
+                        userHeading = userHeading,
+                        selectedId = selectedId,
+                        currentUserMarker = userMarkerRef
+                    )
                 }
                 map.setOnMarkerClickListener { marker ->
+                    // Jangan trigger navigasi jika marker yang diklik adalah posisi user sendiri
+                    if (marker == userMarkerRef) return@setOnMarkerClickListener true
+
                     val found = vendors.firstOrNull { it.namaToko == marker.title }
                     if (found != null) {
                         onSelectVendor(found.id)
@@ -118,10 +132,42 @@ fun PetaWarung(
         )
     }
 
-    LaunchedEffect(styleSiap, vendors, userLocation, selectedId) {
+    // ── Update marker warung saat data warung berubah ────────────────────────
+    LaunchedEffect(styleSiap, vendors, selectedId) {
         val map = mapRef ?: return@LaunchedEffect
         if (!styleSiap) return@LaunchedEffect
-        tampilkanMarker(context, map, vendors, userLocation, selectedId)
+        userMarkerRef = updateSemuaMarker(
+            context = context,
+            map = map,
+            vendors = vendors,
+            userLocation = userLocation,
+            userHeading = userHeading,
+            selectedId = selectedId,
+            currentUserMarker = userMarkerRef
+        )
+    }
+
+    // ── Update posisi user & arah panah hadap secara REAL-TIME ───────────────
+    LaunchedEffect(styleSiap, userLocation, userHeading) {
+        val map = mapRef ?: return@LaunchedEffect
+        if (!styleSiap || userLocation == null) return@LaunchedEffect
+
+        val iconFactory = IconFactory.getInstance(context)
+        val puckBitmap = PinGenerator.dapatkanPuckLokasi(context, userHeading)
+        val customPuck = iconFactory.fromBitmap(puckBitmap)
+
+        val existing = userMarkerRef
+        if (existing != null) {
+            existing.position = userLocation
+            existing.icon = customPuck
+        } else {
+            userMarkerRef = map.addMarker(
+                MarkerOptions()
+                    .position(userLocation)
+                    .icon(customPuck)
+                    .title("Lokasi saya")
+            )
+        }
     }
 
     LaunchedEffect(center, zoom) {
@@ -138,28 +184,35 @@ fun PetaWarung(
     }
 }
 
-private fun tampilkanMarker(
+private fun updateSemuaMarker(
     context: android.content.Context,
     map: MapLibreMap,
     vendors: List<VendorDto>,
     userLocation: LatLng?,
-    selectedId: String?
-) {
+    userHeading: Float,
+    selectedId: String?,
+    currentUserMarker: Marker?
+): Marker? {
     map.clear()
     val iconFactory = IconFactory.getInstance(context)
 
+    // 1. Gambar posisi pengguna dengan panah arah hadap
+    var newPuckMarker: Marker? = null
     userLocation?.let { lokasi ->
-        map.addMarker(
+        val puckBitmap = PinGenerator.dapatkanPuckLokasi(context, userHeading)
+        val customPuck = iconFactory.fromBitmap(puckBitmap)
+        newPuckMarker = map.addMarker(
             MarkerOptions()
                 .position(lokasi)
+                .icon(customPuck)
                 .title("Lokasi saya")
         )
     }
 
+    // 2. Gambar semua pin warung
     vendors.forEach { vendor ->
         if (vendor.lat == 0.0 && vendor.lng == 0.0) return@forEach
 
-        // Buat pin kustom berisi ikon kategori dan nama warung
         val pinBitmap = PinGenerator.dapatkanPin(
             context = context,
             namaToko = vendor.namaToko,
@@ -176,4 +229,6 @@ private fun tampilkanMarker(
                 .snippet(Format.labelKategori(vendor.kategori))
         )
     }
+
+    return newPuckMarker
 }

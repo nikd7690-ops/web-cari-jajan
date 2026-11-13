@@ -9,10 +9,13 @@ import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Typeface
 import androidx.collection.LruCache
+import kotlin.math.roundToInt
 
 object PinGenerator {
-    // Cache bitmap agar tidak menggambar ulang pin yang sama berulang kali
+    // Cache bitmap warung agar tidak menggambar ulang pin yang sama
     private val pinCache = LruCache<String, Bitmap>(128)
+    // Cache puck lokasi berdasarkan kuantisasi sudut rotasi (per 3 derajat)
+    private val puckCache = LruCache<Int, Bitmap>(120)
 
     fun dapatkanPin(
         context: Context,
@@ -26,6 +29,87 @@ object PinGenerator {
         val density = context.resources.displayMetrics.density
         val bitmap = gambarPin(namaToko, kategori, buka, density)
         pinCache.put(key, bitmap)
+        return bitmap
+    }
+
+    /**
+     * Menggambar puck lokasi real-time dengan tanda panah arah hadap (heading/bearing).
+     */
+    fun dapatkanPuckLokasi(context: Context, heading: Float): Bitmap {
+        // Kuantisasi derajat ke kelipatan 3 derajat agar menggunakan cache efisien
+        val quantizedHeading = ((heading % 360f + 360f) % 360f / 3f).roundToInt() * 3
+        puckCache.get(quantizedHeading)?.let { return it }
+
+        val density = context.resources.displayMetrics.density
+        val bitmap = gambarPuckLokasi(quantizedHeading.toFloat(), density)
+        puckCache.put(quantizedHeading, bitmap)
+        return bitmap
+    }
+
+    private fun gambarPuckLokasi(heading: Float, density: Float): Bitmap {
+        val dp = { value: Float -> value * density }
+        val size = dp(46f)
+        val bitmap = Bitmap.createBitmap(size.toInt(), size.toInt(), Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+
+        val cx = size / 2f
+        val cy = size / 2f
+
+        // 1. Lingkaran luar berbayang halus (halo akurasi GPS)
+        val haloPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.parseColor("#33059669") // Emerald transparan
+            style = Paint.Style.FILL
+        }
+        canvas.drawCircle(cx, cy, dp(21f), haloPaint)
+
+        // 2. Tanda Panah Arah Hadap (menunjuk sesuai sudut heading)
+        canvas.save()
+        canvas.rotate(heading, cx, cy)
+
+        val arrowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.parseColor("#059669")
+            style = Paint.Style.FILL
+        }
+        val arrowBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            style = Paint.Style.STROKE
+            strokeWidth = dp(1.5f)
+            strokeJoin = Paint.Join.ROUND
+        }
+
+        val arrowPath = Path().apply {
+            moveTo(cx, cy - dp(21f)) // Ujung tajam panah di depan
+            lineTo(cx - dp(7.5f), cy - dp(9f))
+            lineTo(cx, cy - dp(12f)) // Cekungan belakang panah
+            lineTo(cx + dp(7.5f), cy - dp(9f))
+            close()
+        }
+        canvas.drawPath(arrowPath, arrowPaint)
+        canvas.drawPath(arrowPath, arrowBorderPaint)
+
+        canvas.restore()
+
+        // 3. Lingkaran Inti Posisi (Titik Biru/Hijau dengan Lingkar Putih Bersih)
+        val outerDotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            style = Paint.Style.FILL
+            setShadowLayer(dp(2.5f), 0f, dp(1f), Color.parseColor("#44000000"))
+        }
+        canvas.drawCircle(cx, cy, dp(9.5f), outerDotPaint)
+
+        val innerDotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.parseColor("#059669")
+            style = Paint.Style.FILL
+        }
+        canvas.drawCircle(cx, cy, dp(7f), innerDotPaint)
+
+        // Titik kilau putih kecil di tengah
+        val centerDotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            style = Paint.Style.FILL
+        }
+        canvas.drawCircle(cx, cy, dp(2.2f), centerDotPaint)
+
         return bitmap
     }
 
@@ -48,7 +132,6 @@ object PinGenerator {
         }
         val textWidth = textPaint.measureText(namaTampil)
         val fontMetrics = textPaint.fontMetrics
-        val textHeight = fontMetrics.descent - fontMetrics.ascent
 
         // Dimensi pin
         val iconSize = dp(24f)
@@ -61,7 +144,7 @@ object PinGenerator {
 
         val bubbleW = padX + iconSize + gap + textWidth + padX + dp(4f)
         val bubbleH = padY + iconSize + padY
-        val totalW = bubbleW + dp(4f) // padding ekstra untuk stroke
+        val totalW = bubbleW + dp(4f)
         val totalH = bubbleH + arrowH + dp(4f)
 
         val bitmap = Bitmap.createBitmap(
@@ -157,7 +240,7 @@ object PinGenerator {
 
         when (kategori) {
             "pkl" -> {
-                // Ikon Gerobak PKL (badan gerobak + 2 roda + gagang)
+                // Ikon Gerobak PKL
                 val body = Path().apply {
                     moveTo(cx - half * 0.7f, cy - half * 0.4f)
                     lineTo(cx + half * 0.8f, cy - half * 0.4f)
@@ -166,50 +249,43 @@ object PinGenerator {
                     close()
                 }
                 canvas.drawPath(body, paint)
-                // Gagang gerobak
                 canvas.drawLine(cx - half * 0.7f, cy - half * 0.4f, cx - half * 0.95f, cy - half * 0.7f, paint)
-                // Roda 1 & 2
                 canvas.drawCircle(cx - half * 0.35f, cy + half * 0.65f, half * 0.22f, fillPaint)
                 canvas.drawCircle(cx + half * 0.35f, cy + half * 0.65f, half * 0.22f, fillPaint)
             }
             "keliling" -> {
-                // Ikon Motor / Kendaraan Keliling (2 roda + bodi motor)
+                // Ikon Motor / Kendaraan Keliling
                 val rRoda = half * 0.32f
                 val rodaLeftX = cx - half * 0.55f
                 val rodaRightX = cx + half * 0.55f
                 val rodaY = cy + half * 0.45f
 
-                // Roda depan & belakang
                 canvas.drawCircle(rodaLeftX, rodaY, rRoda, paint)
                 canvas.drawCircle(rodaRightX, rodaY, rRoda, paint)
 
-                // Rangka motor
                 val motorPath = Path().apply {
                     moveTo(rodaLeftX, rodaY)
                     lineTo(cx - half * 0.1f, cy - half * 0.15f)
                     lineTo(cx + half * 0.35f, cy - half * 0.15f)
                     lineTo(rodaRightX, rodaY)
-                    // Setang motor
                     moveTo(cx + half * 0.35f, cy - half * 0.15f)
                     lineTo(cx + half * 0.45f, cy - half * 0.75f)
                 }
                 canvas.drawPath(motorPath, paint)
 
-                // Keranjang/boks jualan di belakang
                 val box = RectF(cx - half * 0.8f, cy - half * 0.55f, cx - half * 0.15f, cy - half * 0.05f)
                 canvas.drawRoundRect(box, 2f, 2f, paint)
             }
             "rumah_makan", "cafe" -> {
-                // Ikon Mangkuk Makanan Hangat / Rumah Makan
+                // Ikon Mangkuk Makanan Hangat
                 val bowlRect = RectF(cx - half * 0.8f, cy - half * 0.2f, cx + half * 0.8f, cy + half * 0.75f)
                 canvas.drawArc(bowlRect, 0f, 180f, true, paint)
-                // Garis uap hangat di atas
                 canvas.drawLine(cx - half * 0.35f, cy - half * 0.45f, cx - half * 0.35f, cy - half * 0.75f, paint)
                 canvas.drawLine(cx, cy - half * 0.55f, cx, cy - half * 0.85f, paint)
                 canvas.drawLine(cx + half * 0.35f, cy - half * 0.45f, cx + half * 0.35f, cy - half * 0.75f, paint)
             }
             else -> {
-                // Ikon Rumah / Toko Tetap (Atap segitiga + dinding + pintu)
+                // Ikon Rumah / Toko Tetap
                 val atap = Path().apply {
                     moveTo(cx, cy - half * 0.85f)
                     lineTo(cx + half * 0.85f, cy - half * 0.15f)
@@ -218,11 +294,9 @@ object PinGenerator {
                 }
                 canvas.drawPath(atap, paint)
 
-                // Dinding rumah
                 val dinding = RectF(cx - half * 0.65f, cy - half * 0.15f, cx + half * 0.65f, cy + half * 0.75f)
                 canvas.drawRect(dinding, paint)
 
-                // Pintu
                 val pintu = RectF(cx - half * 0.22f, cy + half * 0.2f, cx + half * 0.22f, cy + half * 0.75f)
                 canvas.drawRect(pintu, fillPaint)
             }
