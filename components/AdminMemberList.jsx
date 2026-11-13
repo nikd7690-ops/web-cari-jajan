@@ -50,6 +50,30 @@ export default function AdminMemberList({ initialMembers = [] }) {
     }
   }
 
+  async function hapusMember(member) {
+    const konfirmasi = confirm(
+      `Apakah Anda yakin ingin MENGHAPUS PERMANEN akun "${member.name || member.email}"?\n\nTindakan ini tidak dapat dibatalkan.`
+    );
+    if (!konfirmasi) return;
+
+    setLoadingId(member._id);
+    try {
+      const res = await fetch(`/api/admin/members/${member._id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMembers((prev) => prev.filter((m) => m._id !== member._id));
+      } else {
+        alert(data.error || "Gagal menghapus member");
+      }
+    } catch {
+      alert("Terjadi kesalahan jaringan");
+    } finally {
+      setLoadingId(null);
+    }
+  }
+
   return (
     <div className="space-y-3">
       <input
@@ -100,7 +124,7 @@ export default function AdminMemberList({ initialMembers = [] }) {
             </div>
 
             {m.role !== "admin" && (
-              <div className="shrink-0">
+              <div className="flex shrink-0 items-center gap-1.5">
                 <button
                   disabled={loadingId === m._id}
                   onClick={() => toggleBan(m)}
@@ -111,6 +135,26 @@ export default function AdminMemberList({ initialMembers = [] }) {
                   }`}
                 >
                   {m.isBanned ? "Buka Blokir" : "Blokir"}
+                </button>
+                <button
+                  disabled={loadingId === m._id}
+                  onClick={() => hapusMember(m)}
+                  title="Hapus akun member"
+                  aria-label="Hapus akun member"
+                  className="rounded-lg border border-zinc-200 bg-white p-1 text-zinc-500 hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 transition"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4 w-4"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" />
+                  </svg>
                 </button>
               </div>
             )}

@@ -125,6 +125,12 @@ class VendorRepository(private val api: ApiService) {
         Unit
     }
 
+    suspend fun deleteMember(id: String): Result<Unit> = call {
+        val res = api.deleteMember(id)
+        if (!res.isSuccessful) throw ApiException(ApiErrors.message(res))
+        Unit
+    }
+
     private inline fun <T> call(block: () -> T): Result<T> = try {
         Result.success(block())
     } catch (e: Exception) {

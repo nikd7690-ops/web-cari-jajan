@@ -98,6 +98,10 @@ fun AdminDashboardContent(
     var banReason by remember { mutableStateOf("") }
     var banLoading by remember { mutableStateOf(false) }
 
+    // Dialog aksi Hapus Member
+    var dialogHapusMemberTarget by remember { mutableStateOf<UserDto?>(null) }
+    var hapusMemberLoading by remember { mutableStateOf(false) }
+
     fun refresh() {
         loading = true
         errorPesan = ""
@@ -331,9 +335,13 @@ fun AdminDashboardContent(
                                                 Button(
                                                     onClick = {
                                                         scope.launch {
-                                                            container.vendorRepository.adminVendorAction(v.id, "approve")
-                                                            pesanSukses = "Warung '${v.namaToko}' berhasil disetujui tayang!"
-                                                            refresh()
+                                                            val res = container.vendorRepository.adminVendorAction(v.id, "approve")
+                                                            res.onSuccess {
+                                                                pesanSukses = "Warung '${v.namaToko}' berhasil disetujui tayang!"
+                                                                refresh()
+                                                            }.onFailure { err ->
+                                                                errorPesan = "Gagal menyetujui warung: ${err.message}"
+                                                            }
                                                         }
                                                     },
                                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669)),
@@ -348,9 +356,13 @@ fun AdminDashboardContent(
                                                 OutlinedButton(
                                                     onClick = {
                                                         scope.launch {
-                                                            container.vendorRepository.adminVendorAction(v.id, "reject")
-                                                            pesanSukses = "Warung '${v.namaToko}' ditolak."
-                                                            refresh()
+                                                            val res = container.vendorRepository.adminVendorAction(v.id, "reject")
+                                                            res.onSuccess {
+                                                                pesanSukses = "Warung '${v.namaToko}' ditolak."
+                                                                refresh()
+                                                            }.onFailure { err ->
+                                                                errorPesan = "Gagal menolak warung: ${err.message}"
+                                                            }
                                                         }
                                                     },
                                                     modifier = Modifier.height(32.dp).padding(start = 4.dp),
@@ -363,9 +375,13 @@ fun AdminDashboardContent(
                                             IconButton(
                                                 onClick = {
                                                     scope.launch {
-                                                        container.vendorRepository.delete(v.id)
-                                                        pesanSukses = "Warung '${v.namaToko}' dihapus permanen."
-                                                        refresh()
+                                                        val res = container.vendorRepository.delete(v.id)
+                                                        res.onSuccess {
+                                                            pesanSukses = "Warung '${v.namaToko}' dihapus permanen."
+                                                            refresh()
+                                                        }.onFailure { err ->
+                                                            errorPesan = "Gagal menghapus warung: ${err.message}"
+                                                        }
                                                     }
                                                 },
                                                 modifier = Modifier.size(32.dp).padding(start = 4.dp)
@@ -527,22 +543,39 @@ fun AdminDashboardContent(
                                     }
 
                                     if (m.displayRole != "admin") {
-                                        Button(
-                                            onClick = {
-                                                dialogBanTarget = m
-                                                banReason = ""
-                                            },
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = if (m.displayIsBanned) Color(0xFF059669) else Color(0xFFDC2626)
-                                            ),
-                                            modifier = Modifier.height(30.dp),
-                                            shape = RoundedCornerShape(6.dp)
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                                         ) {
-                                            Text(
-                                                if (m.displayIsBanned) "Buka Blokir" else "Blokir",
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
+                                            Button(
+                                                onClick = {
+                                                    dialogBanTarget = m
+                                                    banReason = ""
+                                                },
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = if (m.displayIsBanned) Color(0xFF059669) else Color(0xFFDC2626)
+                                                ),
+                                                modifier = Modifier.height(30.dp),
+                                                shape = RoundedCornerShape(6.dp)
+                                            ) {
+                                                Text(
+                                                    if (m.displayIsBanned) "Buka Blokir" else "Blokir",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+
+                                            IconButton(
+                                                onClick = { dialogHapusMemberTarget = m },
+                                                modifier = Modifier.size(30.dp)
+                                            ) {
+                                                Icon(
+                                                    Icons.Filled.Delete,
+                                                    contentDescription = "Hapus Member",
+                                                    tint = Color(0xFFEF4444),
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -721,6 +754,51 @@ fun AdminDashboardContent(
                 TextButton(
                     onClick = { dialogBanTarget = null },
                     enabled = !banLoading
+                ) {
+                    Text("Batal")
+                }
+            }
+        )
+    }
+
+    // ── Dialog Konfirmasi Hapus Member Permanen ──
+    dialogHapusMemberTarget?.let { target ->
+        AlertDialog(
+            onDismissRequest = { if (!hapusMemberLoading) dialogHapusMemberTarget = null },
+            title = {
+                Text("Hapus Akun Member?", fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Text(
+                    "Apakah Anda yakin ingin menghapus permanen akun '${target.displayName}' (${target.displayEmail})?\n\nTindakan ini tidak dapat dibatalkan dan akun tidak akan bisa digunakan lagi."
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        hapusMemberLoading = true
+                        scope.launch {
+                            val res = container.vendorRepository.deleteMember(target.displayId)
+                            hapusMemberLoading = false
+                            res.onSuccess {
+                                pesanSukses = "Akun '${target.displayName}' berhasil dihapus permanen."
+                                dialogHapusMemberTarget = null
+                                refresh()
+                            }.onFailure {
+                                errorPesan = it.message ?: "Gagal menghapus member"
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
+                    enabled = !hapusMemberLoading
+                ) {
+                    Text(if (hapusMemberLoading) "Menghapus..." else "Ya, Hapus")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { dialogHapusMemberTarget = null },
+                    enabled = !hapusMemberLoading
                 ) {
                     Text("Batal")
                 }

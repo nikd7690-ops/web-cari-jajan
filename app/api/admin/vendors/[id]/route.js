@@ -95,67 +95,27 @@ export async function PATCH(request, { params }) {
     }
 
     const pemilik = vendor.submittedBy || vendor.owner;
-    if (!pemilik) {
-      await Vendor.updateOne(
-        { _id: vendor._id, status: "approved" },
-        { $set: { status: "pending" } }
-      );
-      return NextResponse.json(
-        { error: "Warung tidak memiliki user pengaju yang valid" },
-        { status: 409 }
-      );
-    }
+    let hadiah = null;
 
-    let hadiah;
-
-    try {
-      hadiah = await User.findByIdAndUpdate(
-        pemilik,
-        [
-          {
-            $set: {
-              xp: {
-                $add: [{ $ifNull: ["$xp", 0] }, XP_PER_APPROVAL],
-              },
-            },
-          },
-          {
-            $set: {
-              level: {
-                $add: [
-                  1,
-                  {
-                    $floor: {
-                      $divide: ["$xp", XP_PER_LEVEL],
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        ],
-        {
-          returnDocument: "after",
-          projection: { name: 1, xp: 1, level: 1 },
+    if (pemilik) {
+      try {
+        const userObj = await User.findById(pemilik);
+        if (userObj) {
+          const xpBaru = (userObj.xp || 0) + XP_PER_APPROVAL;
+          const levelBaru = Math.floor(xpBaru / XP_PER_LEVEL) + 1;
+          userObj.xp = xpBaru;
+          userObj.level = levelBaru;
+          await userObj.save();
+          hadiah = {
+            id: userObj._id.toString(),
+            name: userObj.name,
+            xp: userObj.xp,
+            level: userObj.level,
+          };
         }
-      ).lean();
-    } catch (error) {
-      await Vendor.updateOne(
-        { _id: vendor._id, status: "approved" },
-        { $set: { status: "pending" } }
-      );
-      throw error;
-    }
-
-    if (!hadiah) {
-      await Vendor.updateOne(
-        { _id: vendor._id, status: "approved" },
-        { $set: { status: "pending" } }
-      );
-      return NextResponse.json(
-        { error: "User pengaju warung tidak ditemukan" },
-        { status: 409 }
-      );
+      } catch (rewardErr) {
+        console.warn("Gagal memberikan XP hadiah kepada user pengaju:", rewardErr);
+      }
     }
 
     return NextResponse.json({ data: { vendor, user: hadiah } });
