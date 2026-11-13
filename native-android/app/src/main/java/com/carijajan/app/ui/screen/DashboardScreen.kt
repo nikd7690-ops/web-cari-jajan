@@ -92,11 +92,8 @@ fun DashboardScreen(
     val user by container.authRepository.user.collectAsStateWithLifecycle()
     val defaultTipeAkun by container.authRepository.tipeAkun.collectAsStateWithLifecycle()
 
-    // Mode tampilan: "penjual" atau "pembeli" (pengguna bisa bebas beralih untuk demonstrasi)
-    var modeDashboard by remember { mutableStateOf(defaultTipeAkun) }
-    LaunchedEffect(defaultTipeAkun) {
-        modeDashboard = defaultTipeAkun
-    }
+    // Penentuan peran: Mitra vs Pengguna/Member (terkunci sesuai akun tanpa switcher)
+    val isMitra = (user?.tipeAkun == "mitra" || defaultTipeAkun == "mitra" || defaultTipeAkun == "penjual")
 
     var vendors by remember { mutableStateOf<List<VendorDto>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -155,12 +152,16 @@ fun DashboardScreen(
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (modeDashboard == "penjual") "Dashboard Pemilik Warung" else "Dashboard Pembeli & Kontributor",
+                    text = if (isMitra) "Dashboard Mitra Warung" else "Dashboard Pengguna / Member",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 val namaUser = user?.name?.takeIf { it.isNotBlank() } ?: user?.email.orEmpty()
-                Text("Halo, $namaUser", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = if (isMitra) "Halo, $namaUser • Pemilik Warung" else "Halo, $namaUser • Member Komunitas",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             IconButton(onClick = {
                 scope.launch {
@@ -172,83 +173,14 @@ fun DashboardScreen(
             }
         }
 
-        // ── Switcher Mode Dashboard (Penjual vs Pembeli) ────────────────────────
-        Surface(
-            color = Color(0xFFF4F4F5),
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp)
-        ) {
-            Row(modifier = Modifier.padding(4.dp)) {
-                val isPjl = modeDashboard == "penjual"
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(9.dp))
-                        .background(if (isPjl) Color(0xFF059669) else Color.Transparent)
-                        .clickable {
-                            modeDashboard = "penjual"
-                            scope.launch { container.authRepository.setTipeAkun("penjual") }
-                        }
-                        .padding(vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Filled.Storefront,
-                            contentDescription = null,
-                            tint = if (isPjl) Color.White else Color(0xFF52525B),
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            "Mode Penjual",
-                            fontSize = 12.sp,
-                            fontWeight = if (isPjl) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isPjl) Color.White else Color(0xFF52525B)
-                        )
-                    }
-                }
-
-                val isPbl = modeDashboard == "pembeli"
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(9.dp))
-                        .background(if (isPbl) Color(0xFF2563EB) else Color.Transparent)
-                        .clickable {
-                            modeDashboard = "pembeli"
-                            scope.launch { container.authRepository.setTipeAkun("pembeli") }
-                        }
-                        .padding(vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Filled.VolunteerActivism,
-                            contentDescription = null,
-                            tint = if (isPbl) Color.White else Color(0xFF52525B),
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            "Mode Pembeli",
-                            fontSize = 12.sp,
-                            fontWeight = if (isPbl) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isPbl) Color.White else Color(0xFF52525B)
-                        )
-                    }
-                }
-            }
-        }
-
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(14.dp),
             modifier = Modifier.weight(1f)
         ) {
             // =========================================================================
-            // 🍲 TAMPILAN DASHBOARD PEMBELI & KONTRIBUTOR KOMUNITAS
+            // 🍲 TAMPILAN DASHBOARD PENGGUNA / MEMBER (KOMUNITAS)
             // =========================================================================
-            if (modeDashboard == "pembeli") {
+            if (!isMitra) {
                 val xp = user?.xp ?: 0
                 val level = Gamifikasi.levelDariXp(xp)
                 val gelar = Gamifikasi.gelarLevel(level)
@@ -397,8 +329,7 @@ fun DashboardScreen(
                     items(vendors, key = { it.id }) { vendor ->
                         PembeliVendorCard(
                             vendor = vendor,
-                            onView = { onVendor(vendor.id) },
-                            onRequestEdit = { dialogRevisiWarung = vendor }
+                            onView = { onVendor(vendor.id) }
                         )
                     }
                 }
@@ -561,24 +492,51 @@ fun DashboardScreen(
                     }
                 }
 
-                // 3. Tombol Tambah Warung Baru
+                // 3. Status Warung Mitra (Maksimal 1 Warung)
                 item {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 4.dp)
-                    ) {
-                        Text(
-                            "Warung Milik Anda",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Button(
-                            onClick = onAdd,
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669)),
-                            shape = RoundedCornerShape(10.dp)
+                    val sudahPunyaWarung = vendors.isNotEmpty()
+                    Column(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("+ Tambah Warung", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                "Warung Resmi Anda",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (!sudahPunyaWarung) {
+                                Button(
+                                    onClick = onAdd,
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669)),
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Text("+ Daftarkan Warung", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+                            } else {
+                                Surface(
+                                    shape = RoundedCornerShape(20.dp),
+                                    color = Color(0xFFECFDF5),
+                                    border = BorderStroke(1.dp, Color(0xFFA7F3D0))
+                                ) {
+                                    Text(
+                                        "1 / 1 Warung Aktif",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF065F46),
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                        }
+                        if (sudahPunyaWarung) {
+                            Text(
+                                "📌 Ketentuan Mitra: 1 akun mitra mengelola 1 warung utama. Hubungi admin bila ingin mengajukan pendaftaran warung kedua/cabang.",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
                         }
                     }
                 }
@@ -721,12 +679,12 @@ fun DashboardScreen(
     }
 }
 
-// ── Komponen Kartu Warung Khusus Pembeli (Kontributor) ────────────────────────
+// ── Komponen Kartu Warung Khusus Pengguna / Member (Kontributor) ───────────
 @Composable
 private fun PembeliVendorCard(
     vendor: VendorDto,
     onView: () -> Unit,
-    onRequestEdit: () -> Unit
+    onRequestEdit: (() -> Unit)? = null
 ) {
     Surface(
         shape = RoundedCornerShape(14.dp),
@@ -761,15 +719,31 @@ private fun PembeliVendorCard(
                         modifier = Modifier.padding(top = 4.dp)
                     ) {
                         val isApproved = vendor.status == "approved"
+                        val isRejected = vendor.status == "rejected"
+                        val bgCol = when {
+                            isApproved -> Color(0xFFECFDF5)
+                            isRejected -> Color(0xFFFEF2F2)
+                            else -> Color(0xFFFEF3C7)
+                        }
+                        val txtCol = when {
+                            isApproved -> Color(0xFF047857)
+                            isRejected -> Color(0xFFDC2626)
+                            else -> Color(0xFFB45309)
+                        }
+                        val labelStatus = when {
+                            isApproved -> "✓ Terverifikasi Admin (+50 XP)"
+                            isRejected -> "✕ Ditolak Kurasi"
+                            else -> "⏳ Menunggu Konfirmasi Admin"
+                        }
                         Surface(
-                            color = if (isApproved) Color(0xFFECFDF5) else Color(0xFFFEF3C7),
+                            color = bgCol,
                             shape = RoundedCornerShape(50)
                         ) {
                             Text(
-                                text = if (isApproved) "✓ Terverifikasi (+50 XP)" else "⏳ Menunggu Kurasi Admin",
+                                text = labelStatus,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isApproved) Color(0xFF047857) else Color(0xFFB45309),
+                                color = txtCol,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                             )
                         }
@@ -783,18 +757,37 @@ private fun PembeliVendorCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = onView) { Text("Lihat di Peta", fontSize = 12.sp) }
-                Spacer(Modifier.width(4.dp))
-                OutlinedButton(
-                    onClick = onRequestEdit,
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(13.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Ajukan Revisi", fontSize = 11.sp)
+                Text(
+                    text = "Buka: ${vendor.jamBuka} - ${vendor.jamTutup}",
+                    fontSize = 11.sp,
+                    color = Color(0xFF71717A)
+                )
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Button(
+                        onClick = onView,
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
+                    ) {
+                        Icon(Icons.Filled.Storefront, contentDescription = null, modifier = Modifier.size(13.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Lihat Warung", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    if (onRequestEdit != null) {
+                        Spacer(Modifier.width(6.dp))
+                        OutlinedButton(
+                            onClick = onRequestEdit,
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(13.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Ajukan Revisi", fontSize = 11.sp)
+                        }
+                    }
                 }
             }
         }

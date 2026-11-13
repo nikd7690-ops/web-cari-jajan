@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -41,6 +42,7 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Map
@@ -80,6 +82,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import com.carijajan.app.AppContainer
 import com.carijajan.app.data.VendorDto
 import com.carijajan.app.ui.components.PetaWarung
@@ -111,6 +114,45 @@ private fun hitungJarakMeter(lat1: Double, lng1: Double, lat2: Double, lng2: Dou
     return hasil[0].toDouble()
 }
 
+private fun apakahBukaDiWaktu(jamBuka: String, jamTutup: String, waktu: String): Boolean {
+    if (waktu == "semua") return true
+
+    fun toMinutes(jam: String): Int {
+        val parts = jam.split(":")
+        val h = parts.getOrNull(0)?.toIntOrNull() ?: 0
+        val m = parts.getOrNull(1)?.toIntOrNull() ?: 0
+        return h * 60 + m
+    }
+
+    val b = toMinutes(jamBuka)
+    val t = toMinutes(jamTutup)
+
+    // Jika buka dan tutup sama, berarti buka 24 jam penuh
+    if (b == t) return true
+
+    val targetMulai = when (waktu) {
+        "pagi" -> 5 * 60    // 05:00
+        "siang" -> 11 * 60  // 11:00
+        "malam" -> 17 * 60  // 17:00
+        else -> return true
+    }
+    val targetSelesai = when (waktu) {
+        "pagi" -> 11 * 60   // 11:00
+        "siang" -> 17 * 60  // 17:00
+        "malam" -> 24 * 60  // 24:00
+        else -> return true
+    }
+
+    return if (t > b) {
+        // Rentang normal: overlap jika buka sebelum target selesai dan tutup setelah target mulai
+        b < targetSelesai && t > targetMulai
+    } else {
+        // Lewat tengah malam (misal 17:00 s.d 02:00)
+        if (waktu == "malam") true
+        else t > targetMulai
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BerandaScreen(
@@ -133,6 +175,8 @@ fun BerandaScreen(
     var error by remember { mutableStateOf("") }
     var query by remember { mutableStateOf("") }
     var kategoriFilter by remember { mutableStateOf("semua") }
+    var filterWaktu by remember { mutableStateOf("semua") } // "semua", "pagi", "siang", "malam"
+    var vendorTerpilihPreview by remember { mutableStateOf<VendorDto?>(null) }
     var areaTerbuka by remember { mutableStateOf(false) }
     var daftarWarungTerbuka by remember { mutableStateOf(false) }
     var geoLoading by remember { mutableStateOf(false) }
@@ -241,8 +285,8 @@ fun BerandaScreen(
         loading = false
     }
 
-    // ── 4. Filter Warung berdasarkan Pencarian dan Kategori ──────────────────
-    val vendorsTampil = remember(masterVendors, query, kategoriFilter) {
+    // ── 4. Filter Warung berdasarkan Pencarian, Kategori & Waktu (Pagi/Siang/Malam) ──
+    val vendorsTampil = remember(masterVendors, query, kategoriFilter, filterWaktu) {
         val kata = query.trim().lowercase()
         masterVendors.values.filter { vendor ->
             val cocokKategori = when (kategoriFilter) {
@@ -260,7 +304,9 @@ fun BerandaScreen(
                     vendor.menus.any { it.namaMenu.lowercase().contains(kata) }
             }
 
-            cocokKategori && cocokKata
+            val cocokWaktu = apakahBukaDiWaktu(vendor.jamBuka, vendor.jamTutup, filterWaktu)
+
+            cocokKategori && cocokKata && cocokWaktu
         }
     }
 
@@ -320,7 +366,7 @@ fun BerandaScreen(
             onSelectVendor = { id ->
                 val v = masterVendors[id]
                 if (v != null) {
-                    mulaiNavigasiKeWarung(v)
+                    vendorTerpilihPreview = v
                 }
             }
         )
@@ -334,7 +380,7 @@ fun BerandaScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            // ── Baris Info Lokasi Aktif & Pemilih Kota / Daerah ──────────────
+            // ── Baris Info Lokasi Aktif & Pemilih Kota / Waktu Operasional ───────
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -349,38 +395,82 @@ fun BerandaScreen(
                     modifier = Modifier.clickable { areaTerbuka = true }
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             imageVector = Icons.Default.LocationOn,
                             contentDescription = "Pilih Lokasi",
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(15.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Column {
                             Text(
                                 text = "Lokasi Peta:",
-                                fontSize = 9.sp,
+                                fontSize = 8.5.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = lokasi?.label?.ifBlank { "Pilih Kota / Tempat" } ?: "Pilih Kota / Tempat",
-                                style = MaterialTheme.typography.labelMedium,
+                                text = lokasi?.label?.ifBlank { "Pusat Jember" } ?: "Pusat Jember",
+                                style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(2.dp))
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(16.dp)
                         )
+                    }
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                // ── Tombol Filter Waktu: Pagi, Siang, Malam ────────────────
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                    tonalElevation = 4.dp,
+                    shadowElevation = 3.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        listOf(
+                            Triple("semua", "Semua", "🕒"),
+                            Triple("pagi", "Pagi", "🌅"),
+                            Triple("siang", "Siang", "☀️"),
+                            Triple("malam", "Malam", "🌙")
+                        ).forEach { (key, label, emoji) ->
+                            val terpilih = filterWaktu == key
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = if (terpilih) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                modifier = Modifier.clickable { filterWaktu = key }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(emoji, fontSize = 9.sp)
+                                    Spacer(Modifier.width(2.dp))
+                                    Text(
+                                        label,
+                                        fontSize = 9.5.sp,
+                                        fontWeight = if (terpilih) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (terpilih) Color.White else MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -611,9 +701,9 @@ fun BerandaScreen(
             }
         }
 
-        // ── Pill Akses Cepat Warung Terdekat (Tampil jika Tidak Ada Rute Aktif)
+        // ── Pill Akses Cepat Warung Terdekat (Tampil jika Tidak Ada Rute & Tidak Ada Preview)
         AnimatedVisibility(
-            visible = vendorsDenganJarak.isNotEmpty() && ruteAktifVendor == null,
+            visible = vendorsDenganJarak.isNotEmpty() && ruteAktifVendor == null && vendorTerpilihPreview == null,
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier
@@ -649,6 +739,189 @@ fun BerandaScreen(
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
                     )
+                }
+            }
+        }
+
+        // ── Kartu Pop-up Preview Pin Warung Saat di-Klik ────────────────────
+        if (vendorTerpilihPreview != null) {
+            val preview = vendorTerpilihPreview!!
+            val previewJarak = remember(preview, userPos) {
+                if (userPos != null && preview.lat != 0.0 && preview.lng != 0.0) {
+                    hitungJarakMeter(userPos.latitude, userPos.longitude, preview.lat, preview.lng)
+                } else {
+                    preview.jarak
+                }
+            }
+
+            Surface(
+                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 16.dp,
+                tonalElevation = 8.dp,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(bottom = 76.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Foto Warung
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.size(68.dp)
+                            ) {
+                                if (preview.foto.isNotBlank()) {
+                                    AsyncImage(
+                                        model = preview.foto,
+                                        contentDescription = preview.namaToko,
+                                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                } else {
+                                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        Text(preview.kategoriEmoji, fontSize = 28.sp)
+                                    }
+                                }
+                            }
+
+                            // Info Teks Warung
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = preview.namaToko,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+
+                                Text(
+                                    text = preview.alamatPatokan,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.padding(top = 1.dp)
+                                )
+
+                                // Siapa yang mengkontribusikan
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Person,
+                                        contentDescription = null,
+                                        tint = Color(0xFF2563EB),
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(
+                                        text = "Diajukan oleh: ${preview.namaKontributor ?: "Warga Komunitas"}",
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF1D4ED8),
+                                        fontWeight = FontWeight.Medium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+
+                        // Tombol Tutup Preview (X)
+                        IconButton(
+                            onClick = { vendorTerpilihPreview = null },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = "Tutup", modifier = Modifier.size(18.dp))
+                        }
+                    }
+
+                    Spacer(Modifier.height(10.dp))
+
+                    // Status Buka/Tutup & Jam Operasional
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (preview.buka) Color(0xFFDCFCE7) else Color(0xFFFEE2E2),
+                                border = BorderStroke(1.dp, if (preview.buka) Color(0xFF86EFAC) else Color(0xFFFECACA))
+                            ) {
+                                Text(
+                                    text = if (preview.buka) "● Sedang Buka" else "● Sudah Tutup",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (preview.buka) Color(0xFF15803D) else Color(0xFFB91C1C),
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "Buka: ${preview.jamBuka} - ${preview.jamTutup}",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        if (previewJarak != null) {
+                            Text(
+                                text = Format.jarak(previewJarak),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+
+                    // 2 Tombol Aksi: Navigasi Langsung & Lihat Menu/Profil
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                mulaiNavigasiKeWarung(preview)
+                                vendorTerpilihPreview = null
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f).height(42.dp)
+                        ) {
+                            Icon(Icons.Default.Navigation, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Navigasi", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+
+                        Button(
+                            onClick = {
+                                onVendor(preview.id)
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f).height(42.dp)
+                        ) {
+                            Icon(Icons.Default.Storefront, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Menu & Profil", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                    }
                 }
             }
         }

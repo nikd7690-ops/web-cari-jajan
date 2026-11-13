@@ -171,19 +171,49 @@ export default function MapComponent({
           closeOnClick={false}
           onClose={() => setPopupId(null)}
         >
-          <div className="space-y-1">
-            <p className="font-semibold">{vendorPopup.namaToko}</p>
-            <p className="text-xs">{vendorPopup.alamatPatokan}</p>
-            <p className="text-xs">
-              {vendorPopup.buka ? "Buka" : "Tutup"} - jarak{" "}
-              {Math.round(vendorPopup.jarak)} m
-            </p>
-            <Link
-              href={`/warung/${vendorPopup._id}`}
-              className="text-xs font-medium text-emerald-700 underline"
-            >
-              Lihat &amp; pesan
-            </Link>
+          <div className="w-56 space-y-2 p-1 text-zinc-900">
+            {vendorPopup.foto ? (
+              <img
+                src={vendorPopup.foto}
+                alt={vendorPopup.namaToko}
+                className="h-24 w-full rounded-lg object-cover"
+              />
+            ) : null}
+            <div>
+              <p className="font-bold text-sm leading-snug">{vendorPopup.namaToko}</p>
+              <p className="text-xs text-zinc-600 line-clamp-1">{vendorPopup.alamatPatokan}</p>
+              <p className="text-[11px] text-blue-700 font-medium mt-0.5">
+                👤 Diajukan oleh: {vendorPopup.namaKontributor || "Warga Komunitas"}
+              </p>
+            </div>
+            <div className="flex items-center justify-between text-xs pt-1 border-t border-zinc-100">
+              <span
+                className={`font-bold ${
+                  vendorPopup.buka ? "text-emerald-700" : "text-red-600"
+                }`}
+              >
+                {vendorPopup.buka ? "● Sedang Buka" : "● Sudah Tutup"}
+              </span>
+              <span className="text-[11px] text-zinc-500">
+                {vendorPopup.jamBuka} - {vendorPopup.jamTutup}
+              </span>
+            </div>
+            <div className="flex gap-1.5 pt-1">
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${vendorPopup.lokasi.coordinates[1]},${vendorPopup.lokasi.coordinates[0]}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex-1 text-center rounded-lg border border-zinc-300 bg-white py-1.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-50"
+              >
+                Navigasi
+              </a>
+              <Link
+                href={`/warung/${vendorPopup._id}`}
+                className="flex-1 text-center rounded-lg bg-emerald-600 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+              >
+                Menu & Info
+              </Link>
+            </div>
           </div>
         </Popup>
       ) : null}

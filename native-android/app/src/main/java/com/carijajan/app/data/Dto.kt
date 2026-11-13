@@ -43,10 +43,17 @@ data class VendorDto(
     val jarak: Double? = null,
     val buka: Boolean = false,
     val zeroWaste: ZeroWasteDto? = null,
+    val namaKontributor: String? = null,
     val createdAt: String? = null
 ) {
     val lat: Double get() = lokasi?.coordinates?.getOrNull(1) ?: 0.0
     val lng: Double get() = lokasi?.coordinates?.getOrNull(0) ?: 0.0
+    val kategoriEmoji: String get() = when (kategori) {
+        "pkl" -> "🍢"
+        "keliling" -> "🚲"
+        "rumah_makan" -> "🍽️"
+        else -> "🏪"
+    }
 }
 
 @Serializable

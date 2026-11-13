@@ -35,12 +35,18 @@ export default async function DashboardPage() {
 
   await connectDB();
 
-  const [admin, progress] = await Promise.all([
+  const [admin, userProfil] = await Promise.all([
     apakahAdmin(session.user.id),
-    User.findById(session.user.id).select("xp level").lean(),
+    User.findById(session.user.id).select("xp level tipeAkun").lean(),
   ]);
 
-  const vendors = await Vendor.find({ owner: session.user.id })
+  const isMitra = userProfil?.tipeAkun === "mitra";
+
+  const vendors = await Vendor.find(
+    isMitra
+      ? { owner: session.user.id }
+      : { submittedBy: session.user.id }
+  )
     .sort({ createdAt: -1 })
     .lean();
 
@@ -48,16 +54,21 @@ export default async function DashboardPage() {
     <main className="mx-auto w-full max-w-2xl px-4 py-6 pb-24">
       <header className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-zinc-900">
+            {isMitra ? "Dashboard Mitra Warung" : "Dashboard Pengguna / Member"}
+          </h1>
           <p className="text-sm text-zinc-600">
-            Halo, {session.user.name || session.user.email}
+            Halo, {session.user.name || session.user.email} •{" "}
+            {isMitra ? "Pemilik Warung Resmi" : "Kontributor Komunitas"}
           </p>
-          <div className="mt-1 flex items-center gap-2 text-xs">
-            <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700">
-              Level {progress?.level ?? 1}
-            </span>
-            <span className="text-zinc-500">{progress?.xp ?? 0} XP</span>
-          </div>
+          {!isMitra ? (
+            <div className="mt-1 flex items-center gap-2 text-xs">
+              <span className="rounded-full bg-blue-50 px-2 py-0.5 font-medium text-blue-700">
+                Level {userProfil?.level ?? 1}
+              </span>
+              <span className="text-zinc-500">{userProfil?.xp ?? 0} XP Total</span>
+            </div>
+          ) : null}
         </div>
         <div className="flex items-center gap-2">
           {admin ? (
@@ -73,13 +84,40 @@ export default async function DashboardPage() {
       </header>
 
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-zinc-800">
-          Warung milikmu
-        </h2>
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-zinc-800">
+            {isMitra
+              ? "Warung Resmi Milikmu"
+              : "Warung yang Pernah Kamu Ajukan / Kontribusikan"}
+          </h2>
+          {!isMitra ? (
+            <Link
+              href="/dashboard/tambah"
+              className="text-xs font-semibold text-blue-700 underline"
+            >
+              + Ajukan Warung Baru
+            </Link>
+          ) : vendors.length === 0 ? (
+            <Link
+              href="/dashboard/tambah"
+              className="text-xs font-semibold text-emerald-700 underline"
+            >
+              + Daftarkan Warung
+            </Link>
+          ) : null}
+        </div>
+
+        {isMitra && vendors.length >= 1 ? (
+          <p className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50/70 p-2.5 text-xs text-emerald-800">
+            📌 <strong>Ketentuan Mitra:</strong> 1 akun mitra mengelola 1 warung resmi. Hubungi admin bila ingin mendaftarkan cabang baru.
+          </p>
+        ) : null}
 
         {vendors.length === 0 ? (
           <p className="rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-600">
-            Belum ada warung terdaftar. Tekan tombol + untuk menambah.
+            {isMitra
+              ? "Belum ada warung terdaftar. Daftarkan warung resmi Anda sekarang."
+              : "Belum ada warung yang diajukan. Temukan UMKM terdekat dan jadilah kontributor pertama!"}
           </p>
         ) : (
           <ul className="space-y-2">
@@ -143,16 +181,20 @@ export default async function DashboardPage() {
                         >
                           Lihat
                         </Link>
-                        <Link
-                          href={`/dashboard/edit/${vendor._id}`}
-                          className="rounded-lg px-2 py-2 text-sm font-medium text-emerald-700 underline"
-                        >
-                          Edit
-                        </Link>
-                        <DeleteWarungButton
-                          vendorId={vendor._id.toString()}
-                          namaToko={vendor.namaToko}
-                        />
+                        {isMitra ? (
+                          <>
+                            <Link
+                              href={`/dashboard/edit/${vendor._id}`}
+                              className="rounded-lg px-2 py-2 text-sm font-medium text-emerald-700 underline"
+                            >
+                              Edit
+                            </Link>
+                            <DeleteWarungButton
+                              vendorId={vendor._id.toString()}
+                              namaToko={vendor.namaToko}
+                            />
+                          </>
+                        ) : null}
                       </div>
                     </div>
                     <p className="mt-1 line-clamp-1 text-sm text-zinc-600">

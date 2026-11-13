@@ -75,7 +75,25 @@ export async function GET(request) {
         },
       },
       { $match: { status: "approved" } },
-      { $project: { owner: 0, submittedBy: 0 } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "submittedBy",
+          foreignField: "_id",
+          as: "kontributor",
+        },
+      },
+      {
+        $addFields: {
+          namaKontributor: {
+            $ifNull: [
+              { $arrayElemAt: ["$kontributor.name", 0] },
+              "Warga Komunitas",
+            ],
+          },
+        },
+      },
+      { $project: { owner: 0, kontributor: 0 } },
     ]);
 
     const data = vendors.map((vendor) => ({

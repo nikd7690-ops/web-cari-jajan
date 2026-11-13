@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { connectDB } from "@/lib/mongodb";
 import Vendor from "@/models/Vendor";
+import User from "@/models/User";
 import { isBuka } from "@/lib/jam";
 import { requireUser, requireVendorOwner } from "@/lib/apiAuth";
 import { apakahAdmin } from "@/lib/admin";
@@ -43,9 +44,16 @@ export async function GET(request, { params }) {
       }
     }
 
+    let namaKontributor = "Warga Komunitas";
+    if (vendor.submittedBy) {
+      const u = await User.findById(vendor.submittedBy).select("name").lean();
+      if (u?.name) namaKontributor = u.name;
+    }
+
     const data = {
       ...vendor,
       buka: isBuka(vendor.jamBuka, vendor.jamTutup),
+      namaKontributor,
     };
     delete data.owner;
     delete data.submittedBy;

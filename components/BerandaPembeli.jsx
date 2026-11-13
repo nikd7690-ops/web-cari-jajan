@@ -25,6 +25,30 @@ const MapComponent = dynamic(() => import("@/components/MapComponent"), {
 const RADIUS = 3000;
 const INDONESIA = { lat: -2.5, lng: 118 };
 
+function apakahBukaDiWaktu(jamBuka, jamTutup, waktu) {
+  if (waktu === "semua" || !jamBuka || !jamTutup) return true;
+
+  const toMinutes = (jam) => {
+    const [h, m] = jam.split(":").map(Number);
+    return (h || 0) * 60 + (m || 0);
+  };
+
+  const b = toMinutes(jamBuka);
+  const t = toMinutes(jamTutup);
+
+  if (b === t) return true;
+
+  const targetMulai = waktu === "pagi" ? 300 : waktu === "siang" ? 660 : 1020;
+  const targetSelesai = waktu === "pagi" ? 660 : waktu === "siang" ? 1020 : 1440;
+
+  if (t > b) {
+    return b < targetSelesai && t > targetMulai;
+  } else {
+    if (waktu === "malam") return true;
+    return t > targetMulai;
+  }
+}
+
 export default function BerandaPembeli() {
   const [lokasi, setLokasi] = useState(null);
   const [vendors, setVendors] = useState([]);
@@ -40,6 +64,7 @@ export default function BerandaPembeli() {
   const [pesanLokasi, setPesanLokasi] = useState("");
   const [statusLokasi, setStatusLokasi] = useState("");
   const [isNative, setIsNative] = useState(false);
+  const [filterWaktu, setFilterWaktu] = useState("semua"); // "semua", "pagi", "siang", "malam"
   const [offline, setOffline] = useState(false);
   const [petaGagal, setPetaGagal] = useState(false);
   const [onboarding, setOnboarding] = useState(true);
@@ -237,11 +262,12 @@ export default function BerandaPembeli() {
 
   const vendorsTampil = useMemo(() => {
     const kata = query.trim().toLowerCase();
-    if (!kata) return vendors;
-    return vendors.filter((vendor) =>
-      vendor.namaToko.toLowerCase().includes(kata)
-    );
-  }, [vendors, query]);
+    return vendors.filter((vendor) => {
+      const cocokKata = !kata || vendor.namaToko.toLowerCase().includes(kata);
+      const cocokWaktu = apakahBukaDiWaktu(vendor.jamBuka, vendor.jamTutup, filterWaktu);
+      return cocokKata && cocokWaktu;
+    });
+  }, [vendors, query, filterWaktu]);
 
   const tutupArea = useCallback(() => setAreaTerbuka(false), []);
 
@@ -410,12 +436,37 @@ export default function BerandaPembeli() {
       )}
 
       <div className="absolute inset-x-0 top-0 z-[1050] p-3">
-        <div className="mx-auto flex max-w-md items-center justify-end">
-          <div
-            className={`flex items-center overflow-hidden transition-all duration-300 ${
-              cariTerbuka ? "mr-2 flex-1 opacity-100" : "w-0 opacity-0"
-            }`}
-          >
+        <div className="mx-auto flex max-w-md items-center justify-between gap-2">
+          {/* Filter Waktu: Pagi, Siang, Malam */}
+          <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white/95 p-1 shadow-md backdrop-blur">
+            {[
+              { id: "semua", label: "Semua", icon: "🕒" },
+              { id: "pagi", label: "Pagi", icon: "🌅" },
+              { id: "siang", label: "Siang", icon: "☀️" },
+              { id: "malam", label: "Malam", icon: "🌙" },
+            ].map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setFilterWaktu(t.id)}
+                className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-all ${
+                  filterWaktu === t.id
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "text-zinc-600 hover:bg-zinc-100"
+                }`}
+              >
+                <span>{t.icon}</span>
+                <span>{t.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-end">
+            <div
+              className={`flex items-center overflow-hidden transition-all duration-300 ${
+                cariTerbuka ? "mr-2 w-44 opacity-100" : "w-0 opacity-0"
+              }`}
+            >
             <div className="flex w-full items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-2 shadow-md">
               {query ? (
                 <button
