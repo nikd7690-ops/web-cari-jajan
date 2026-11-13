@@ -103,6 +103,10 @@ fun PetaWarung(
                         map.uiSettings.isDoubleTapGesturesEnabled = true
                         map.uiSettings.isQuickZoomGesturesEnabled = true
 
+                        // Batas zoom optimal: mencegah GPU lag/overdraw saat zoom dekat ekstrem
+                        map.setMinZoomPreference(3.5)
+                        map.setMaxZoomPreference(18.5)
+
                         map.cameraPosition = CameraPosition.Builder()
                             .target(initialCenter)
                             .zoom(initialZoom)
