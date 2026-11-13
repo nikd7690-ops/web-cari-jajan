@@ -17,7 +17,7 @@ Aplikasi mobile etalase hiperlokal UMKM — pembeli menemukan warung terdekat di
 9. [Struktur Proyek](#9-struktur-proyek)
 10. [Instalasi dan Menjalankan](#10-instalasi-dan-menjalankan)
 11. [Variabel Lingkungan](#11-variabel-lingkungan)
-12. [Akun Demo](#12-akun-demo)
+12. [Akun Uji Coba Juri & Akun Demo](#12-akun-uji-coba-juri--akun-demo)
 13. [Dokumentasi Penggunaan AI](#13-dokumentasi-penggunaan-ai)
 14. [Etika dan Keamanan](#14-etika-dan-keamanan)
 15. [Atribusi](#15-atribusi)
@@ -62,12 +62,14 @@ Kami yang bertanda tangan di bawah ini menyatakan dengan sebenar-benarnya, serta
 
 ### A. Pembeli & Kontributor Komunitas
 - **Deteksi Lokasi & Pencarian Terdekat:** Deteksi GPS real-time dengan kompas arah hadap. Bila GPS tidak aktif, tersedia pilihan kawasan manual.
-- **Peta Interaktif:** Peta vektor modern (MapLibre + OpenFreeMap Liberty) dengan marker kategori warung kustom (rumah, gerobak PKL, motor keliling).
+- **Peta Interaktif Presisi:** Peta vektor modern (MapLibre + OpenFreeMap Liberty) dengan marker kategori warung kustom (rumah makan, gerobak PKL, motor keliling, warung tetap) yang ikonnya konsisten dengan profil warung.
+- **Pop-Up Foto Warung & Diskon di Peta:** Saat pin diklik di peta, foto warung dan label diskon mekar mengambang persis di atas pin dan ikut bergeser secara alami saat peta digeser. Kalibrasi jangkar (*anchor*) presisi memastikan ujung panah pin selalu menancap tepat di koordinat GPS warung tanpa meleset.
+- **Filter Waktu Operasional:** Tombol filter waktu berbasis icon kit resmi (Semua, Pagi, Siang, Malam) dengan status buka/tutup akurat sesuai zona waktu lokal (WIB GMT+7).
 - **Rute & Navigasi GPS Turn-by-Turn:** Kalkulasi jalur jalan raya riil via OSRM, estimasi durasi (motor & jalan kaki), serta tombol navigasi langsung ke Google Maps dengan panduan suara.
 - **Pencarian & Filter Kategori:** Filter chip warung (Semua, Warung, PKL, Rumah Makan, Cafe, Keliling) dan live search bar.
 - **Daftar Warung Terdekat:** Menampilkan warung terdekat dalam radius dengan penanda status Buka/Tutup dan jarak riil.
 - **Halaman Detail Warung & Pesanan WhatsApp:** Katalog menu, kalkulasi total otomatis, opsi pesan diantar / ambil sendiri, serta tautan langsung ke WhatsApp penjual tanpa potongan komisi.
-- **Kontribusi Titik Warung Baru (Crowdsourced):** Pembeli dapat mengajukan titik lokasi warung UMKM tersembunyi yang baru mereka temukan untuk dikurasi admin.
+- **Kontribusi Titik Warung Baru (Crowdsourced):** Pembeli dapat mengajukan titik lokasi warung UMKM tersembunyi yang baru mereka temukan untuk dikurasi admin, termasuk menginfokan jika warung sedang mengadakan diskon/promo.
 - **Gamifikasi Kontributor (Level & XP):** Sistem reward +50 XP per warung yang lolos kurasi admin, progress bar XP, dan gelar kehormatan kontributor (*Penjelajah Jajanan*, *Pemberi Rekomendasi*, *Pahlawan UMKM Lokal*).
 
 ### B. Pemilik Warung (Penjual)
@@ -75,18 +77,22 @@ Kami yang bertanda tangan di bawah ini menyatakan dengan sebenar-benarnya, serta
 - **Dashboard Performa Warung:**
   - **Statistik Pengunjung:** Menampilkan total dilihat pembeli (*view count*) dan frekuensi warung masuk radar pencarian radius pembeli.
   - **Status Kurasi Admin:** Tampilan status verifikasi awal (*Menunggu Kurasi Admin* atau *Terverifikasi & Tayang*).
-- **Fitur Khusus "Zero Waste Food" (Penyelamat Makanan UMKM):**
-  - Sesuai pilar SDG 12 (*Responsible Consumption*), penjual dapat mengaktifkan promo diskon makanan berlebih jelang tutup (diskon 20%, 30%, 50%) agar dagangan cepat habis dan mencegah makanan terbuang sia-sia.
+- **Fitur Khusus "Zero Waste Food" Fleksibel (1% – 100%):**
+  - Sesuai pilar SDG 12 (*Responsible Consumption*), penjual (maupun pembeli yang mendaftarkan) dapat mengaktifkan promo diskon porsi makanan jelang tutup secara fleksibel mulai dari **1% hingga 100%** dengan slider dan preset cepat (-1%, -10%, -20%, -30%, -50%) agar dagangan laris dan mencegah makanan mubazir.
 - **Pengelolaan Warung & Menu:** Menambah, mengedit nama, patokan alamat, jam buka-tutup, nomor WhatsApp, foto, dan daftar menu dinamis.
 - **Draf Menu dari AI:** Tombol "Baca menu dari foto" berbasis AI (Google Gemini API) untuk mengekstrak menu dan harga dari foto daftar menu secara otomatis dengan label wajib *"Draf AI, periksa dulu"*.
 - **Keamanan Data Server-Side:** Validasi kepemilikan warung ketat di server; penjual hanya bisa mengubah warung miliknya sendiri.
 
 ### C. Kurasi & Admin
-- **Halaman Kurasi Admin:** Tinjauan warung baru yang didaftarkan penjual maupun diajukan pembeli sebelum ditayangkan ke publik.
+- **Halaman & Dashboard Kurasi Admin:** Tinjauan warung baru yang didaftarkan penjual maupun diajukan pembeli sebelum ditayangkan ke publik, lengkap dengan filter status (*Menunggu Kurasi*, *Tayang*, *Ditolak*).
+- **Aksi Persetujuan & Penolakan:** Admin dapat menyetujui (*approve*) atau menolak (*reject*) warung dengan satu sentuhan.
 - **Distribusi XP Otomatis:** Pemberian +50 XP secara otomatis ke akun pengaju saat warung disetujui (*approved*).
+- **Penghapusan Warung Permanen:** Hak akses khusus admin untuk menghapus warung yang tidak valid atau melanggar ketentuan.
+- **Manajemen Member & Leaderboard Kontributor:** Admin dapat memantau daftar member, melihat kontributor teraktif pengaju warung, serta menangguhkan/memblokir (*ban*) atau menghapus akun yang melanggar ketentuan komunitas.
 
-### D. Arsitektur Mobile & Multi-Platform
+### D. Arsitektur Mobile & Interaktivitas UI
 - **Aplikasi Mobile Android (Klien Utama):** 100% Native Android (Kotlin murni + Jetpack Compose) tanpa wrapper WebView, menghasilkan performa rendering 60 FPS mulus, integrasi sensor rotasi kompas arah hadap, pelacakan GPS real-time, gestur peta MapLibre lengkap, dan integrasi Intent navigasi GPS.
+- **Desain Selaras Logo & Efek Pegas (iOS-style Bounce):** Palet warna visual disesuaikan dengan logo resmi Cari Jajan (Brand Orange `#EA681E` dan Brand Maroon `#4A1517`), dilengkapi efek mikro-interaksi pegas (*bounce click*) pada tombol dan kartu untuk pengalaman pengguna yang menyenangkan.
 - **Backend REST API & Web Portal:** Layanan REST API berbasis Next.js App Router dan MongoDB Atlas untuk sinkronisasi data terpusat, autentikasi JWT, dan portal kurasi admin.
 
 ## 5. Rencana Pengembangan
@@ -235,6 +241,12 @@ Semua endpoint menerima/mengembalikan JSON, kecuali yang ber-tanda form-data.
 | POST | `/api/menu-dari-foto` | Login | Draf menu dari foto via Gemini (form-data, maks 2 MB, ada rate limit) |
 | GET | `/api/admin/vendors` | Admin | Daftar seluruh warung untuk keperluan kurasi verifikasi |
 | PATCH | `/api/admin/vendors/[id]` | Admin | Setujui (*approve*) atau tolak (*reject*) warung; otomatis menambahkan +50 XP ke pengaju |
+| DELETE | `/api/admin/vendors/[id]` | Admin | Hapus warung secara permanen oleh admin |
+| GET | `/api/admin/members` | Admin | Daftar seluruh anggota/member dan leaderboard top kontributor pengaju warung |
+| POST | `/api/admin/members/[id]/ban` | Admin | Tangguhkan atau cabut penangguhan (*ban/unban*) akun pengguna |
+| DELETE | `/api/admin/members/[id]` | Admin | Hapus akun pengguna yang melanggar ketentuan komunitas |
+| POST | `/api/reports` | Publik / Login | Kirim laporan pelanggaran warung atau data tidak valid |
+| GET | `/api/reports` | Admin | Daftar laporan komunitas yang masuk untuk ditinjau admin |
 
 ## 9. Struktur Proyek
 
@@ -251,9 +263,9 @@ native-android/               Aplikasi Native Android (100% Kotlin + Jetpack Com
   app/src/main/java/com/carijajan/app/
     data/                     ApiClient, ApiService, AuthRepository, VendorRepository, TokenStore
     ui/screen/                BerandaScreen, DashboardScreen, MasukScreen, DaftarScreen, EditWarungScreen, WarungDetailScreen
-    ui/components/            PetaWarung (MapLibre), PinGenerator (Dynamic Vector Pin & Heading Puck), KomponenFoto
+    ui/components/            PetaWarung (MapLibre), PinGenerator (Dynamic Vector Pin & Heading Puck), KomponenFoto, AdminDashboardContent
     util/                     ArahKompas, Navigasi (OSRM & GPS Intent), Gamifikasi, Lokasi, WhatsApp
-scripts/                      seed.js (data awal), migrasi-kurasi.js, set-role.js
+scripts/                      seed.js (data awal), seed-juri.js (akun juri), migrasi-kurasi.js, set-role.js
 tests/                        Tes unit Vitest (gamifikasi, jam operasional, keranjang, nomor WA)
 public/                       Aset ikon, manifest PWA, service worker
 ```
@@ -284,6 +296,7 @@ Perintah yang tersedia:
 | `npm run lint` | Periksa gaya kode ESLint |
 | `npm test` | Jalankan rangkaian tes unit Vitest |
 | `npm run seed` | Isi akun demo + warung contoh di Jember |
+| `npm run seed:juri` | Isi akun khusus pengujian juri (Member, Mitra, Admin) |
 
 Untuk menjalankan atau mengompilasi aplikasi Native Android:
 1. Masuk ke folder `native-android/` dan salin `.env.example` menjadi `.env` jika ingin mengubah URL backend, nama aplikasi, atau ikon launcher:
@@ -325,12 +338,21 @@ NEXT_PUBLIC_MAP_STYLE_URL=
 | `DEMO_PASSWORD` | Password akun demo untuk `npm run seed` |
 | `NEXT_PUBLIC_MAP_STYLE_URL` | URL style vector tile (default: OpenFreeMap Liberty) |
 
-## 12. Akun Demo
+## 12. Akun Uji Coba Juri & Akun Demo
 
-- **Email:** `demo@carijajan.local`
-- **Password:** `Demo1234!`
+Untuk mempermudah pengujian dan penilaian oleh dewan juri, telah disediakan 3 akun terkonfigurasi dengan peran spesifik:
 
-Dapat diisi ulang sewaktu-waktu menggunakan perintah `npm run seed`.
+| Peran Akun | Alamat Email | Kata Sandi | Hak Akses & Data Awal |
+|---|---|---|---|
+| **Member (Pembeli & Kontributor)** | `member@gmail.com` | `password123` | Level 2 (150 XP), riwayat pengaju warung terverifikasi, dapat menjelajah peta, memesan WhatsApp, serta mengajukan warung baru beserta info diskon. |
+| **Mitra (Pemilik Warung)** | `pemilikwarung@gmail.com` | `password123` | Pemilik resmi "Warung Bu Siti", akses dashboard performa warung, kelola menu, dan promo aktif Zero Waste Food diskon 35%. |
+| **Administrator (Kurator)** | `admin@gmail.com` | `password123` | Akses penuh dashboard admin, kurasi persetujuan/penolakan warung baru, hapus warung permanen, leaderboard pengaju, dan manajemen moderasi member. |
+
+> **Catatan Pengujian Juri:** Seluruh akun di atas dapat di-reset atau diisi ulang sewaktu-waktu dengan menjalankan perintah `npm run seed:juri` di terminal.
+>
+> Tersedia juga akun demo bawaan:
+> - **Email:** `demo@carijajan.local`
+> - **Password:** `Demo1234!` (dapat diisi ulang via `npm run seed`)
 
 ## 13. Dokumentasi Penggunaan AI
 
