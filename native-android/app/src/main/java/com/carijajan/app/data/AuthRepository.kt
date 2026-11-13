@@ -11,6 +11,14 @@ class AuthRepository(
     private val _user = MutableStateFlow<UserDto?>(null)
     val user: StateFlow<UserDto?> = _user.asStateFlow()
 
+    private val _tipeAkun = MutableStateFlow("penjual") // "penjual" atau "pembeli"
+    val tipeAkun: StateFlow<String> = _tipeAkun.asStateFlow()
+
+    suspend fun setTipeAkun(tipe: String) {
+        tokenStore.saveTipeAkun(tipe)
+        _tipeAkun.value = tipe
+    }
+
     suspend fun login(email: String, password: String): Result<UserDto> = try {
         val res = api.login(LoginRequest(email.trim().lowercase(), password))
         if (res.isSuccessful) {
@@ -20,6 +28,7 @@ class AuthRepository(
             } else {
                 tokenStore.saveToken(body.token)
                 _user.value = body.user
+                _tipeAkun.value = tokenStore.getTipeAkun()
                 Result.success(body.user)
             }
         } else {
@@ -29,9 +38,16 @@ class AuthRepository(
         Result.failure(e)
     }
 
-    suspend fun register(nama: String, email: String, password: String): Result<Unit> = try {
+    suspend fun register(
+        nama: String,
+        email: String,
+        password: String,
+        tipeAkun: String = "penjual"
+    ): Result<Unit> = try {
         val res = api.register(RegisterRequest(nama.trim(), email.trim().lowercase(), password))
         if (res.isSuccessful) {
+            tokenStore.saveTipeAkun(tipeAkun)
+            _tipeAkun.value = tipeAkun
             Result.success(Unit)
         } else {
             Result.failure(ApiException(ApiErrors.message(res)))
@@ -42,6 +58,7 @@ class AuthRepository(
 
     suspend fun restoreSession(): UserDto? {
         val token = tokenStore.getToken()
+        _tipeAkun.value = tokenStore.getTipeAkun()
         if (token.isNullOrBlank()) {
             _user.value = null
             return null

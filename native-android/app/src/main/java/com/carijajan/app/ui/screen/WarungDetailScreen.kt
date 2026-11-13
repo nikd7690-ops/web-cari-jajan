@@ -14,6 +14,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material.icons.filled.Eco
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
@@ -62,7 +68,12 @@ fun WarungDetailScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
+    val zeroWasteAktif by container.tokenStore.isZeroWasteActive(vendorId).collectAsStateWithLifecycle(initialValue = false)
+    val zeroWasteDiskon by container.tokenStore.getZeroWasteDiscount(vendorId).collectAsStateWithLifecycle(initialValue = 30)
+    val zeroWasteCatatan by container.tokenStore.getZeroWasteNote(vendorId).collectAsStateWithLifecycle(initialValue = "")
+
     LaunchedEffect(vendorId) {
+        container.tokenStore.recordVendorView(vendorId)
         loading = true
         val res = container.vendorRepository.detail(vendorId)
         res.onSuccess {
@@ -149,6 +160,24 @@ fun WarungDetailScreen(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text("Petunjuk Arah (Navigasi GPS)")
+                    }
+
+                    if (zeroWasteAktif) {
+                        Surface(
+                            color = Color(0xFFFFFBEB),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, Color(0xFFFDE68A)),
+                            modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
+                        ) {
+                            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Filled.Eco, contentDescription = null, tint = Color(0xFFD97706), modifier = Modifier.size(24.dp))
+                                Spacer(Modifier.width(10.dp))
+                                Column {
+                                    Text("🌿 Promo Zero Waste Food (Diskon $zeroWasteDiskon%)", fontWeight = FontWeight.Bold, color = Color(0xFF92400E), fontSize = 13.sp)
+                                    Text(zeroWasteCatatan, style = MaterialTheme.typography.bodySmall, color = Color(0xFFB45309), fontSize = 11.sp)
+                                }
+                            }
+                        }
                     }
 
                     Text("Menu", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 14.dp))

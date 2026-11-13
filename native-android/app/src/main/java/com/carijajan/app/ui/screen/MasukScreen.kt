@@ -1,18 +1,34 @@
 package com.carijajan.app.ui.screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -21,11 +37,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.carijajan.app.AppContainer
 import kotlinx.coroutines.launch
 
@@ -63,28 +83,85 @@ fun MasukScreen(
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        TextButton(onClick = onBack) { Text("← Kembali") }
-        Text(
-            text = "Masuk penjual",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "Kelola warung dan menu milikmu.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+            }
+            Spacer(Modifier.width(4.dp))
+            Text("Kembali", style = MaterialTheme.typography.titleSmall)
+        }
+
+        Column {
+            Text(
+                text = "Masuk ke Cari Jajan",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = "Satu akun untuk Pemilik Warung UMKM dan Pembeli / Kontributor Komunitas.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        // Info Card: Menjelaskan 2 Peran
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF059669)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Filled.Storefront, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    }
+                    Spacer(Modifier.width(10.dp))
+                    Column {
+                        Text("Pemilik Warung", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                        Text("Kelola warung, pantau pengunjung, & promo Zero Waste", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF2563EB)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Filled.VolunteerActivism, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    }
+                    Spacer(Modifier.width(10.dp))
+                    Column {
+                        Text("Pembeli & Kontributor", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                        Text("Ajukan warung baru, raih XP, dan naikkan level!", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
 
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
+            placeholder = { Text("contoh@email.com") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         )
+
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -92,30 +169,51 @@ fun MasukScreen(
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         )
 
         if (error.isNotBlank()) {
-            Text(
-                text = error,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
-            )
+            Surface(
+                color = MaterialTheme.colorScheme.errorContainer,
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(10.dp)
+                )
+            }
         }
 
         Button(
             onClick = { submit() },
             enabled = !loading,
-            modifier = Modifier.fillMaxWidth()
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669)),
+            modifier = Modifier.fillMaxWidth().height(48.dp)
         ) {
             if (loading) {
-                CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp), strokeWidth = 2.dp)
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp).padding(end = 8.dp),
+                    strokeWidth = 2.dp,
+                    color = Color.White
+                )
             }
-            Text(if (loading) "Memproses..." else "Masuk")
+            Text(if (loading) "Memproses..." else "Masuk Akun", fontWeight = FontWeight.Bold)
         }
 
-        TextButton(onClick = onRegister, modifier = Modifier.fillMaxWidth()) {
-            Text("Belum punya akun? Daftar")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Belum punya akun?", style = MaterialTheme.typography.bodyMedium)
+            TextButton(onClick = onRegister) {
+                Text("Daftar Sekarang", fontWeight = FontWeight.Bold, color = Color(0xFF059669))
+            }
         }
     }
 }

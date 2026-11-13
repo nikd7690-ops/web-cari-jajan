@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -26,6 +28,15 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.VolunteerActivism
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -72,6 +83,7 @@ fun EditWarungScreen(
 ) {
     val scope = rememberCoroutineScope()
     val isEdit = vendorId != null
+    val tipeAkun by container.authRepository.tipeAkun.collectAsStateWithLifecycle()
 
     // ── Form state ──────────────────────────────────────────────────────────────
     var namaToko by remember { mutableStateOf("") }
@@ -208,15 +220,56 @@ fun EditWarungScreen(
         TextButton(onClick = onBack) { Text("← Kembali") }
 
         Text(
-            text = if (isEdit) "Edit warung" else "Tambah warung",
+            text = when {
+                isEdit -> "Edit Warung"
+                tipeAkun == "pembeli" -> "Ajukan Lokasi Warung"
+                else -> "Daftarkan Warung Baru"
+            },
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Isi data warung dengan benar. Data ini akan dilihat pembeli.",
+            text = when {
+                isEdit -> "Perbarui data menu, jam buka, dan info warung Anda."
+                tipeAkun == "pembeli" -> "Temukan warung UMKM tersembunyi dan bantu mereka tayang di peta!"
+                else -> "Daftarkan warung atau gerobak Anda agar dapat ditemukan pembeli terdekat."
+            },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        // Banner informasi sesuai tipe pengguna
+        if (!isEdit && tipeAkun == "pembeli") {
+            Surface(
+                color = Color(0xFFEFF6FF),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+            ) {
+                Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.VolunteerActivism, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Column {
+                        Text("Kontribusi Komunitas (+50 XP)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color(0xFF1E40AF))
+                        Text("Warung akan diverifikasi oleh kurator admin sebelum tampil di peta publik.", fontSize = 11.sp, color = Color(0xFF3B82F6))
+                    }
+                }
+            }
+        } else if (!isEdit) {
+            Surface(
+                color = Color(0xFFFFFBEB),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+            ) {
+                Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Info, contentDescription = null, tint = Color(0xFFD97706), modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Column {
+                        Text("Verifikasi Kurasi Awal", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color(0xFF92400E))
+                        Text("Warung baru akan masuk status 'Menunggu Verifikasi Admin' pada awalan saja.", fontSize = 11.sp, color = Color(0xFFB45309))
+                    }
+                }
+            }
+        }
 
         // ── Info dasar ──────────────────────────────────────────────────────────
         JudulBagian("Info dasar")
@@ -393,8 +446,9 @@ fun EditWarungScreen(
                 when {
                     uploadProses -> "Mengunggah foto..."
                     loading -> "Menyimpan..."
-                    isEdit -> "Simpan perubahan"
-                    else -> "Daftarkan warung"
+                    isEdit -> "Simpan Perubahan"
+                    tipeAkun == "pembeli" -> "Ajukan Warung (+50 XP)"
+                    else -> "Kirim & Tunggu Verifikasi"
                 }
             )
         }
