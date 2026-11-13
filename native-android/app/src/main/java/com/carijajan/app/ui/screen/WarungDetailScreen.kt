@@ -7,13 +7,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -40,6 +44,7 @@ import com.carijajan.app.ui.components.PesanError
 import com.carijajan.app.util.CartItem
 import com.carijajan.app.util.Format
 import com.carijajan.app.util.Keranjang
+import com.carijajan.app.util.Navigasi
 import com.carijajan.app.util.WhatsApp
 import kotlinx.coroutines.launch
 
@@ -130,7 +135,23 @@ fun WarungDetailScreen(
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
-                    Text("Menu", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 12.dp))
+
+                    OutlinedButton(
+                        onClick = {
+                            Navigasi.bukaNavigasi(context, toko.lat, toko.lng, toko.namaToko)
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Navigation,
+                            contentDescription = "Navigasi",
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Petunjuk Arah (Navigasi GPS)")
+                    }
+
+                    Text("Menu", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 14.dp))
                 }
             }
             if (toko.menus.isEmpty()) {

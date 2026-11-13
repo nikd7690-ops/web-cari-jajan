@@ -31,9 +31,12 @@ import org.maplibre.android.MapLibre
 import org.maplibre.android.annotations.IconFactory
 import org.maplibre.android.annotations.Marker
 import org.maplibre.android.annotations.MarkerOptions
+import org.maplibre.android.annotations.Polyline
+import org.maplibre.android.annotations.PolylineOptions
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 
@@ -50,6 +53,7 @@ fun PetaWarung(
     userHeading: Float = 0f,
     vendors: List<VendorDto>,
     selectedId: String?,
+    routePoints: List<LatLng>? = null,
     onSelectVendor: (String) -> Unit
 ) {
     val context = LocalContext.current
@@ -79,9 +83,10 @@ fun PetaWarung(
     var mapRef by remember { mutableStateOf<MapLibreMap?>(null) }
     var styleSiap by remember { mutableStateOf(false) }
 
-    // Referensi marker lokal agar pembaruan tidak saling menghapus
+    // Referensi marker lokal
     var userMarkerRef by remember { mutableStateOf<Marker?>(null) }
     val vendorMarkers = remember { mutableListOf<Marker>() }
+    var polylineRef by remember { mutableStateOf<Polyline?>(null) }
 
     Box(modifier = modifier) {
         AndroidView(
@@ -90,21 +95,19 @@ fun PetaWarung(
                     getMapAsync { map ->
                         mapRef = map
 
-                        // ── Aktifkan Gestur Penuh: Geser, Zoom, Rotasi, Tilt ───
-                        map.uiSettings.isScrollGesturesEnabled = true   // Geser bebas (pan)
-                        map.uiSettings.isZoomGesturesEnabled = true     // Zoom (cubit / pinch)
-                        map.uiSettings.isRotateGesturesEnabled = true   // Rotasi 2 jari bebas
-                        map.uiSettings.isTiltGesturesEnabled = true     // Kemiringan 2 jari (pitch)
+                        // ── Gestur Penuh: Bebas Geser, Zoom, Rotasi, Tilt ─────
+                        map.uiSettings.isScrollGesturesEnabled = true
+                        map.uiSettings.isZoomGesturesEnabled = true
+                        map.uiSettings.isRotateGesturesEnabled = true
+                        map.uiSettings.isTiltGesturesEnabled = true
                         map.uiSettings.isDoubleTapGesturesEnabled = true
                         map.uiSettings.isQuickZoomGesturesEnabled = true
 
-                        // Atur posisi awal sekali saja saat peta pertama kali diinisialisasi
                         map.cameraPosition = CameraPosition.Builder()
                             .target(initialCenter)
                             .zoom(initialZoom)
                             .build()
 
-                        // Kompas bawaan MapLibre (sebelah kanan bawah)
                         val density = ctx.resources.displayMetrics.density
                         map.uiSettings.isCompassEnabled = true
                         map.uiSettings.compassGravity = Gravity.BOTTOM or Gravity.END
@@ -115,7 +118,6 @@ fun PetaWarung(
                         }
 
                         map.setOnMarkerClickListener { marker ->
-                            // Abaikan klik pada titik lokasi pengguna sendiri
                             if (marker == userMarkerRef) return@setOnMarkerClickListener true
 
                             val found = vendors.firstOrNull { it.namaToko == marker.title }
@@ -130,10 +132,9 @@ fun PetaWarung(
                 }
             },
             modifier = Modifier.fillMaxSize()
-            // JANGAN gunakan lambda update di sini agar kamera tidak terus-menerus direset saat recompose!
         )
 
-        // Atribusi OpenStreetMap dan OpenFreeMap (wajib ada dan tidak boleh ditutupi)
+        // Atribusi OpenStreetMap dan OpenFreeMap (wajib ada)
         Text(
             text = "© kontributor OpenStreetMap · OpenFreeMap",
             color = Color(0xFF3F3F46),
@@ -146,18 +147,16 @@ fun PetaWarung(
         )
     }
 
-    // ── Update Marker Warung saat Data Berubah (Tanpa Mengganggu Posisi User) ─
+    // ── Update Marker Warung ────────────────────────────────────────────────
     LaunchedEffect(styleSiap, vendors) {
         val map = mapRef ?: return@LaunchedEffect
         if (!styleSiap) return@LaunchedEffect
 
-        // Hapus marker warung yang lama
         vendorMarkers.forEach { map.removeMarker(it) }
         vendorMarkers.clear()
 
         val iconFactory = IconFactory.getInstance(context)
 
-        // Pasang marker warung baru
         vendors.forEach { vendor ->
             if (vendor.lat == 0.0 && vendor.lng == 0.0) return@forEach
 
@@ -180,7 +179,7 @@ fun PetaWarung(
         }
     }
 
-    // ── Update Posisi & Arah Panah Pengguna Real-Time (Tanpa Mereset Kamera) ──
+    // ── Update Posisi & Arah Panah Pengguna Real-Time ────────────────────────
     LaunchedEffect(styleSiap, userLocation, userHeading) {
         val map = mapRef ?: return@LaunchedEffect
         if (!styleSiap || userLocation == null) return@LaunchedEffect
@@ -203,7 +202,34 @@ fun PetaWarung(
         }
     }
 
-    // ── Animasi Kamera HANYA Berjalan saat Ada Pemicu Tindakan Eksplisit ──────
+    // ── Menggambar Garis Rute Navigasi (Polyline) ───────────────────────────
+    LaunchedEffect(styleSiap, routePoints) {
+        val map = mapRef ?: return@LaunchedEffect
+        if (!styleSiap) return@LaunchedEffect
+
+        polylineRef?.let { map.removePolyline(it) }
+        polylineRef = null
+
+        if (!routePoints.isNullOrEmpty() && routePoints.size >= 2) {
+            val opts = PolylineOptions()
+                .color(android.graphics.Color.parseColor("#059669"))
+                .width(5.5f)
+            routePoints.forEach { opts.add(it) }
+            polylineRef = map.addPolyline(opts)
+
+            // Zoom otomatis memuat seluruh rute perjalanan
+            try {
+                val builder = LatLngBounds.Builder()
+                routePoints.forEach { builder.include(it) }
+                val bounds = builder.build()
+                val density = context.resources.displayMetrics.density
+                val padding = (70 * density).toInt()
+                map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding), 600)
+            } catch (_: Exception) {}
+        }
+    }
+
+    // ── Kontrol Kamera ──────────────────────────────────────────────────────
     LaunchedEffect(cameraMoveTrigger) {
         if (cameraMoveTrigger > 0 && cameraTarget != null) {
             val map = mapRef ?: return@LaunchedEffect
@@ -212,7 +238,7 @@ fun PetaWarung(
         }
     }
 
-    // ── Animasi Kompas Reset ke Utara ────────────────────────────────────────
+    // ── Kompas Reset ke Utara ────────────────────────────────────────────────
     LaunchedEffect(bearingResetTrigger) {
         if (bearingResetTrigger > 0) {
             val map = mapRef ?: return@LaunchedEffect

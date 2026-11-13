@@ -36,12 +36,14 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -83,6 +85,7 @@ import com.carijajan.app.ui.components.PilihAreaSheet
 import com.carijajan.app.util.ArahKompas
 import com.carijajan.app.util.Format
 import com.carijajan.app.util.Lokasi
+import com.carijajan.app.util.Navigasi
 import com.carijajan.app.util.Titik
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -100,7 +103,6 @@ private val DAFTAR_KATEGORI = listOf(
     "rumah_makan" to "Rumah Makan"
 )
 
-// Helper penghitung jarak geodesik presisi dalam meter
 private fun hitungJarakMeter(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
     val hasil = FloatArray(1)
     Location.distanceBetween(lat1, lng1, lat2, lng2, hasil)
@@ -134,7 +136,11 @@ fun BerandaScreen(
     var geoLoading by remember { mutableStateOf(false) }
     var pesanLokasi by remember { mutableStateOf("") }
 
-    // Pemicu kontrol kamera eksplisit (mencegah rubbering saat user menggeser/zoom/rotasi)
+    // Fitur Navigasi Rute
+    var ruteAktifVendor by remember { mutableStateOf<VendorDto?>(null) }
+    var ruteTitikList by remember { mutableStateOf<List<LatLng>?>(null) }
+
+    // Pemicu kontrol kamera eksplisit
     var cameraMoveTrigger by remember { mutableIntStateOf(0) }
     var cameraTarget by remember { mutableStateOf<LatLng?>(null) }
     var cameraZoom by remember { mutableStateOf<Double?>(null) }
@@ -177,7 +183,7 @@ fun BerandaScreen(
         }
     }
 
-    // ── 1. Pemantau Lokasi Real-Time (GPS & Network Provider) ────────────────
+    // ── 1. Pemantau Lokasi Real-Time ─────────────────────────────────────────
     LaunchedEffect(izinLokasiDiberikan) {
         if (!izinLokasiDiberikan) return@LaunchedEffect
         Lokasi.pantauLokasi(context).collectLatest { loc ->
@@ -198,7 +204,7 @@ fun BerandaScreen(
         }
     }
 
-    // ── 2. Pemantau Arah Hadap Kompas Real-Time (dengan filter getaran) ──────
+    // ── 2. Pemantau Arah Hadap Kompas Real-Time ──────────────────────────────
     LaunchedEffect(Unit) {
         ArahKompas.pantauArah(context).collectLatest { heading ->
             userHeading = heading
@@ -253,7 +259,7 @@ fun BerandaScreen(
         }
     }
 
-    // ── 5. Urutkan Warung dari yang Terdekat berdasarkan Lokasi Pengguna ─────
+    // ── 5. Urutkan Warung dari yang Terdekat ─────────────────────────────────
     val userPos = userLocationRealtime ?: lokasi?.let { LatLng(it.lat, it.lng) }
     val vendorsDenganJarak = remember(vendorsTampil, userPos) {
         vendorsTampil.map { vendor ->
@@ -263,7 +269,19 @@ fun BerandaScreen(
                 vendor.jarak ?: 999999.0
             }
             Pair(vendor, jarakMeter)
-        }.sortedBy { it.second } // Diurutkan dari yang terdekat!
+        }.sortedBy { it.second }
+    }
+
+    // Fungsi aktivasi navigasi rute ke warung
+    fun mulaiNavigasiKeWarung(vendor: VendorDto) {
+        ruteAktifVendor = vendor
+        val pos = userLocationRealtime ?: lokasi?.let { LatLng(it.lat, it.lng) }
+        if (pos != null && vendor.lat != 0.0 && vendor.lng != 0.0) {
+            scope.launch {
+                val titikList = Navigasi.ambilTitikRute(pos.latitude, pos.longitude, vendor.lat, vendor.lng)
+                ruteTitikList = titikList
+            }
+        }
     }
 
     // Kamera meluncur ke warung yang dicari
@@ -280,7 +298,7 @@ fun BerandaScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // ── Peta Penuh MapLibre: Bebas Geser, Zoom, dan Rotasi Mulus ──────────
+        // ── Peta Penuh MapLibre ──────────────────────────────────────────────
         PetaWarung(
             modifier = Modifier.fillMaxSize(),
             initialCenter = JEMBER_PUSAT,
@@ -293,7 +311,13 @@ fun BerandaScreen(
             userHeading = userHeading,
             vendors = vendorsTampil,
             selectedId = null,
-            onSelectVendor = onVendor
+            routePoints = ruteTitikList,
+            onSelectVendor = { id ->
+                val v = masterVendors[id]
+                if (v != null) {
+                    mulaiNavigasiKeWarung(v)
+                }
+            }
         )
 
         // ── Bagian Atas: Pencarian & Baris Kategori ──────────────────────────
@@ -405,7 +429,7 @@ fun BerandaScreen(
             shadowElevation = 6.dp,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = 105.dp)
+                .padding(end = 16.dp, bottom = if (ruteAktifVendor != null) 175.dp else 105.dp)
                 .size(46.dp)
                 .clickable {
                     bearingResetTrigger++
@@ -421,9 +445,110 @@ fun BerandaScreen(
             }
         }
 
-        // ── Pill Akses Cepat Warung Terdekat ────────────────────────────────
+        // ── Kartu Navigasi Rute Aktif (Muncul saat Memilih Warung / Tekan Rute)
         AnimatedVisibility(
-            visible = vendorsDenganJarak.isNotEmpty(),
+            visible = ruteAktifVendor != null,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 92.dp)
+                .fillMaxWidth()
+        ) {
+            val vendor = ruteAktifVendor
+            if (vendor != null) {
+                val jarak = if (userPos != null && vendor.lat != 0.0 && vendor.lng != 0.0) {
+                    hitungJarakMeter(userPos.latitude, userPos.longitude, vendor.lat, vendor.lng)
+                } else {
+                    vendor.jarak ?: 0.0
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(18.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 6.dp,
+                    shadowElevation = 10.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Navigation,
+                                contentDescription = "Rute Navigasi",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = vendor.namaToko,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = "Jarak ${Format.jarak(jarak)} • 🛵 ${Navigasi.estimasiWaktuMotor(jarak)} • 🚶 ${Navigasi.estimasiWaktuJalan(jarak)}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                            IconButton(
+                                onClick = {
+                                    ruteAktifVendor = null
+                                    ruteTitikList = null
+                                },
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Tutup Rute",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(10.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { onVendor(vendor.id) },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Text("Buka Menu", fontSize = 12.sp)
+                            }
+
+                            Button(
+                                onClick = {
+                                    Navigasi.bukaNavigasi(context, vendor.lat, vendor.lng, vendor.namaToko)
+                                },
+                                modifier = Modifier.weight(1.4f),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Navigation,
+                                    contentDescription = "Mulai Navigasi",
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(Modifier.width(6.dp))
+                                Text("Navigasi GPS ↗", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Pill Akses Cepat Warung Terdekat (Tampil jika Tidak Ada Rute Aktif)
+        AnimatedVisibility(
+            visible = vendorsDenganJarak.isNotEmpty() && ruteAktifVendor == null,
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier
@@ -501,7 +626,7 @@ fun BerandaScreen(
                     )
                 )
 
-                // 2. Lokasi (Kamera fokus kembali ke posisi pengguna terkini)
+                // 2. Lokasi
                 NavigationBarItem(
                     selected = false,
                     onClick = {
@@ -701,6 +826,10 @@ fun BerandaScreen(
                         VendorRowTerdekat(
                             vendor = vendor,
                             jarakMeter = jarakMeter,
+                            onMulaiRute = {
+                                daftarWarungTerbuka = false
+                                mulaiNavigasiKeWarung(vendor)
+                            },
                             onLihatDiPeta = {
                                 daftarWarungTerbuka = false
                                 if (vendor.lat != 0.0 && vendor.lng != 0.0) {
@@ -752,12 +881,13 @@ fun BerandaScreen(
 }
 
 /**
- * Baris item warung terdekat dengan badge kategori, jarak terhitung, dan tombol aksi.
+ * Baris item warung terdekat dengan badge kategori, jarak terhitung, tombol rute dan aksi.
  */
 @Composable
 private fun VendorRowTerdekat(
     vendor: VendorDto,
     jarakMeter: Double,
+    onMulaiRute: () -> Unit,
     onLihatDiPeta: () -> Unit,
     onClick: () -> Unit
 ) {
@@ -858,7 +988,7 @@ private fun VendorRowTerdekat(
                 }
             }
 
-            // Tombol Aksi Cepat
+            // Tombol Aksi: Rute Navigasi, Lihat di Peta, Buka Menu
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -866,18 +996,32 @@ private fun VendorRowTerdekat(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 OutlinedButton(
+                    onClick = onMulaiRute,
+                    modifier = Modifier.height(32.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Navigation,
+                        contentDescription = "Rute",
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("Rute", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Spacer(modifier = Modifier.width(6.dp))
+                OutlinedButton(
                     onClick = onLihatDiPeta,
                     modifier = Modifier.height(32.dp),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Lihat di Peta", fontSize = 11.sp)
+                    Text("Peta", fontSize = 11.sp)
                 }
                 Spacer(modifier = Modifier.width(6.dp))
                 TextButton(
                     onClick = onClick,
                     modifier = Modifier.height(32.dp)
                 ) {
-                    Text("Buka Menu →", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text("Menu →", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
