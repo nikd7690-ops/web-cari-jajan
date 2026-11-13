@@ -1,7 +1,59 @@
 package com.carijajan.app.data
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
+
+@OptIn(ExperimentalSerializationApi::class)
+object FlexibleStringSerializer : KSerializer<String?> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("FlexibleStringSerializer", PrimitiveKind.STRING)
+
+    override fun deserialize(decoder: Decoder): String? {
+        val jsonDecoder = decoder as? JsonDecoder ?: return try {
+            decoder.decodeString()
+        } catch (_: Exception) {
+            null
+        }
+
+        return try {
+            val element = jsonDecoder.decodeJsonElement()
+            when (element) {
+                is JsonNull -> null
+                is JsonPrimitive -> element.contentOrNull
+                is JsonObject -> {
+                    val name = element["name"]?.let { if (it is JsonPrimitive) it.contentOrNull else null }
+                    val id = element["_id"]?.let { if (it is JsonPrimitive) it.contentOrNull else null }
+                        ?: element["id"]?.let { if (it is JsonPrimitive) it.contentOrNull else null }
+                    val namaToko = element["namaToko"]?.let { if (it is JsonPrimitive) it.contentOrNull else null }
+                    name ?: namaToko ?: id
+                }
+                else -> null
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    override fun serialize(encoder: Encoder, value: String?) {
+        if (value != null) {
+            encoder.encodeString(value)
+        } else {
+            encoder.encodeNull()
+        }
+    }
+}
 
 @Serializable
 data class Coordinates(
@@ -27,8 +79,8 @@ data class ZeroWasteDto(
 @Serializable
 data class VendorDto(
     @SerialName("_id") val id: String = "",
-    val owner: String? = null,
-    val submittedBy: String? = null,
+    @Serializable(with = FlexibleStringSerializer::class) val owner: String? = null,
+    @Serializable(with = FlexibleStringSerializer::class) val submittedBy: String? = null,
     val status: String = "approved",
     val namaToko: String = "",
     val kategori: String = "warung",
@@ -184,7 +236,7 @@ data class KirimLaporanRequest(
 @Serializable
 data class LaporanDto(
     @SerialName("_id") val id: String = "",
-    val vendorId: String? = null,
+    @Serializable(with = FlexibleStringSerializer::class) val vendorId: String? = null,
     val namaToko: String = "",
     val namaPelapor: String = "Warga Komunitas",
     val alasan: String = "lokasi_salah",
@@ -207,7 +259,7 @@ data class LaporanListResponse(val data: List<LaporanDto> = emptyList())
 
 @Serializable
 data class TopKontributorDto(
-    val userId: String = "",
+    @Serializable(with = FlexibleStringSerializer::class) val userId: String? = null,
     val name: String = "",
     val email: String = "",
     val xp: Int = 0,

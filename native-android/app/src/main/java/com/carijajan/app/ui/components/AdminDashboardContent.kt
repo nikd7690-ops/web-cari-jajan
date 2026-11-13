@@ -282,8 +282,9 @@ fun AdminDashboardContent(
                                                 Text(v.namaToko, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                                                 Text(v.alamatPatokan, fontSize = 12.sp, color = Color(0xFF52525B), maxLines = 1, overflow = TextOverflow.Ellipsis)
                                                 Text("Kategori: ${Format.labelKategori(v.kategori)} • Jam ${v.jamBuka}-${v.jamTutup}", fontSize = 11.sp, color = Color(0xFF71717A))
-                                                if (!v.namaKontributor.isNullOrBlank()) {
-                                                    Text("Diajukan: ${v.namaKontributor}", fontSize = 11.sp, color = Color(0xFF2563EB), fontWeight = FontWeight.Medium)
+                                                val namaPengaju = v.namaKontributor?.takeIf { it.isNotBlank() } ?: v.submittedBy?.takeIf { it.isNotBlank() }
+                                                if (!namaPengaju.isNullOrBlank()) {
+                                                    Text("Diajukan: $namaPengaju", fontSize = 11.sp, color = Color(0xFF2563EB), fontWeight = FontWeight.Medium)
                                                 }
                                             }
 
