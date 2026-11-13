@@ -111,18 +111,26 @@ data class VendorDto(
 @Serializable
 data class UserDto(
     @SerialName("_id") val mongoId: String? = null,
-    val id: String = "",
-    val name: String = "",
-    val email: String = "",
-    val role: String = "user",
-    val tipeAkun: String = "pengguna",
-    val xp: Int = 0,
-    val level: Int = 1,
-    val emailVerified: Boolean = false,
-    val isBanned: Boolean = false,
-    val totalPengajuan: Int = 0
+    val id: String? = null,
+    val name: String? = null,
+    val email: String? = null,
+    val role: String? = null,
+    val tipeAkun: String? = null,
+    val xp: Int? = null,
+    val level: Int? = null,
+    val emailVerified: Boolean? = null,
+    val isBanned: Boolean? = null,
+    val totalPengajuan: Int? = null
 ) {
-    val displayId: String get() = id.ifBlank { mongoId.orEmpty() }
+    val displayId: String get() = id?.ifBlank { mongoId.orEmpty() } ?: mongoId.orEmpty()
+    val displayName: String get() = name?.ifBlank { "Member Cari Jajan" } ?: "Member Cari Jajan"
+    val displayEmail: String get() = email.orEmpty()
+    val displayRole: String get() = role ?: "user"
+    val displayTipeAkun: String get() = tipeAkun ?: "pengguna"
+    val displayXp: Int get() = xp ?: 0
+    val displayLevel: Int get() = level ?: 1
+    val displayIsBanned: Boolean get() = isBanned ?: false
+    val displayTotalPengajuan: Int get() = totalPengajuan ?: 0
 }
 
 @Serializable
@@ -260,20 +268,31 @@ data class LaporanListResponse(val data: List<LaporanDto> = emptyList())
 @Serializable
 data class TopKontributorDto(
     @Serializable(with = FlexibleStringSerializer::class) val userId: String? = null,
-    val name: String = "",
-    val email: String = "",
-    val xp: Int = 0,
-    val level: Int = 1,
-    val totalPengajuan: Int = 0,
-    val diterima: Int = 0,
-    val menunggu: Int = 0
-)
+    val name: String? = null,
+    val email: String? = null,
+    val xp: Int? = null,
+    val level: Int? = null,
+    val totalPengajuan: Int? = null,
+    val diterima: Int? = null,
+    val menunggu: Int? = null
+) {
+    val displayName: String get() = name?.ifBlank { "Warga Komunitas" } ?: "Warga Komunitas"
+    val displayEmail: String get() = email ?: "-"
+    val displayXp: Int get() = xp ?: 0
+    val displayLevel: Int get() = level ?: 1
+    val displayTotalPengajuan: Int get() = totalPengajuan ?: 0
+    val displayDiterima: Int get() = diterima ?: 0
+    val displayMenunggu: Int get() = menunggu ?: 0
+}
 
 @Serializable
 data class AdminMembersData(
-    val members: List<UserDto> = emptyList(),
-    val topKontributor: List<TopKontributorDto> = emptyList()
-)
+    val members: List<UserDto>? = emptyList(),
+    val topKontributor: List<TopKontributorDto>? = emptyList()
+) {
+    val safeMembers: List<UserDto> get() = members ?: emptyList()
+    val safeTopKontributor: List<TopKontributorDto> get() = topKontributor ?: emptyList()
+}
 
 @Serializable
 data class AdminMembersResponse(val data: AdminMembersData? = null)

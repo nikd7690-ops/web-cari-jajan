@@ -27,7 +27,7 @@ class AuthRepository(
                 Result.failure(ApiException("Balasan login tidak valid"))
             } else {
                 tokenStore.saveToken(body.token)
-                val tipe = body.user.tipeAkun.ifBlank { tokenStore.getTipeAkun() }
+                val tipe = body.user.displayTipeAkun.ifBlank { tokenStore.getTipeAkun() }
                 tokenStore.saveTipeAkun(tipe)
                 _tipeAkun.value = tipe
                 _user.value = body.user

@@ -113,8 +113,8 @@ fun AdminDashboardContent(
             }
 
             resMembers.onSuccess { memData ->
-                members = memData.members
-                topKontributor = memData.topKontributor
+                members = memData.safeMembers
+                topKontributor = memData.safeTopKontributor
             }.onFailure {
                 if (errorPesan.isBlank()) errorPesan = "Gagal memuat member: ${it.message}"
             }
@@ -442,8 +442,8 @@ fun AdminDashboardContent(
                                                     }
                                                     Spacer(Modifier.width(8.dp))
                                                     Column {
-                                                        Text(top.name, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                                        Text("Level ${top.level} • ${top.xp} XP", fontSize = 10.sp, color = Color(0xFF6B7280))
+                                                        Text(top.displayName, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                                        Text("Level ${top.displayLevel} • ${top.displayXp} XP", fontSize = 10.sp, color = Color(0xFF6B7280))
                                                     }
                                                 }
 
@@ -452,7 +452,7 @@ fun AdminDashboardContent(
                                                     color = Color(0xFFDBEAFE)
                                                 ) {
                                                     Text(
-                                                        "${top.totalPengajuan} Warung (${top.diterima} Tayang)",
+                                                        "${top.displayTotalPengajuan} Warung (${top.displayDiterima} Tayang)",
                                                         color = Color(0xFF1D4ED8),
                                                         fontWeight = FontWeight.Bold,
                                                         fontSize = 11.sp,
@@ -479,8 +479,8 @@ fun AdminDashboardContent(
                         items(members, key = { it.displayId }) { m ->
                             Surface(
                                 shape = RoundedCornerShape(10.dp),
-                                border = BorderStroke(1.dp, if (m.isBanned) Color(0xFFFCA5A5) else Color(0xFFE4E4E7)),
-                                color = if (m.isBanned) Color(0xFFFFF5F5) else Color.White,
+                                border = BorderStroke(1.dp, if (m.displayIsBanned) Color(0xFFFCA5A5) else Color(0xFFE4E4E7)),
+                                color = if (m.displayIsBanned) Color(0xFFFFF5F5) else Color.White,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Row(
@@ -491,12 +491,12 @@ fun AdminDashboardContent(
                                     Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                                         Surface(
                                             shape = CircleShape,
-                                            color = if (m.isBanned) Color(0xFF991B1B) else if (m.role == "admin") Color(0xFFDC2626) else if (m.tipeAkun == "mitra") Color(0xFF059669) else Color(0xFF2563EB),
+                                            color = if (m.displayIsBanned) Color(0xFF991B1B) else if (m.displayRole == "admin") Color(0xFFDC2626) else if (m.displayTipeAkun == "mitra") Color(0xFF059669) else Color(0xFF2563EB),
                                             modifier = Modifier.size(36.dp)
                                         ) {
                                             Box(contentAlignment = Alignment.Center) {
                                                 Text(
-                                                    m.name.take(1).uppercase(),
+                                                    m.displayName.take(1).uppercase(),
                                                     color = Color.White,
                                                     fontWeight = FontWeight.Bold,
                                                     fontSize = 14.sp
@@ -506,40 +506,40 @@ fun AdminDashboardContent(
                                         Spacer(Modifier.width(10.dp))
                                         Column {
                                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Text(m.name, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                                if (m.role == "admin") {
+                                                Text(m.displayName, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                                if (m.displayRole == "admin") {
                                                     Spacer(Modifier.width(4.dp))
                                                     Surface(color = Color(0xFFFEE2E2), shape = RoundedCornerShape(4.dp)) {
                                                         Text("ADMIN", color = Color(0xFFDC2626), fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 4.dp))
                                                     }
                                                 }
-                                                if (m.isBanned) {
+                                                if (m.displayIsBanned) {
                                                     Spacer(Modifier.width(4.dp))
                                                     Surface(color = Color(0xFFFEE2E2), shape = RoundedCornerShape(4.dp)) {
                                                         Text("DIBLOKIR", color = Color(0xFFDC2626), fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 4.dp))
                                                     }
                                                 }
                                             }
-                                            Text(m.email, fontSize = 11.sp, color = Color(0xFF71717A), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                            val tipeLabel = m.tipeAkun.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-                                            Text("Peran: $tipeLabel • ${m.totalPengajuan} Warung • Lv ${m.level} (${m.xp} XP)", fontSize = 10.sp, color = Color(0xFF3F3F46))
+                                            Text(m.displayEmail, fontSize = 11.sp, color = Color(0xFF71717A), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                            val tipeLabel = m.displayTipeAkun.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                                            Text("Peran: $tipeLabel • ${m.displayTotalPengajuan} Warung • Lv ${m.displayLevel} (${m.displayXp} XP)", fontSize = 10.sp, color = Color(0xFF3F3F46))
                                         }
                                     }
 
-                                    if (m.role != "admin") {
+                                    if (m.displayRole != "admin") {
                                         Button(
                                             onClick = {
                                                 dialogBanTarget = m
                                                 banReason = ""
                                             },
                                             colors = ButtonDefaults.buttonColors(
-                                                containerColor = if (m.isBanned) Color(0xFF059669) else Color(0xFFDC2626)
+                                                containerColor = if (m.displayIsBanned) Color(0xFF059669) else Color(0xFFDC2626)
                                             ),
                                             modifier = Modifier.height(30.dp),
                                             shape = RoundedCornerShape(6.dp)
                                         ) {
                                             Text(
-                                                if (m.isBanned) "Buka Blokir" else "Blokir",
+                                                if (m.displayIsBanned) "Buka Blokir" else "Blokir",
                                                 fontSize = 10.sp,
                                                 fontWeight = FontWeight.Bold
                                             )
@@ -661,7 +661,7 @@ fun AdminDashboardContent(
 
     // ── Dialog Konfirmasi Banned / Unbanned Member ──
     dialogBanTarget?.let { target ->
-        val aksiBlokir = !target.isBanned
+        val aksiBlokir = !target.displayIsBanned
         AlertDialog(
             onDismissRequest = { if (!banLoading) dialogBanTarget = null },
             title = {
@@ -671,9 +671,9 @@ fun AdminDashboardContent(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         if (aksiBlokir)
-                            "Member '${target.name}' (${target.email}) tidak akan dapat login atau mengajukan warung selama akun diblokir."
+                            "Member '${target.displayName}' (${target.displayEmail}) tidak akan dapat login atau mengajukan warung selama akun diblokir."
                         else
-                            "Pulihkan akses akun untuk '${target.name}' (${target.email}) agar dapat login kembali."
+                            "Pulihkan akses akun untuk '${target.displayName}' (${target.displayEmail}) agar dapat login kembali."
                     )
                     if (aksiBlokir) {
                         OutlinedTextField(
@@ -699,9 +699,9 @@ fun AdminDashboardContent(
                             banLoading = false
                             res.onSuccess {
                                 pesanSukses = if (aksiBlokir)
-                                    "Akun '${target.name}' berhasil diblokir."
+                                    "Akun '${target.displayName}' berhasil diblokir."
                                 else
-                                    "Blokir akun '${target.name}' berhasil dicabut."
+                                    "Blokir akun '${target.displayName}' berhasil dicabut."
                                 dialogBanTarget = null
                                 refresh()
                             }.onFailure {
