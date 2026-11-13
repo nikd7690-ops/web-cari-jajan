@@ -6,6 +6,7 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
@@ -63,4 +64,22 @@ interface ApiService {
     @Multipart
     @POST("api/menu-dari-foto")
     suspend fun scanMenuFoto(@Part file: MultipartBody.Part): Response<MenuScanAiResponse>
+
+    @POST("api/reports")
+    suspend fun kirimLaporan(@Body body: KirimLaporanRequest): Response<Unit>
+
+    @GET("api/reports")
+    suspend fun daftarLaporan(): Response<LaporanListResponse>
+
+    @GET("api/admin/members")
+    suspend fun adminMembers(): Response<AdminMembersResponse>
+
+    @GET("api/admin/vendors")
+    suspend fun adminVendors(@Query("status") status: String = "semua"): Response<VendorListResponse>
+
+    @PATCH("api/admin/vendors/{id}")
+    suspend fun adminVendorAction(
+        @Path("id") id: String,
+        @Body body: AdminVendorActionRequest
+    ): Response<Unit>
 }

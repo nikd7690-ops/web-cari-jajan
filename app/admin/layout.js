@@ -33,18 +33,36 @@ export default async function AdminLayout({ children }) {
               Dashboard
             </Link>
           </div>
-          <nav className="mt-3 flex gap-2" aria-label="Navigasi admin">
+          <nav className="mt-3 flex flex-wrap gap-2" aria-label="Navigasi admin">
             <Link
               href="/admin"
-              className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-700 active:bg-zinc-100"
+              className="rounded-lg px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-700 hover:bg-zinc-100"
             >
               Overview
             </Link>
             <Link
               href="/admin/kurasi"
-              className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-700 active:bg-zinc-100"
+              className="rounded-lg px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-700 hover:bg-zinc-100"
             >
               Kurasi
+            </Link>
+            <Link
+              href="/admin/warung"
+              className="rounded-lg px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+            >
+              Toko / Warung
+            </Link>
+            <Link
+              href="/admin/members"
+              className="rounded-lg px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+            >
+              Member
+            </Link>
+            <Link
+              href="/admin/laporan"
+              className="rounded-lg px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+            >
+              Laporan
             </Link>
           </nav>
         </div>

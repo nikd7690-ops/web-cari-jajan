@@ -168,3 +168,58 @@ data class MenuScanAiResponse(
     val items: List<AiMenuItemDto> = emptyList(),
     val error: String? = null
 )
+
+@Serializable
+data class KirimLaporanRequest(
+    val vendorId: String,
+    val alasan: String,
+    val deskripsi: String = ""
+)
+
+@Serializable
+data class LaporanDto(
+    @SerialName("_id") val id: String = "",
+    val vendorId: String? = null,
+    val namaToko: String = "",
+    val namaPelapor: String = "Warga Komunitas",
+    val alasan: String = "lokasi_salah",
+    val deskripsi: String = "",
+    val status: String = "pending",
+    val catatanAdmin: String = "",
+    val createdAt: String? = null
+) {
+    val alasanLabel: String get() = when (alasan) {
+        "lokasi_salah" -> "📍 Titik lokasi tidak sesuai peta"
+        "sudah_tutup" -> "🚪 Toko sudah tutup permanen"
+        "menu_salah" -> "📋 Menu/harga tidak akurat"
+        "duplikat" -> "👥 Warung duplikat"
+        else -> "⚠️ Masalah lainnya"
+    }
+}
+
+@Serializable
+data class LaporanListResponse(val data: List<LaporanDto> = emptyList())
+
+@Serializable
+data class TopKontributorDto(
+    val userId: String = "",
+    val name: String = "",
+    val email: String = "",
+    val xp: Int = 0,
+    val level: Int = 1,
+    val totalPengajuan: Int = 0,
+    val diterima: Int = 0,
+    val menunggu: Int = 0
+)
+
+@Serializable
+data class AdminMembersData(
+    val members: List<UserDto> = emptyList(),
+    val topKontributor: List<TopKontributorDto> = emptyList()
+)
+
+@Serializable
+data class AdminMembersResponse(val data: AdminMembersData? = null)
+
+@Serializable
+data class AdminVendorActionRequest(val aksi: String)

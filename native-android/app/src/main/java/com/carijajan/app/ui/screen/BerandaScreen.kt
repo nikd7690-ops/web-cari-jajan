@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
@@ -89,6 +90,7 @@ import coil3.compose.AsyncImage
 import com.carijajan.app.AppContainer
 import com.carijajan.app.data.VendorDto
 import com.carijajan.app.ui.components.CariJajanBottomBar
+import com.carijajan.app.ui.components.DialogLaporkanWarung
 import com.carijajan.app.ui.components.PetaWarung
 import com.carijajan.app.ui.components.PilihAreaPanel
 import com.carijajan.app.ui.components.PilihAreaSheet
@@ -184,6 +186,7 @@ fun BerandaScreen(
     var vendorTerpilihPreview by remember { mutableStateOf<VendorDto?>(null) }
     var areaTerbuka by remember { mutableStateOf(false) }
     var daftarWarungTerbuka by remember { mutableStateOf(false) }
+    var laporanWarungTarget by remember { mutableStateOf<VendorDto?>(null) }
     var geoLoading by remember { mutableStateOf(false) }
     var pesanLokasi by remember { mutableStateOf("") }
 
@@ -851,12 +854,20 @@ fun BerandaScreen(
                             }
                         }
 
-                        // Tombol Tutup Preview (X)
-                        IconButton(
-                            onClick = { vendorTerpilihPreview = null },
-                            modifier = Modifier.size(28.dp)
-                        ) {
-                            Icon(Icons.Default.Close, contentDescription = "Tutup", modifier = Modifier.size(18.dp))
+                        // Aksi Laporkan & Tutup Preview
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = { laporanWarungTarget = preview },
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(Icons.Filled.Flag, contentDescription = "Laporkan Warung", tint = Color(0xFFEF4444), modifier = Modifier.size(16.dp))
+                            }
+                            IconButton(
+                                onClick = { vendorTerpilihPreview = null },
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = "Tutup", modifier = Modifier.size(18.dp))
+                            }
                         }
                     }
 
@@ -1168,6 +1179,16 @@ fun BerandaScreen(
                     }
                 }
             }
+        )
+    }
+
+    // ── Dialog Laporkan Warung (Ketidaksesuaian Peta / Tutup) ────────────────
+    if (laporanWarungTarget != null) {
+        DialogLaporkanWarung(
+            container = container,
+            vendorId = laporanWarungTarget!!.id,
+            namaToko = laporanWarungTarget!!.namaToko,
+            onDismiss = { laporanWarungTarget = null }
         )
     }
 }

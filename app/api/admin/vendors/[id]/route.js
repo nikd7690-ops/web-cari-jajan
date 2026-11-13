@@ -160,3 +160,28 @@ export async function PATCH(request, { params }) {
     );
   }
 }
+
+export async function DELETE(request, { params }) {
+  const { response } = await requireAdmin(request);
+  if (response) return response;
+
+  const { id } = await params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return NextResponse.json(
+      { error: "ID warung tidak valid" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    await connectDB();
+    const vendor = await Vendor.findByIdAndDelete(id);
+    if (!vendor) {
+      return NextResponse.json({ error: "Warung tidak ditemukan" }, { status: 404 });
+    }
+    return NextResponse.json({ message: "Warung berhasil dihapus oleh admin" });
+  } catch (error) {
+    console.error("DELETE /api/admin/vendors/[id] gagal:", error);
+    return NextResponse.json({ error: "Gagal menghapus warung" }, { status: 500 });
+  }
+}

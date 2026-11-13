@@ -64,6 +64,36 @@ class VendorRepository(private val api: ApiService) {
         res.body()?.items ?: emptyList()
     }
 
+    suspend fun kirimLaporan(vendorId: String, alasan: String, deskripsi: String): Result<Unit> = call {
+        val res = api.kirimLaporan(KirimLaporanRequest(vendorId, alasan, deskripsi))
+        if (!res.isSuccessful) throw ApiException(ApiErrors.message(res))
+        Unit
+    }
+
+    suspend fun daftarLaporan(): Result<List<LaporanDto>> = call {
+        val res = api.daftarLaporan()
+        if (!res.isSuccessful) throw ApiException(ApiErrors.message(res))
+        res.body()?.data ?: emptyList()
+    }
+
+    suspend fun adminMembers(): Result<AdminMembersData> = call {
+        val res = api.adminMembers()
+        if (!res.isSuccessful) throw ApiException(ApiErrors.message(res))
+        res.body()?.data ?: AdminMembersData()
+    }
+
+    suspend fun adminVendors(status: String = "semua"): Result<List<VendorDto>> = call {
+        val res = api.adminVendors(status)
+        if (!res.isSuccessful) throw ApiException(ApiErrors.message(res))
+        res.body()?.data ?: emptyList()
+    }
+
+    suspend fun adminVendorAction(id: String, aksi: String): Result<Unit> = call {
+        val res = api.adminVendorAction(id, AdminVendorActionRequest(aksi))
+        if (!res.isSuccessful) throw ApiException(ApiErrors.message(res))
+        Unit
+    }
+
     private inline fun <T> call(block: () -> T): Result<T> = try {
         Result.success(block())
     } catch (e: Exception) {

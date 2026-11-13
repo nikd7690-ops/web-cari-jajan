@@ -74,6 +74,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.carijajan.app.AppContainer
 import com.carijajan.app.data.VendorDto
+import com.carijajan.app.ui.components.AdminDashboardContent
 import com.carijajan.app.ui.components.CariJajanBottomBar
 import com.carijajan.app.util.Format
 import com.carijajan.app.util.Gamifikasi
@@ -95,6 +96,7 @@ fun DashboardScreen(
 
     // Penentuan peran: Mitra vs Pengguna/Member (terkunci sesuai akun tanpa switcher)
     val isMitra = (user?.tipeAkun == "mitra" || defaultTipeAkun == "mitra" || defaultTipeAkun == "penjual")
+    val isAdmin = (user?.role == "admin")
 
     var vendors by remember { mutableStateOf<List<VendorDto>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -155,13 +157,13 @@ fun DashboardScreen(
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (isMitra) "Dashboard Mitra Warung" else "Dashboard Pengguna / Member",
+                    text = if (isAdmin) "Dashboard Admin Cari Jajan" else if (isMitra) "Dashboard Mitra Warung" else "Dashboard Pengguna / Member",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 val namaUser = user?.name?.takeIf { it.isNotBlank() } ?: user?.email.orEmpty()
                 Text(
-                    text = if (isMitra) "Halo, $namaUser • Pemilik Warung" else "Halo, $namaUser • Member Komunitas",
+                    text = if (isAdmin) "Halo, $namaUser • Administrator" else if (isMitra) "Halo, $namaUser • Pemilik Warung" else "Halo, $namaUser • Member Komunitas",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -176,10 +178,17 @@ fun DashboardScreen(
             }
         }
 
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-            modifier = Modifier.weight(1f)
-        ) {
+        if (isAdmin) {
+            AdminDashboardContent(
+                container = container,
+                onViewVendor = onVendor,
+                modifier = Modifier.weight(1f)
+            )
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                modifier = Modifier.weight(1f)
+            ) {
             // =========================================================================
             // 🍲 TAMPILAN DASHBOARD PENGGUNA / MEMBER (KOMUNITAS)
             // =========================================================================
@@ -590,6 +599,7 @@ fun DashboardScreen(
             }
         }
     }
+}
 
     // ── Bottom Navigation Bar Tetap Tampil di Depan ──
     CariJajanBottomBar(

@@ -148,7 +148,7 @@ fun CariJajanBottomBar(
                 },
                 label = {
                     Text(
-                        if (sudahLogin) "Akun" else "Masuk",
+                        "Akun",
                         fontSize = 11.sp
                     )
                 },
