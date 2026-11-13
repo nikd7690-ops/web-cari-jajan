@@ -3,9 +3,8 @@ import mongoose from "mongoose";
 import { connectDB } from "@/lib/mongodb";
 import Vendor from "@/models/Vendor";
 import { isBuka } from "@/lib/jam";
-import { getSession } from "@/lib/auth";
-import { apakahAdmin } from "@/lib/admin";
 import { requireUser, requireVendorOwner } from "@/lib/apiAuth";
+import { apakahAdmin } from "@/lib/admin";
 import { vendorUpdateSchema } from "@/lib/vendorSchema";
 
 export async function GET(request, { params }) {
@@ -28,15 +27,15 @@ export async function GET(request, { params }) {
     }
 
     if (vendor.status !== "approved") {
-      const session = await getSession();
-      const userId = session?.user?.id;
+      const { user, response } = await requireUser(request);
+      const userId = user?.id;
       const pemilik =
         userId &&
         (vendor.owner?.toString() === userId ||
           vendor.submittedBy?.toString() === userId);
       const admin = userId ? await apakahAdmin(userId) : false;
 
-      if (!pemilik && !admin) {
+      if (response || (!pemilik && !admin)) {
         return NextResponse.json(
           { error: "Warung tidak ditemukan" },
           { status: 404 }

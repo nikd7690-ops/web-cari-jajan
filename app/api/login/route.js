@@ -64,6 +64,7 @@ export async function POST(request) {
       id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role || "user",
     });
 
     return NextResponse.json({
@@ -72,6 +73,9 @@ export async function POST(request) {
         id: user._id.toString(),
         name: user.name,
         email: user.email,
+        role: user.role || "user",
+        xp: user.xp ?? 0,
+        level: user.level ?? 1,
       },
     });
   } catch (error) {
