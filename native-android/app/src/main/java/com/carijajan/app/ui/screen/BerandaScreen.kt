@@ -1,6 +1,7 @@
 package com.carijajan.app.ui.screen
 
 import android.Manifest
+import android.location.Location
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -33,9 +34,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Person
@@ -50,6 +53,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -95,6 +99,13 @@ private val DAFTAR_KATEGORI = listOf(
     "warung" to "Warung Tetap",
     "rumah_makan" to "Rumah Makan"
 )
+
+// Helper penghitung jarak geodesik presisi dalam meter
+private fun hitungJarakMeter(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
+    val hasil = FloatArray(1)
+    Location.distanceBetween(lat1, lng1, lat2, lng2, hasil)
+    return hasil[0].toDouble()
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -173,12 +184,10 @@ fun BerandaScreen(
             val latLng = LatLng(loc.latitude, loc.longitude)
             userLocationRealtime = latLng
 
-            // Gunakan bearing GPS jika bergerak cukup cepat
             if (loc.hasBearing() && loc.speed > 0.5f) {
                 userHeading = loc.bearing
             }
 
-            // Gerakkan kamera ke lokasi pengguna SEKALI SAJA saat GPS pertama kali terkunci
             if (!initialLocationMoved) {
                 initialLocationMoved = true
                 lokasi = Titik(loc.latitude, loc.longitude, "Lokasi saya")
@@ -242,6 +251,19 @@ fun BerandaScreen(
 
             cocokKategori && cocokKata
         }
+    }
+
+    // ── 5. Urutkan Warung dari yang Terdekat berdasarkan Lokasi Pengguna ─────
+    val userPos = userLocationRealtime ?: lokasi?.let { LatLng(it.lat, it.lng) }
+    val vendorsDenganJarak = remember(vendorsTampil, userPos) {
+        vendorsTampil.map { vendor ->
+            val jarakMeter = if (userPos != null && vendor.lat != 0.0 && vendor.lng != 0.0) {
+                hitungJarakMeter(userPos.latitude, userPos.longitude, vendor.lat, vendor.lng)
+            } else {
+                vendor.jarak ?: 999999.0
+            }
+            Pair(vendor, jarakMeter)
+        }.sortedBy { it.second } // Diurutkan dari yang terdekat!
     }
 
     // Kamera meluncur ke warung yang dicari
@@ -399,9 +421,9 @@ fun BerandaScreen(
             }
         }
 
-        // ── Pill Akses Cepat Warung ──────────────────────────────────────────
+        // ── Pill Akses Cepat Warung Terdekat ────────────────────────────────
         AnimatedVisibility(
-            visible = vendorsTampil.isNotEmpty(),
+            visible = vendorsDenganJarak.isNotEmpty(),
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier
@@ -426,7 +448,7 @@ fun BerandaScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "${vendorsTampil.size} warung tampil",
+                        text = "${vendorsDenganJarak.size} warung terdekat",
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -441,7 +463,7 @@ fun BerandaScreen(
             }
         }
 
-        // ── Bagian Bawah: 4 Tombol Navigasi ─────────────────────────────────
+        // ── Bagian Bawah: 5 Tombol Navigasi ─────────────────────────────────
         Surface(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -460,14 +482,14 @@ fun BerandaScreen(
             ) {
                 // 1. Peta
                 NavigationBarItem(
-                    selected = (tabDipilih == "peta"),
+                    selected = (tabDipilih == "peta" && !daftarWarungTerbuka),
                     onClick = {
                         tabDipilih = "peta"
-                        daftarWarungTerbuka = !daftarWarungTerbuka
+                        daftarWarungTerbuka = false
                     },
                     icon = {
                         Icon(
-                            imageVector = if (tabDipilih == "peta") Icons.Default.Map else Icons.Outlined.Map,
+                            imageVector = if (tabDipilih == "peta" && !daftarWarungTerbuka) Icons.Default.Map else Icons.Outlined.Map,
                             contentDescription = "Peta"
                         )
                     },
@@ -523,7 +545,33 @@ fun BerandaScreen(
                     }
                 )
 
-                // 4. Akun
+                // 4. ⭐ Tombol List Warung (di sebelah kanan tombol Tambah)
+                NavigationBarItem(
+                    selected = daftarWarungTerbuka,
+                    onClick = {
+                        daftarWarungTerbuka = !daftarWarungTerbuka
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = if (daftarWarungTerbuka) Icons.Default.FormatListBulleted else Icons.Outlined.FormatListBulleted,
+                            contentDescription = "List Warung Terdekat"
+                        )
+                    },
+                    label = {
+                        Text(
+                            "Daftar",
+                            fontSize = 11.sp,
+                            fontWeight = if (daftarWarungTerbuka) FontWeight.Bold else FontWeight.Normal
+                        )
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                )
+
+                // 5. Akun
                 NavigationBarItem(
                     selected = false,
                     onClick = {
@@ -546,7 +594,7 @@ fun BerandaScreen(
         }
     }
 
-    // ── Bottom Sheet: Daftar Warung ─────────────────────────────────────────
+    // ── Bottom Sheet: Daftar Warung dari yang Terdekat + Kategori ────────────
     if (daftarWarungTerbuka) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
         ModalBottomSheet(
@@ -559,18 +607,19 @@ fun BerandaScreen(
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 24.dp)
             ) {
+                // Header Sheet
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Daftar warung",
+                            text = "Daftar Warung Terdekat",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "${vendorsTampil.size} warung ditemukan",
+                            text = "Diurutkan dari posisi terdekatmu • ${vendorsDenganJarak.size} warung",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -580,6 +629,37 @@ fun BerandaScreen(
                             text = "Memuat...",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                // Baris Kategori di dalam Sheet
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    DAFTAR_KATEGORI.forEach { (idKat, label) ->
+                        val terpilih = (kategoriFilter == idKat)
+                        FilterChip(
+                            selected = terpilih,
+                            onClick = {
+                                kategoriFilter = if (terpilih && idKat != "semua") "semua" else idKat
+                            },
+                            label = {
+                                Text(
+                                    text = label,
+                                    fontSize = 11.sp,
+                                    fontWeight = if (terpilih) FontWeight.Bold else FontWeight.Normal
+                                )
+                            },
+                            shape = RoundedCornerShape(50),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
                         )
                     }
                 }
@@ -605,7 +685,7 @@ fun BerandaScreen(
                     }
                 }
 
-                if (!loading && error.isBlank() && vendorsTampil.isEmpty()) {
+                if (!loading && error.isBlank() && vendorsDenganJarak.isEmpty()) {
                     Text(
                         text = if (query.isNotBlank()) "Tidak ada warung yang cocok dengan \"$query\"."
                         else "Tidak ada warung pada kategori ini.",
@@ -615,10 +695,20 @@ fun BerandaScreen(
                     )
                 }
 
-                LazyColumn(modifier = Modifier.heightIn(max = 380.dp)) {
-                    items(vendorsTampil) { vendor ->
-                        VendorRow(
+                // List Warung Terdekat
+                LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+                    items(vendorsDenganJarak, key = { it.first.id }) { (vendor, jarakMeter) ->
+                        VendorRowTerdekat(
                             vendor = vendor,
+                            jarakMeter = jarakMeter,
+                            onLihatDiPeta = {
+                                daftarWarungTerbuka = false
+                                if (vendor.lat != 0.0 && vendor.lng != 0.0) {
+                                    cameraTarget = LatLng(vendor.lat, vendor.lng)
+                                    cameraZoom = 16.5
+                                    cameraMoveTrigger++
+                                }
+                            },
                             onClick = {
                                 daftarWarungTerbuka = false
                                 onVendor(vendor.id)
@@ -661,57 +751,133 @@ fun BerandaScreen(
     }
 }
 
+/**
+ * Baris item warung terdekat dengan badge kategori, jarak terhitung, dan tombol aksi.
+ */
 @Composable
-private fun VendorRow(vendor: VendorDto, onClick: () -> Unit) {
+private fun VendorRowTerdekat(
+    vendor: VendorDto,
+    jarakMeter: Double,
+    onLihatDiPeta: () -> Unit,
+    onClick: () -> Unit
+) {
     Surface(
-        shape = RoundedCornerShape(12.dp),
-        tonalElevation = 1.dp,
+        shape = RoundedCornerShape(14.dp),
+        tonalElevation = 2.dp,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .padding(vertical = 5.dp)
             .clickable(onClick = onClick)
     ) {
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.Top) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = vendor.namaToko,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = Format.labelKategori(vendor.kategori),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = vendor.alamatPatokan,
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Column(horizontalAlignment = Alignment.End) {
-                Surface(
-                    color = if (vendor.buka) MaterialTheme.colorScheme.primaryContainer
-                    else MaterialTheme.colorScheme.errorContainer,
-                    shape = RoundedCornerShape(50)
-                ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = if (vendor.buka) "Buka" else "Tutup",
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        text = vendor.namaToko,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                    // Badge Kategori & Jam Buka
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Text(
+                                text = when (vendor.kategori) {
+                                    "pkl" -> "🛒 Gerobak PKL"
+                                    "keliling" -> "🛵 Keliling"
+                                    "warung" -> "🏠 Warung Tetap"
+                                    "rumah_makan", "cafe" -> "🍽️ Rumah Makan"
+                                    else -> Format.labelKategori(vendor.kategori)
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+
+                        Text(
+                            text = "Jam ${vendor.jamBuka} - ${vendor.jamTutup}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = vendor.alamatPatokan,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-                if (vendor.jarak != null) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = Format.jarak(vendor.jarak),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // Jarak & Status Buka/Tutup
+                Column(horizontalAlignment = Alignment.End) {
+                    Surface(
+                        color = if (vendor.buka) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.errorContainer,
+                        shape = RoundedCornerShape(50)
+                    ) {
+                        Text(
+                            text = if (vendor.buka) "Buka" else "Tutup",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = if (vendor.buka) MaterialTheme.colorScheme.onPrimaryContainer
+                            else MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
+
+                    if (jarakMeter < 900000) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = Format.jarak(jarakMeter),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+
+            // Tombol Aksi Cepat
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedButton(
+                    onClick = onLihatDiPeta,
+                    modifier = Modifier.height(32.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Lihat di Peta", fontSize = 11.sp)
+                }
+                Spacer(modifier = Modifier.width(6.dp))
+                TextButton(
+                    onClick = onClick,
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Text("Buka Menu →", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
