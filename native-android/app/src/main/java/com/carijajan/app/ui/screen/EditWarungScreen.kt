@@ -72,6 +72,7 @@ import com.carijajan.app.AppContainer
 import com.carijajan.app.data.MenuInput
 import com.carijajan.app.data.VendorInput
 import com.carijajan.app.data.ZeroWasteDto
+import com.carijajan.app.ui.components.CariJajanBottomBar
 import com.carijajan.app.ui.components.JudulBagian
 import com.carijajan.app.ui.components.KameraDialog
 import com.carijajan.app.ui.components.KomponenFoto
@@ -361,15 +362,16 @@ fun EditWarungScreen(
         return
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(bottom = 76.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
         TextButton(onClick = onBack) { Text("← Kembali") }
 
         Text(
@@ -955,7 +957,24 @@ fun EditWarungScreen(
             )
         }
 
-        Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
+        }
+
+        // ── Bottom Navigation Bar Tetap Tampil di Depan ──
+        CariJajanBottomBar(
+            tabAktif = if (!isEdit) "tambah" else "peta",
+            sudahLogin = true,
+            modifier = Modifier.align(Alignment.BottomCenter),
+            onTabSelected = { tab ->
+                when (tab) {
+                    "peta" -> onBack()
+                    "lokasi" -> onBack()
+                    "daftar" -> onBack()
+                    "tambah" -> Unit
+                    "akun" -> onBack()
+                }
+            }
+        )
     }
 
     // ── Dialog Kamera Langsung Tambah Warung (Foto + Auto GPS) ────────────────

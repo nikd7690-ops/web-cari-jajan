@@ -74,6 +74,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.carijajan.app.AppContainer
 import com.carijajan.app.data.VendorDto
+import com.carijajan.app.ui.components.CariJajanBottomBar
 import com.carijajan.app.util.Format
 import com.carijajan.app.util.Gamifikasi
 import kotlinx.coroutines.flow.first
@@ -136,12 +137,14 @@ fun DashboardScreen(
 
     LaunchedEffect(Unit) { load() }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .padding(horizontal = 16.dp)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 76.dp)
+        ) {
         // ── Header Bar ────────────────────────────────────────────────────────
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 12.dp),
@@ -587,6 +590,23 @@ fun DashboardScreen(
             }
         }
     }
+
+    // ── Bottom Navigation Bar Tetap Tampil di Depan ──
+    CariJajanBottomBar(
+        tabAktif = "akun",
+        sudahLogin = (user != null),
+        modifier = Modifier.align(Alignment.BottomCenter),
+        onTabSelected = { tab ->
+            when (tab) {
+                "peta" -> onBack()
+                "lokasi" -> onBack()
+                "daftar" -> onBack()
+                "tambah" -> onAdd()
+                "akun" -> Unit
+            }
+        }
+    )
+}
 
     // ── Dialog Usul Revisi untuk Pembeli ──────────────────────────────────────
     dialogRevisiWarung?.let { v ->

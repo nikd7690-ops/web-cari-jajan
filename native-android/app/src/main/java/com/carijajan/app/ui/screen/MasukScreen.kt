@@ -47,6 +47,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carijajan.app.AppContainer
+import com.carijajan.app.ui.components.CariJajanBottomBar
 import kotlinx.coroutines.launch
 
 @Composable
@@ -77,14 +78,16 @@ fun MasukScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp)
+                .padding(bottom = 76.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
@@ -215,5 +218,21 @@ fun MasukScreen(
                 Text("Daftar Sekarang", fontWeight = FontWeight.Bold, color = Color(0xFF059669))
             }
         }
+    }
+
+        CariJajanBottomBar(
+            tabAktif = "akun",
+            sudahLogin = false,
+            modifier = Modifier.align(Alignment.BottomCenter),
+            onTabSelected = { tab ->
+                when (tab) {
+                    "peta" -> onBack()
+                    "lokasi" -> onBack()
+                    "daftar" -> onBack()
+                    "tambah" -> onBack()
+                    "akun" -> Unit
+                }
+            }
+        )
     }
 }

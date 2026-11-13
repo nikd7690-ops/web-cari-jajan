@@ -1,5 +1,6 @@
 package com.carijajan.app.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -10,12 +11,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -146,6 +149,73 @@ fun PilihAreaSheet(
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        PilihAreaContent(
+            container = container,
+            lokasiAktif = lokasiAktif,
+            userLocation = userLocation,
+            loadingLokasi = loadingLokasi,
+            pesanLokasi = pesanLokasi,
+            onGunakanLokasi = onGunakanLokasi,
+            onPilih = onPilih,
+            onDismiss = onDismiss
+        )
+    }
+}
+
+/**
+ * Panel inline untuk memilih area di atas peta dengan Bottom Navigation Bar tetap tampil di depan.
+ */
+@Composable
+fun PilihAreaPanel(
+    container: AppContainer,
+    lokasiAktif: String,
+    userLocation: LatLng? = null,
+    loadingLokasi: Boolean,
+    pesanLokasi: String,
+    modifier: Modifier = Modifier,
+    onGunakanLokasi: () -> Unit,
+    onPilih: (Titik) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 6.dp,
+        shadowElevation = 16.dp,
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(max = 560.dp)
+            .padding(bottom = 74.dp)
+            .navigationBarsPadding()
+    ) {
+        PilihAreaContent(
+            container = container,
+            lokasiAktif = lokasiAktif,
+            userLocation = userLocation,
+            loadingLokasi = loadingLokasi,
+            pesanLokasi = pesanLokasi,
+            onGunakanLokasi = onGunakanLokasi,
+            onPilih = onPilih,
+            onDismiss = onDismiss
+        )
+    }
+}
+
+@Composable
+fun PilihAreaContent(
+    container: AppContainer,
+    lokasiAktif: String,
+    userLocation: LatLng? = null,
+    loadingLokasi: Boolean,
+    pesanLokasi: String,
+    onGunakanLokasi: () -> Unit,
+    onPilih: (Titik) -> Unit,
+    onDismiss: () -> Unit
+) {
     var query by remember { mutableStateOf("") }
     var hasilGeocode by remember { mutableStateOf<List<GeocodeItem>>(emptyList()) }
     var loadingGeocode by remember { mutableStateOf(false) }
@@ -179,37 +249,45 @@ fun PilihAreaSheet(
         }
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 18.dp)
+            .padding(bottom = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Column(
+        // Drag Handle
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 18.dp)
-                .padding(bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .align(Alignment.CenterHorizontally)
+                .padding(top = 8.dp)
+                .size(width = 36.dp, height = 4.dp)
+                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), CircleShape)
+        )
+
+        // ── Header Judul & Status Lokasi Aktif ───────────────────────────
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // ── Header Judul & Status Lokasi Aktif ───────────────────────────
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = "Pilih Kota & Daerah",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = if (lokasiAktif.isBlank()) "Belum ada lokasi dipilih" else "📍 Area aktif: $lokasiAktif",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Pilih Kota & Daerah",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = if (lokasiAktif.isBlank()) "Belum ada lokasi dipilih" else "📍 Area aktif: $lokasiAktif",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium
+                )
             }
+            IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
+                Icon(Icons.Default.Close, contentDescription = "Tutup", modifier = Modifier.size(18.dp))
+            }
+        }
 
             // ── Card Lokasi GPS Saya Saat Ini ────────────────────────────────
             Surface(
@@ -523,5 +601,4 @@ fun PilihAreaSheet(
                 fontSize = 10.sp
             )
         }
-    }
 }

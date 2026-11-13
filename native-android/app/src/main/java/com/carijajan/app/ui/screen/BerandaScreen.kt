@@ -7,6 +7,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -86,7 +88,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.carijajan.app.AppContainer
 import com.carijajan.app.data.VendorDto
+import com.carijajan.app.ui.components.CariJajanBottomBar
 import com.carijajan.app.ui.components.PetaWarung
+import com.carijajan.app.ui.components.PilihAreaPanel
 import com.carijajan.app.ui.components.PilihAreaSheet
 import com.carijajan.app.util.ArahKompas
 import com.carijajan.app.util.Format
@@ -706,12 +710,13 @@ fun BerandaScreen(
 
         // ── Pill Akses Cepat Warung Terdekat (Tampil jika Tidak Ada Rute & Tidak Ada Preview)
         AnimatedVisibility(
-            visible = vendorsDenganJarak.isNotEmpty() && ruteAktifVendor == null && vendorTerpilihPreview == null,
+            visible = vendorsDenganJarak.isNotEmpty() && ruteAktifVendor == null && vendorTerpilihPreview == null && !daftarWarungTerbuka && !areaTerbuka,
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 92.dp)
+                .navigationBarsPadding()
+                .padding(bottom = 96.dp)
         ) {
             Surface(
                 shape = RoundedCornerShape(20.dp),
@@ -758,14 +763,16 @@ fun BerandaScreen(
             }
 
             Surface(
-                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+                shape = RoundedCornerShape(20.dp),
                 color = MaterialTheme.colorScheme.surface,
                 shadowElevation = 16.dp,
                 tonalElevation = 8.dp,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .padding(bottom = 76.dp)
+                    .padding(horizontal = 10.dp)
+                    .navigationBarsPadding()
+                    .padding(bottom = 90.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -929,293 +936,238 @@ fun BerandaScreen(
             }
         }
 
-        // ── Bagian Bawah: 5 Tombol Navigasi ─────────────────────────────────
-        Surface(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth(),
-            tonalElevation = 8.dp,
-            shadowElevation = 12.dp,
-            shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp),
-            color = MaterialTheme.colorScheme.surface
+        // ── Panel Sheet: Daftar Warung Terdekat (Tampil di Atas Peta, di Belakang Bottom Navigation Bar) ──
+        AnimatedVisibility(
+            visible = daftarWarungTerbuka,
+            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+            modifier = Modifier.align(Alignment.BottomCenter)
         ) {
-            NavigationBar(
-                containerColor = Color.Transparent,
+            Surface(
+                shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 6.dp,
+                shadowElevation = 16.dp,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .navigationBarsPadding(),
-                tonalElevation = 0.dp
+                    .heightIn(max = 520.dp)
+                    .padding(bottom = 76.dp)
+                    .navigationBarsPadding()
             ) {
-                // 1. Peta
-                NavigationBarItem(
-                    selected = (tabDipilih == "peta" && !daftarWarungTerbuka),
-                    onClick = {
-                        tabDipilih = "peta"
-                        daftarWarungTerbuka = false
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = if (tabDipilih == "peta" && !daftarWarungTerbuka) Icons.Default.Map else Icons.Outlined.Map,
-                            contentDescription = "Peta"
-                        )
-                    },
-                    label = { Text("Peta", fontSize = 11.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.primary,
-                        selectedTextColor = MaterialTheme.colorScheme.primary,
-                        indicatorColor = MaterialTheme.colorScheme.primaryContainer
-                    )
-                )
-
-                // 2. Pilih Lokasi & Kota/Daerah
-                NavigationBarItem(
-                    selected = areaTerbuka,
-                    onClick = {
-                        areaTerbuka = true
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Outlined.LocationOn,
-                            contentDescription = "Pilih Lokasi & Daerah"
-                        )
-                    },
-                    label = { Text("Lokasi", fontSize = 11.sp) }
-                )
-
-                // 3. Tambah Warung
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { onAdd() },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Filled.AddCircle,
-                            contentDescription = "Tambah Warung",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(26.dp)
-                        )
-                    },
-                    label = {
-                        Text(
-                            "Tambah",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                )
-
-                // 4. ⭐ Tombol List Warung (di sebelah kanan tombol Tambah)
-                NavigationBarItem(
-                    selected = daftarWarungTerbuka,
-                    onClick = {
-                        daftarWarungTerbuka = !daftarWarungTerbuka
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = if (daftarWarungTerbuka) Icons.Default.FormatListBulleted else Icons.Outlined.FormatListBulleted,
-                            contentDescription = "List Warung Terdekat"
-                        )
-                    },
-                    label = {
-                        Text(
-                            "Daftar",
-                            fontSize = 11.sp,
-                            fontWeight = if (daftarWarungTerbuka) FontWeight.Bold else FontWeight.Normal
-                        )
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.primary,
-                        selectedTextColor = MaterialTheme.colorScheme.primary,
-                        indicatorColor = MaterialTheme.colorScheme.primaryContainer
-                    )
-                )
-
-                // 5. Akun
-                NavigationBarItem(
-                    selected = false,
-                    onClick = {
-                        if (user == null) onLogin() else onDashboard()
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = if (user != null) Icons.Default.Person else Icons.Outlined.Person,
-                            contentDescription = "Akun"
-                        )
-                    },
-                    label = {
-                        Text(
-                            if (user != null) "Akun" else "Masuk",
-                            fontSize = 11.sp
-                        )
-                    }
-                )
-            }
-        }
-    }
-
-    // ── Bottom Sheet: Daftar Warung dari yang Terdekat + Kategori ────────────
-    if (daftarWarungTerbuka) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-        ModalBottomSheet(
-            onDismissRequest = { daftarWarungTerbuka = false },
-            sheetState = sheetState
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 24.dp)
-            ) {
-                // Header Sheet
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Daftar Warung Terdekat",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Diurutkan dari posisi terdekatmu • ${vendorsDenganJarak.size} warung",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    if (loading) {
-                        Text(
-                            text = "Memuat...",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-
-                // Baris Kategori di dalam Sheet
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
                 ) {
-                    DAFTAR_KATEGORI.forEach { (idKat, label) ->
-                        val terpilih = (kategoriFilter == idKat)
-                        FilterChip(
-                            selected = terpilih,
-                            onClick = {
-                                kategoriFilter = if (terpilih && idKat != "semua") "semua" else idKat
-                            },
-                            label = {
-                                Text(
-                                    text = label,
-                                    fontSize = 11.sp,
-                                    fontWeight = if (terpilih) FontWeight.Bold else FontWeight.Normal
-                                )
-                            },
-                            shape = RoundedCornerShape(50),
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        )
-                    }
-                }
-
-                if (loading) {
-                    LinearProgressIndicator(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    // Drag Handle
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .size(width = 36.dp, height = 4.dp)
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), CircleShape)
                     )
-                }
+                    Spacer(Modifier.height(8.dp))
 
-                if (error.isNotBlank()) {
+                    // Header Sheet
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = error,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.weight(1f)
-                        )
-                        TextButton(onClick = { mintaIzinLokasi() }) { Text("Coba lagi") }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Daftar Warung Terdekat",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Diurutkan dari posisi terdekatmu • ${vendorsDenganJarak.size} warung",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (loading) {
+                            Text(
+                                text = "Memuat...",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(Modifier.width(8.dp))
+                        }
+                        IconButton(
+                            onClick = { daftarWarungTerbuka = false },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = "Tutup", modifier = Modifier.size(18.dp))
+                        }
                     }
-                }
 
-                if (!loading && error.isBlank() && vendorsDenganJarak.isEmpty()) {
-                    Text(
-                        text = if (query.isNotBlank()) "Tidak ada warung yang cocok dengan \"$query\"."
-                        else "Tidak ada warung pada kategori ini.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 16.dp)
-                    )
-                }
+                    // Baris Kategori di dalam Sheet
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        DAFTAR_KATEGORI.forEach { (idKat, label) ->
+                            val terpilih = (kategoriFilter == idKat)
+                            FilterChip(
+                                selected = terpilih,
+                                onClick = {
+                                    kategoriFilter = if (terpilih && idKat != "semua") "semua" else idKat
+                                },
+                                label = {
+                                    Text(
+                                        text = label,
+                                        fontSize = 11.sp,
+                                        fontWeight = if (terpilih) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                },
+                                shape = RoundedCornerShape(50),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            )
+                        }
+                    }
 
-                // List Warung Terdekat
-                LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
-                    items(vendorsDenganJarak, key = { it.first.id }) { (vendor, jarakMeter) ->
-                        VendorRowTerdekat(
-                            vendor = vendor,
-                            jarakMeter = jarakMeter,
-                            onMulaiRute = {
-                                daftarWarungTerbuka = false
-                                mulaiNavigasiKeWarung(vendor)
-                            },
-                            onLihatDiPeta = {
-                                daftarWarungTerbuka = false
-                                vendorTerpilihPreview = vendor
-                                if (vendor.lat != 0.0 && vendor.lng != 0.0) {
-                                    cameraTarget = LatLng(vendor.lat, vendor.lng)
-                                    cameraZoom = 16.5
-                                    cameraMoveTrigger++
-                                }
-                            },
-                            onClick = {
-                                daftarWarungTerbuka = false
-                                onVendor(vendor.id)
-                            }
+                    if (loading) {
+                        LinearProgressIndicator(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                         )
+                    }
+
+                    if (error.isNotBlank()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = error,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.weight(1f)
+                            )
+                            TextButton(onClick = { mintaIzinLokasi() }) { Text("Coba lagi") }
+                        }
+                    }
+
+                    if (!loading && error.isBlank() && vendorsDenganJarak.isEmpty()) {
+                        Text(
+                            text = if (query.isNotBlank()) "Tidak ada warung yang cocok dengan \"$query\"."
+                            else "Tidak ada warung pada kategori ini.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = 16.dp)
+                        )
+                    }
+
+                    // List Warung Terdekat
+                    LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                        items(vendorsDenganJarak, key = { it.first.id }) { (vendor, jarakMeter) ->
+                            VendorRowTerdekat(
+                                vendor = vendor,
+                                jarakMeter = jarakMeter,
+                                onMulaiRute = {
+                                    daftarWarungTerbuka = false
+                                    mulaiNavigasiKeWarung(vendor)
+                                },
+                                onLihatDiPeta = {
+                                    daftarWarungTerbuka = false
+                                    vendorTerpilihPreview = vendor
+                                    if (vendor.lat != 0.0 && vendor.lng != 0.0) {
+                                        cameraTarget = LatLng(vendor.lat, vendor.lng)
+                                        cameraZoom = 16.5
+                                        cameraMoveTrigger++
+                                    }
+                                },
+                                onClick = {
+                                    daftarWarungTerbuka = false
+                                    onVendor(vendor.id)
+                                }
+                            )
+                        }
                     }
                 }
             }
         }
-    }
 
-    // ── Bottom Sheet: Pilih Area Manual & Kota/Tempat Sekitar ───────────────
-    if (areaTerbuka) {
-        PilihAreaSheet(
-            container = container,
-            lokasiAktif = lokasi?.label.orEmpty(),
-            userLocation = userLocationRealtime ?: lokasi?.let { LatLng(it.lat, it.lng) },
-            loadingLokasi = geoLoading,
-            pesanLokasi = pesanLokasi,
-            onGunakanLokasi = {
-                mintaIzinLokasi()
-                val pos = userLocationRealtime
-                if (pos != null) {
-                    scope.launch {
-                        val label = Lokasi.dapatkanNamaArea(context, pos.latitude, pos.longitude)
-                        lokasi = Titik(pos.latitude, pos.longitude, label)
+        // ── Panel Sheet: Pilih Area Manual & Kota/Tempat Sekitar ───────────────
+        AnimatedVisibility(
+            visible = areaTerbuka,
+            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            PilihAreaPanel(
+                container = container,
+                lokasiAktif = lokasi?.label.orEmpty(),
+                userLocation = userLocationRealtime ?: lokasi?.let { LatLng(it.lat, it.lng) },
+                loadingLokasi = geoLoading,
+                pesanLokasi = pesanLokasi,
+                onGunakanLokasi = {
+                    mintaIzinLokasi()
+                    val pos = userLocationRealtime
+                    if (pos != null) {
+                        scope.launch {
+                            val label = Lokasi.dapatkanNamaArea(context, pos.latitude, pos.longitude)
+                            lokasi = Titik(pos.latitude, pos.longitude, label)
+                        }
+                        cameraTarget = pos
+                        cameraZoom = 16.0
+                        cameraMoveTrigger++
+                        bearingResetTrigger++
+                        areaTerbuka = false
                     }
-                    cameraTarget = pos
-                    cameraZoom = 16.0
+                },
+                onPilih = { titik ->
+                    pesanLokasi = ""
+                    lokasi = titik
+                    cameraTarget = LatLng(titik.lat, titik.lng)
+                    cameraZoom = 15.5
                     cameraMoveTrigger++
-                    bearingResetTrigger++
                     areaTerbuka = false
+                },
+                onDismiss = { areaTerbuka = false }
+            )
+        }
+
+        // ── Bagian Bawah: Bottom Navigation Bar Utama (Selalu di Lapisan Paling Depan) ──
+        CariJajanBottomBar(
+            tabAktif = when {
+                daftarWarungTerbuka -> "daftar"
+                areaTerbuka -> "lokasi"
+                else -> "peta"
+            },
+            sudahLogin = (user != null),
+            modifier = Modifier.align(Alignment.BottomCenter),
+            onTabSelected = { tab ->
+                when (tab) {
+                    "peta" -> {
+                        daftarWarungTerbuka = false
+                        areaTerbuka = false
+                    }
+                    "lokasi" -> {
+                        daftarWarungTerbuka = false
+                        areaTerbuka = !areaTerbuka
+                    }
+                    "daftar" -> {
+                        areaTerbuka = false
+                        daftarWarungTerbuka = !daftarWarungTerbuka
+                    }
+                    "tambah" -> {
+                        daftarWarungTerbuka = false
+                        areaTerbuka = false
+                        onAdd()
+                    }
+                    "akun" -> {
+                        daftarWarungTerbuka = false
+                        areaTerbuka = false
+                        if (user == null) onLogin() else onDashboard()
+                    }
                 }
-            },
-            onPilih = { titik ->
-                pesanLokasi = ""
-                lokasi = titik
-                cameraTarget = LatLng(titik.lat, titik.lng)
-                cameraZoom = 15.5
-                cameraMoveTrigger++
-                areaTerbuka = false
-            },
-            onDismiss = { areaTerbuka = false }
+            }
         )
     }
 }
