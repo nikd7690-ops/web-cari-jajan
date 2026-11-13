@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Cari Jajan</string>
-    <string name="title_activity_main">Cari Jajan</string>
-    <string name="package_name">com.carijajan.app</string>
-    <string name="custom_url_scheme">com.carijajan.app</string>
-</resources>
