@@ -78,6 +78,8 @@ import com.carijajan.app.ui.components.KameraDialog
 import com.carijajan.app.ui.components.KomponenFoto
 import com.carijajan.app.ui.components.PesanError
 import com.carijajan.app.ui.components.PilihTitikPetaDialog
+import com.carijajan.app.ui.components.bounceClick
+import com.carijajan.app.ui.components.bounceEffect
 import com.carijajan.app.util.Gambar
 import com.carijajan.app.util.Lokasi
 import kotlinx.coroutines.launch
@@ -372,7 +374,10 @@ fun EditWarungScreen(
                 .padding(bottom = 76.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-        TextButton(onClick = onBack) { Text("← Kembali") }
+        TextButton(
+            onClick = onBack,
+            modifier = Modifier.bounceClick { onBack() }
+        ) { Text("← Kembali") }
 
         Text(
             text = when {
@@ -463,7 +468,7 @@ fun EditWarungScreen(
                     border = if (modeTambahKamera) androidx.compose.foundation.BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null,
                     modifier = Modifier
                         .weight(1f)
-                        .clickable {
+                        .bounceClick {
                             modeTambahKamera = true
                             if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
                                 kameraWarungTerbuka = true
@@ -504,7 +509,7 @@ fun EditWarungScreen(
                     border = if (!modeTambahKamera) androidx.compose.foundation.BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null,
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { modeTambahKamera = false }
+                        .bounceClick { modeTambahKamera = false }
                 ) {
                     Column(
                         modifier = Modifier.padding(12.dp),
@@ -543,7 +548,7 @@ fun EditWarungScreen(
                         modifier = Modifier.padding(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF059669), modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = com.carijajan.app.ui.theme.BrandOrange, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
                         Text(pesanOtomatis, fontSize = 11.sp, color = Color(0xFF065F46), fontWeight = FontWeight.Medium)
                     }
@@ -618,7 +623,9 @@ fun EditWarungScreen(
             Button(
                 onClick = { isiGpsDanAlamatOtomatis() },
                 enabled = !gpsOtomatisLoading,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .bounceEffect()
             ) {
                 if (gpsOtomatisLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
@@ -632,7 +639,9 @@ fun EditWarungScreen(
 
             OutlinedButton(
                 onClick = { petaPickerTerbuka = true },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .bounceEffect()
             ) {
                 Icon(imageVector = Icons.Default.Map, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
@@ -799,7 +808,9 @@ fun EditWarungScreen(
         ) {
             OutlinedButton(
                 onClick = { menus.add(MenuBaris()) },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .bounceEffect()
             ) {
                 Text("+ Menu Manual", fontSize = 12.sp)
             }
@@ -813,7 +824,9 @@ fun EditWarungScreen(
                     }
                 },
                 enabled = !aiScanning,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .bounceEffect()
             ) {
                 Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(6.dp))
@@ -904,7 +917,7 @@ fun EditWarungScreen(
                                     shape = RoundedCornerShape(8.dp),
                                     color = if (zeroWasteDiskon == disc) Color(0xFFD97706) else Color.White,
                                     border = BorderStroke(1.dp, if (zeroWasteDiskon == disc) Color(0xFFD97706) else Color(0xFFFDE68A)),
-                                    modifier = Modifier.clickable { zeroWasteDiskon = disc }
+                                    modifier = Modifier.bounceClick { zeroWasteDiskon = disc }
                                 ) {
                                     Text(
                                         text = "-$disc%",
@@ -940,7 +953,9 @@ fun EditWarungScreen(
         Button(
             onClick = { simpan() },
             enabled = !loading && !uploadProses && !aiScanning && !(isEdit && isPengguna),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .bounceEffect()
         ) {
             if (loading) {
                 CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp), strokeWidth = 2.dp)

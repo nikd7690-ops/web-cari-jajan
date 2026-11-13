@@ -57,7 +57,7 @@ object PinGenerator {
 
         // 1. Lingkaran luar berbayang halus (halo akurasi GPS)
         val haloPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#33059669") // Emerald transparan
+            color = Color.parseColor("#33EA681E") // Orange Brand transparan
             style = Paint.Style.FILL
         }
         canvas.drawCircle(cx, cy, dp(21f), haloPaint)
@@ -67,7 +67,7 @@ object PinGenerator {
         canvas.rotate(heading, cx, cy)
 
         val arrowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#059669")
+            color = Color.parseColor("#EA681E")
             style = Paint.Style.FILL
         }
         val arrowBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -98,7 +98,7 @@ object PinGenerator {
         canvas.drawCircle(cx, cy, dp(9.5f), outerDotPaint)
 
         val innerDotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#059669")
+            color = Color.parseColor("#EA681E")
             style = Paint.Style.FILL
         }
         canvas.drawCircle(cx, cy, dp(7f), innerDotPaint)
@@ -154,8 +154,8 @@ object PinGenerator {
         )
         val canvas = Canvas(bitmap)
 
-        val warnaUtama = if (buka) Color.parseColor("#059669") else Color.parseColor("#6B7280")
-        val warnaBgIcon = if (buka) Color.parseColor("#D1FAE5") else Color.parseColor("#F3F4F6")
+        val warnaUtama = if (buka) Color.parseColor("#EA681E") else Color.parseColor("#78716C")
+        val warnaBgIcon = if (buka) Color.parseColor("#FFEDD5") else Color.parseColor("#F5F5F4")
 
         // 1. Gambar latar belakang gelembung pin + ekor panah
         val bubbleRect = RectF(dp(2f), dp(2f), dp(2f) + bubbleW, dp(2f) + bubbleH)

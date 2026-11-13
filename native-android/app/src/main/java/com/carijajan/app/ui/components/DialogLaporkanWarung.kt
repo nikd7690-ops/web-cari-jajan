@@ -83,7 +83,7 @@ fun DialogLaporkanWarung(
             Icon(
                 imageVector = if (sukses) Icons.Filled.CheckCircle else Icons.Filled.Flag,
                 contentDescription = null,
-                tint = if (sukses) Color(0xFF059669) else MaterialTheme.colorScheme.error,
+                tint = if (sukses) com.carijajan.app.ui.theme.BrandOrange else MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(32.dp)
             )
         },

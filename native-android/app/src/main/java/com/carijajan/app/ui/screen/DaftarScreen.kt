@@ -57,6 +57,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carijajan.app.AppContainer
+import com.carijajan.app.ui.components.bounceClick
+import com.carijajan.app.ui.components.bounceEffect
+import com.carijajan.app.ui.theme.*
 import kotlinx.coroutines.launch
 
 @Composable
@@ -174,7 +177,7 @@ fun DaftarScreen(
                 Icon(
                     Icons.Filled.Email,
                     contentDescription = null,
-                    tint = Color(0xFF059669),
+                    tint = com.carijajan.app.ui.theme.BrandOrange,
                     modifier = Modifier.size(36.dp)
                 )
             },
@@ -200,7 +203,7 @@ fun DaftarScreen(
                         text = registeredEmail,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF059669)
+                        color = com.carijajan.app.ui.theme.BrandOrange
                     )
 
                     // Banner Kode OTP untuk Kemudahan Penjurian Hackathon / Dev Mode
@@ -234,7 +237,7 @@ fun DaftarScreen(
                         Text(
                             text = otpPesan,
                             fontSize = 12.sp,
-                            color = Color(0xFF059669)
+                            color = com.carijajan.app.ui.theme.BrandOrange
                         )
                     }
 
@@ -288,7 +291,8 @@ fun DaftarScreen(
                 Button(
                     onClick = { verifikasiOtp() },
                     enabled = !otpLoading && otpInput.length == 6,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669))
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
+                    modifier = Modifier.bounceEffect()
                 ) {
                     if (otpLoading) {
                         CircularProgressIndicator(
@@ -356,12 +360,12 @@ fun DaftarScreen(
                 shape = RoundedCornerShape(14.dp),
                 border = BorderStroke(
                     width = if (isMitra) 2.dp else 1.dp,
-                    color = if (isMitra) Color(0xFF059669) else Color(0xFFE4E4E7)
+                    color = if (isMitra) BrandOrange else Color(0xFFE7E5E4)
                 ),
-                color = if (isMitra) Color(0xFFECFDF5) else Color.White,
+                color = if (isMitra) BrandOrangeSurface else Color.White,
                 modifier = Modifier
                     .weight(1f)
-                    .clickable { tipeAkun = "mitra" }
+                    .bounceClick { tipeAkun = "mitra" }
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Row(
@@ -373,13 +377,13 @@ fun DaftarScreen(
                             modifier = Modifier
                                 .size(34.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isMitra) Color(0xFF059669) else Color(0xFFF4F4F5)),
+                                .background(if (isMitra) BrandOrange else Color(0xFFF5F5F4)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 Icons.Filled.Storefront,
                                 contentDescription = null,
-                                tint = if (isMitra) Color.White else Color(0xFF71717A),
+                                tint = if (isMitra) Color.White else Color(0xFF78716C),
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -387,13 +391,13 @@ fun DaftarScreen(
                             Icon(
                                 Icons.Filled.CheckCircle,
                                 contentDescription = null,
-                                tint = Color(0xFF059669),
+                                tint = BrandOrange,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
                     }
                     Spacer(Modifier.height(10.dp))
-                    Text("Mitra / Pemilik Warung", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("Mitra / Pemilik Warung", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = if (isMitra) BrandOrangeDark else Color(0xFF1C1917))
                     Text(
                         "Kelola 1 warung resmi, menu, statistik, & diskon darurat Zero Waste Food.",
                         fontSize = 10.sp,
@@ -410,12 +414,12 @@ fun DaftarScreen(
                 shape = RoundedCornerShape(14.dp),
                 border = BorderStroke(
                     width = if (isPengguna) 2.dp else 1.dp,
-                    color = if (isPengguna) Color(0xFF2563EB) else Color(0xFFE4E4E7)
+                    color = if (isPengguna) BrandMaroon else Color(0xFFE7E5E4)
                 ),
-                color = if (isPengguna) Color(0xFFEFF6FF) else Color.White,
+                color = if (isPengguna) BrandMaroonContainer else Color.White,
                 modifier = Modifier
                     .weight(1f)
-                    .clickable { tipeAkun = "pengguna" }
+                    .bounceClick { tipeAkun = "pengguna" }
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Row(
@@ -427,13 +431,13 @@ fun DaftarScreen(
                             modifier = Modifier
                                 .size(34.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isPengguna) Color(0xFF2563EB) else Color(0xFFF4F4F5)),
+                                .background(if (isPengguna) BrandMaroon else Color(0xFFF5F5F4)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 Icons.Filled.VolunteerActivism,
                                 contentDescription = null,
-                                tint = if (isPengguna) Color.White else Color(0xFF71717A),
+                                tint = if (isPengguna) Color.White else Color(0xFF78716C),
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -441,15 +445,15 @@ fun DaftarScreen(
                             Icon(
                                 Icons.Filled.CheckCircle,
                                 contentDescription = null,
-                                tint = Color(0xFF2563EB),
+                                tint = BrandMaroon,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
                     }
                     Spacer(Modifier.height(10.dp))
-                    Text("Pengguna / Member", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("Pengguna / Warga", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = if (isPengguna) BrandMaroon else Color(0xFF1C1917))
                     Text(
-                        "Bebas ajukan data warung baru di sekitar untuk dikurasi & disetujui admin.",
+                        "Cari warung, pesan via WA, ajukan warung baru tersembunyi & raih XP level!",
                         fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 14.sp,
@@ -484,7 +488,7 @@ fun DaftarScreen(
             Text(
                 text = "🛡️ Hanya menerima akun resmi @gmail.com untuk mencegah akun palsu/spam.",
                 fontSize = 11.sp,
-                color = Color(0xFF059669),
+                color = BrandOrange,
                 modifier = Modifier.padding(start = 4.dp, top = 4.dp)
             )
         }
@@ -518,11 +522,14 @@ fun DaftarScreen(
         Button(
             onClick = { submit() },
             enabled = !loading,
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (tipeAkun == "penjual") Color(0xFF059669) else Color(0xFF2563EB)
+                containerColor = if (tipeAkun == "mitra" || tipeAkun == "penjual") BrandOrange else BrandMaroon
             ),
-            modifier = Modifier.fillMaxWidth().height(48.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+                .bounceEffect()
         ) {
             if (loading) {
                 CircularProgressIndicator(
@@ -533,7 +540,8 @@ fun DaftarScreen(
             }
             Text(
                 if (loading) "Mendaftarkan..." else "Daftar Akun",
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp
             )
         }
 
@@ -543,8 +551,11 @@ fun DaftarScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Sudah punya akun?", style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onBack) {
-                Text("Masuk di Sini", fontWeight = FontWeight.Bold, color = Color(0xFF059669))
+            TextButton(
+                onClick = onBack,
+                modifier = Modifier.bounceEffect()
+            ) {
+                Text("Masuk di Sini", fontWeight = FontWeight.Bold, color = BrandOrange)
             }
         }
     }

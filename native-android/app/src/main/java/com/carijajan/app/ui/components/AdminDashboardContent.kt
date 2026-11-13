@@ -50,6 +50,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import com.carijajan.app.ui.theme.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -344,8 +345,8 @@ fun AdminDashboardContent(
                                                             }
                                                         }
                                                     },
-                                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669)),
-                                                    modifier = Modifier.height(32.dp).padding(start = 4.dp),
+                                                    colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
+                                                    modifier = Modifier.height(32.dp).padding(start = 4.dp).bounceEffect(),
                                                     shape = RoundedCornerShape(8.dp)
                                                 ) {
                                                     Text("Setujui", fontSize = 11.sp, fontWeight = FontWeight.Bold)
@@ -507,7 +508,7 @@ fun AdminDashboardContent(
                                     Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                                         Surface(
                                             shape = CircleShape,
-                                            color = if (m.displayIsBanned) Color(0xFF991B1B) else if (m.displayRole == "admin") Color(0xFFDC2626) else if (m.displayTipeAkun == "mitra") Color(0xFF059669) else Color(0xFF2563EB),
+                                            color = if (m.displayIsBanned) Color(0xFF991B1B) else if (m.displayRole == "admin") Color(0xFFDC2626) else if (m.displayTipeAkun == "mitra") com.carijajan.app.ui.theme.BrandOrange else com.carijajan.app.ui.theme.BrandMaroon,
                                             modifier = Modifier.size(36.dp)
                                         ) {
                                             Box(contentAlignment = Alignment.Center) {
@@ -553,9 +554,9 @@ fun AdminDashboardContent(
                                                     banReason = ""
                                                 },
                                                 colors = ButtonDefaults.buttonColors(
-                                                    containerColor = if (m.displayIsBanned) Color(0xFF059669) else Color(0xFFDC2626)
+                                                    containerColor = if (m.displayIsBanned) BrandOrange else Color(0xFFDC2626)
                                                 ),
-                                                modifier = Modifier.height(30.dp),
+                                                modifier = Modifier.height(30.dp).bounceEffect(),
                                                 shape = RoundedCornerShape(6.dp)
                                             ) {
                                                 Text(
@@ -597,7 +598,7 @@ fun AdminDashboardContent(
                                 modifier = Modifier.padding(24.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color(0xFF059669), modifier = Modifier.size(36.dp))
+                                Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = com.carijajan.app.ui.theme.BrandOrange, modifier = Modifier.size(36.dp))
                                 Spacer(Modifier.height(8.dp))
                                 Text("Semua Aman!", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                                 Text("Belum ada laporan ketidaksesuaian warung dari pengguna.", fontSize = 12.sp, color = Color(0xFF6B7280))
@@ -675,8 +676,8 @@ fun AdminDashboardContent(
                                                         refresh()
                                                     }
                                                 },
-                                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669)),
-                                                modifier = Modifier.height(30.dp).padding(start = 4.dp),
+                                                colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
+                                                modifier = Modifier.height(30.dp).padding(start = 4.dp).bounceEffect(),
                                                 shape = RoundedCornerShape(6.dp)
                                             ) {
                                                 Text("Selesai Ditinjau", fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
@@ -743,7 +744,7 @@ fun AdminDashboardContent(
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (aksiBlokir) Color(0xFFDC2626) else Color(0xFF059669)
+                        containerColor = if (aksiBlokir) Color(0xFFDC2626) else com.carijajan.app.ui.theme.BrandOrange
                     ),
                     enabled = !banLoading
                 ) {

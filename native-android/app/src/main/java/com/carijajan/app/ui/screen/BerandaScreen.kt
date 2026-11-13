@@ -56,6 +56,10 @@ import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import com.carijajan.app.ui.components.bounceClick
+import com.carijajan.app.ui.components.bounceEffect
+import com.carijajan.app.ui.theme.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -476,10 +480,10 @@ fun BerandaScreen(
                             val terpilih = filterWaktu == key
                             Surface(
                                 shape = CircleShape,
-                                color = if (terpilih) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                color = if (terpilih) BrandOrange else Color.Transparent,
                                 modifier = Modifier
-                                    .size(28.dp)
-                                    .clickable { filterWaktu = key }
+                                    .size(30.dp)
+                                    .bounceClick { filterWaktu = key }
                             ) {
                                 Box(
                                     contentAlignment = Alignment.Center,
@@ -733,32 +737,33 @@ fun BerandaScreen(
                 .padding(bottom = 96.dp)
         ) {
             Surface(
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(22.dp),
                 color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 4.dp,
-                shadowElevation = 4.dp,
-                modifier = Modifier.clickable { daftarWarungTerbuka = true }
+                tonalElevation = 6.dp,
+                shadowElevation = 8.dp,
+                border = BorderStroke(1.dp, BrandOrangeLight),
+                modifier = Modifier.bounceClick { daftarWarungTerbuka = true }
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(8.dp)
-                            .background(MaterialTheme.colorScheme.primary, CircleShape)
+                            .size(10.dp)
+                            .background(com.carijajan.app.ui.theme.BrandOrange, CircleShape)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "${vendorsDenganJarak.size} warung terdekat",
                         style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "• Lihat daftar",
+                        text = "• Lihat daftar ↗",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = com.carijajan.app.ui.theme.BrandOrange,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -849,15 +854,15 @@ fun BerandaScreen(
                                     Icon(
                                         imageVector = Icons.Default.Person,
                                         contentDescription = null,
-                                        tint = Color(0xFF2563EB),
+                                        tint = com.carijajan.app.ui.theme.BrandMaroon,
                                         modifier = Modifier.size(13.dp)
                                     )
                                     Spacer(Modifier.width(4.dp))
                                     Text(
                                         text = "Diajukan oleh: ${preview.namaKontributor ?: "Warga Komunitas"}",
                                         fontSize = 11.sp,
-                                        color = Color(0xFF1D4ED8),
-                                        fontWeight = FontWeight.Medium,
+                                        color = com.carijajan.app.ui.theme.BrandMaroon,
+                                        fontWeight = FontWeight.SemiBold,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -934,24 +939,38 @@ fun BerandaScreen(
                                 mulaiNavigasiKeWarung(preview)
                                 vendorTerpilihPreview = null
                             },
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.weight(1f).height(42.dp)
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.5.dp, BrandOrange),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = BrandOrange
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(46.dp)
+                                .bounceEffect()
                         ) {
                             Icon(Icons.Default.Navigation, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(6.dp))
-                            Text("Navigasi", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text("Navigasi", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
 
                         Button(
                             onClick = {
                                 onVendor(preview.id)
                             },
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.weight(1f).height(42.dp)
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = BrandOrange,
+                                contentColor = Color.White
+                            ),
+                            modifier = Modifier
+                                .weight(1.1f)
+                                .height(46.dp)
+                                .bounceEffect()
                         ) {
-                            Icon(Icons.Default.Storefront, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Storefront, contentDescription = null, modifier = Modifier.size(17.dp))
                             Spacer(Modifier.width(6.dp))
-                            Text("Menu & Profil", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text("Menu & Profil", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
                     }
                 }

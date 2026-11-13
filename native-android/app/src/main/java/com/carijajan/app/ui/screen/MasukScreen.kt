@@ -48,6 +48,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carijajan.app.AppContainer
+import com.carijajan.app.ui.components.bounceClick
+import com.carijajan.app.ui.components.bounceEffect
+import com.carijajan.app.ui.theme.*
 import com.carijajan.app.ui.components.CariJajanBottomBar
 import kotlinx.coroutines.launch
 
@@ -126,7 +129,7 @@ fun MasukScreen(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFF059669)),
+                            .background(com.carijajan.app.ui.theme.BrandOrange),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Filled.Storefront, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
@@ -143,7 +146,7 @@ fun MasukScreen(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFF2563EB)),
+                            .background(com.carijajan.app.ui.theme.BrandMaroon),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Filled.VolunteerActivism, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
@@ -197,9 +200,12 @@ fun MasukScreen(
         Button(
             onClick = { submit() },
             enabled = !loading,
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669)),
-            modifier = Modifier.fillMaxWidth().height(48.dp)
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+                .bounceEffect()
         ) {
             if (loading) {
                 CircularProgressIndicator(
@@ -208,7 +214,7 @@ fun MasukScreen(
                     color = Color.White
                 )
             }
-            Text(if (loading) "Memproses..." else "Masuk Akun", fontWeight = FontWeight.Bold)
+            Text(if (loading) "Memproses..." else "Masuk Akun", fontWeight = FontWeight.Bold, fontSize = 15.sp)
         }
 
         Row(
@@ -217,8 +223,11 @@ fun MasukScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Belum punya akun?", style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onRegister) {
-                Text("Daftar Sekarang", fontWeight = FontWeight.Bold, color = Color(0xFF059669))
+            TextButton(
+                onClick = onRegister,
+                modifier = Modifier.bounceEffect()
+            ) {
+                Text("Daftar Sekarang", fontWeight = FontWeight.Bold, color = BrandOrange)
             }
         }
     }
