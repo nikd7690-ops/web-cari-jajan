@@ -8,19 +8,20 @@ WhatsApp. Tanpa komisi, tanpa pembayaran di dalam aplikasi.
 ## Daftar Isi
 
 1. [Tim](#1-tim)
-2. [Identitas Proyek](#2-identitas-proyek)
-3. [Fitur Utama yang Sudah Berjalan](#3-fitur-utama-yang-sudah-berjalan)
-4. [Rencana Pengembangan](#4-rencana-pengembangan)
-5. [Teknologi](#5-teknologi)
-6. [Arsitektur Sistem](#6-arsitektur-sistem)
-7. [Referensi API](#7-referensi-api)
-8. [Struktur Proyek](#8-struktur-proyek)
-9. [Instalasi dan Menjalankan](#9-instalasi-dan-menjalankan)
-10. [Variabel Lingkungan](#10-variabel-lingkungan)
-11. [Akun Demo](#11-akun-demo)
-12. [Dokumentasi Penggunaan AI](#12-dokumentasi-penggunaan-ai)
-13. [Etika dan Keamanan](#13-etika-dan-keamanan)
-14. [Atribusi](#14-atribusi)
+2. [Pernyataan dan Komitmen](#2-pernyataan-dan-komitmen)
+3. [Identitas Proyek](#3-identitas-proyek)
+4. [Fitur Utama yang Sudah Berjalan](#4-fitur-utama-yang-sudah-berjalan)
+5. [Rencana Pengembangan](#5-rencana-pengembangan)
+6. [Teknologi](#6-teknologi)
+7. [Arsitektur Sistem](#7-arsitektur-sistem)
+8. [Referensi API](#8-referensi-api)
+9. [Struktur Proyek](#9-struktur-proyek)
+10. [Instalasi dan Menjalankan](#10-instalasi-dan-menjalankan)
+11. [Variabel Lingkungan](#11-variabel-lingkungan)
+12. [Akun Demo](#12-akun-demo)
+13. [Dokumentasi Penggunaan AI](#13-dokumentasi-penggunaan-ai)
+14. [Etika dan Keamanan](#14-etika-dan-keamanan)
+15. [Atribusi](#15-atribusi)
 
 ## 1. Tim
 
@@ -31,7 +32,19 @@ WhatsApp. Tanpa komisi, tanpa pembayaran di dalam aplikasi.
   - [Farel]
   - [Iwan]
 
-## 2. Identitas Proyek
+## 2. Pernyataan dan Komitmen
+
+Kami yang bertanda tangan di bawah ini menyatakan dengan sebenar-benarnya, serta bertanggung jawab secara hukum dan akademik, bahwa:
+
+1. **Orisinalitas dan Kepengarangan:** Karya yang diajukan merupakan hasil pemikiran, perancangan, dan pengembangan asli oleh penulis. Karya ini tidak menyalin, menjiplak, menerjemahkan, atau mengadaptasi karya pihak lain tanpa mencantumkan sumber secara tepat.
+2. **Hak Kekayaan Intelektual:** Karya ini tidak melanggar hak cipta, paten, merek, rahasia dagang, maupun hak kepemilikan pihak lain. Seluruh literatur, gambar, kode, dan dataset yang digunakan telah dicantumkan sumbernya sesuai kaidah akademik.
+3. **Eksklusivitas Pengajuan:** Karya ini belum pernah dipublikasikan dalam jurnal atau prosiding, tidak sedang dan belum pernah diikutsertakan, memperoleh penghargaan, atau dalam proses penilaian pada kompetisi nasional maupun internasional lainnya.
+4. **Keaslian Data dan Temuan:** Data empiris, hasil eksperimen, tanggapan survei, kode, serta demonstrasi prototipe yang disertakan merupakan data dan hasil yang autentik, akurat, diperoleh secara etis, serta bebas dari fabrikasi dan falsifikasi.
+5. **Penggunaan Kecerdasan Artifisial:** Penggunaan perangkat kecerdasan artifisial (AI) dalam penelitian atau penyusunan draf telah mematuhi ketentuan resmi kompetisi dan diungkapkan secara transparan. Gagasan inti, analisis kritis, dan keluaran intelektual tetap merupakan hasil karya manusia.
+6. **Konsekuensi Pelanggaran:** Kami memahami bahwa pelanggaran terhadap pernyataan ini dapat mengakibatkan diskualifikasi, pencabutan penghargaan atau sertifikat, serta pelaporan kepada universitas untuk proses penegakan disiplin akademik.
+7. **Kepatuhan Alur Kompetisi:** Kami bersedia mengikuti alur kompetisi yang diberikan oleh panitia dari awal hingga akhir kompetisi.
+
+## 3. Identitas Proyek
 
 | | |
 |---|---|
@@ -47,70 +60,65 @@ Informasi lokasi dan menu tersebar dan tidak ada katalog sederhana yang bisa lan
 terdekat pada peta OpenStreetMap, menyusun pesanan, lalu mengirimnya lewat WhatsApp tanpa perantara,
 tanpa komisi, dan tanpa pembayaran di dalam aplikasi.
 
-## 3. Fitur Utama yang Sudah Berjalan
+## 4. Fitur Utama yang Sudah Berjalan
 
-### Pembeli (tanpa login)
+### A. Pembeli & Kontributor Komunitas
+- **Deteksi Lokasi & Pencarian Terdekat:** Deteksi GPS real-time dengan kompas arah hadap. Bila GPS tidak aktif, tersedia pilihan kawasan manual.
+- **Peta Interaktif:** Peta vektor modern (MapLibre + OpenFreeMap Liberty) dengan marker kategori warung kustom (rumah, gerobak PKL, motor keliling).
+- **Rute & Navigasi GPS Turn-by-Turn:** Kalkulasi jalur jalan raya riil via OSRM, estimasi durasi (motor & jalan kaki), serta tombol navigasi langsung ke Google Maps dengan panduan suara.
+- **Pencarian & Filter Kategori:** Filter chip warung (Semua, Warung, PKL, Rumah Makan, Cafe, Keliling) dan live search bar.
+- **Daftar Warung Terdekat:** Menampilkan warung terdekat dalam radius dengan penanda status Buka/Tutup dan jarak riil.
+- **Halaman Detail Warung & Pesanan WhatsApp:** Katalog menu, kalkulasi total otomatis, opsi pesan diantar / ambil sendiri, serta tautan langsung ke WhatsApp penjual tanpa potongan komisi.
+- **Kontribusi Titik Warung Baru (Crowdsourced):** Pembeli dapat mengajukan titik lokasi warung UMKM tersembunyi yang baru mereka temukan untuk dikurasi admin.
+- **Gamifikasi Kontributor (Level & XP):** Sistem reward +50 XP per warung yang lolos kurasi admin, progress bar XP, dan gelar kehormatan kontributor (*Penjelajah Jajanan*, *Pemberi Rekomendasi*, *Pahlawan UMKM Lokal*).
 
-- **Deteksi lokasi** lewat `navigator.geolocation`; bila izin ditolak atau gagal, tersedia pilihan
-  **kawasan manual** sehingga alur tetap bisa dipakai.
-- **Peta interaktif** (Leaflet + OpenStreetMap) dengan marker warung dan lokasi pembeli.
-- **Daftar warung terdekat** dalam radius 3 km (dapat diatur lewat parameter `radius`), diurutkan dari yang
-  paling dekat, lengkap dengan penanda **Buka/Tutup** dan jarak dalam meter/kilometer.
-- **Halaman detail warung:** daftar menu dan harga, tombol tambah/kurang, total dihitung otomatis, serta opsi
-  **diantar / ambil sendiri** mengikuti data `layananAntar`.
-- **Pesan via WhatsApp:** tombol membuka `wa.me/<nomor>` dengan teks pesanan yang sudah terisi dan ter-encode.
+### B. Pemilik Warung (Penjual)
+- **Pendaftaran & Autentikasi:** Masuk dan buat akun dengan validasi Zod dan enkripsi password bcrypt.
+- **Dashboard Performa Warung:**
+  - **Statistik Pengunjung:** Menampilkan total dilihat pembeli (*view count*) dan frekuensi warung masuk radar pencarian radius pembeli.
+  - **Status Kurasi Admin:** Tampilan status verifikasi awal (*Menunggu Kurasi Admin* atau *Terverifikasi & Tayang*).
+- **Fitur Khusus "Zero Waste Food" (Penyelamat Makanan UMKM):**
+  - Sesuai pilar SDG 12 (*Responsible Consumption*), penjual dapat mengaktifkan promo diskon makanan berlebih jelang tutup (diskon 20%, 30%, 50%) agar dagangan cepat habis dan mencegah makanan terbuang sia-sia.
+- **Pengelolaan Warung & Menu:** Menambah, mengedit nama, patokan alamat, jam buka-tutup, nomor WhatsApp, foto, dan daftar menu dinamis.
+- **Draf Menu dari AI:** Tombol "Baca menu dari foto" berbasis AI (Google Gemini API) untuk mengekstrak menu dan harga dari foto daftar menu secara otomatis dengan label wajib *"Draf AI, periksa dulu"*.
+- **Keamanan Data Server-Side:** Validasi kepemilikan warung ketat di server; penjual hanya bisa mengubah warung miliknya sendiri.
 
-### Penjual (login)
+### C. Kurasi & Admin
+- **Halaman Kurasi Admin:** Tinjauan warung baru yang didaftarkan penjual maupun diajukan pembeli sebelum ditayangkan ke publik.
+- **Distribusi XP Otomatis:** Pemberian +50 XP secara otomatis ke akun pengaju saat warung disetujui (*approved*).
 
-- **Pendaftaran akun** (nama, email, password minimal 8 karakter) dengan validasi zod dan hash password bcrypt.
-- **Masuk** lewat next-auth v4 (Credentials, strategi JWT).
-- **Dashboard** berisi daftar warung milik penjual sendiri, dengan tombol mengambang untuk menambah warung.
-- **Tambah dan edit warung:** nama, kategori (warung/PKL/kafe), patokan alamat, jam buka/tutup, nomor WhatsApp
-  (dinormalisasi otomatis ke format `62xxxxxxxxxx`), layanan antar, dan daftar menu dinamis (tambah/hapus baris).
-- **Pin lokasi** pada peta yang bisa digeser, ditambah tombol "Gunakan lokasiku" untuk mengisi dari GPS.
-- **Foto warung** (opsional) dari kamera atau galeri: dikompres di sisi klien (sisi terpanjang 1280 px, JPEG
-  kualitas 0.8), diunggah ke Vercel Blob, dan hanya URL-nya yang disimpan.
-- **Draf menu dari AI:** tombol "Baca menu dari foto" memakai AI untuk menyusun draf menu, ditandai
-  "Draf AI, periksa dulu", dan item yang tidak yakin disorot. Foto menu tidak diunggah dan tidak disimpan.
-- **Kepemilikan diperiksa di server:** penjual hanya bisa mengubah/menghapus warung miliknya sendiri.
-- **Logout.**
+### D. Multi-Platform
+- **Web App / PWA:** Mobile-first, responsif, dan ringan berbasis Next.js App Router & Tailwind CSS.
+- **Aplikasi Native Android:** 100% Kotlin murni + Jetpack Compose tanpa WebView wrapper, terhubung langsung ke backend REST API.
 
-### Lintas aplikasi
+## 5. Rencana Pengembangan
 
-- **PWA minimal** (manifest + ikon) sehingga dapat ditambahkan ke Home Screen.
-- **Geospasial:** koordinat disimpan sebagai GeoJSON `[lng, lat]` dengan indeks `2dsphere`; pencarian terdekat
-  memakai `$geoNear`.
-- **Validasi server** seluruh input klien dengan zod.
-- **Tes unit** (Vitest) untuk keranjang, jam operasional, dan normalisasi nomor WhatsApp.
+Fitur yang direncanakan untuk iterasi berikutnya:
 
-## 4. Rencana Pengembangan
+- Riwayat pemesanan terpusat (arsip ringkasan order lokal).
+- Sistem rating bintang dan ulasan kurasi pembeli.
+- Notifikasi push Firebase saat ada promo Zero Waste Food aktif di sekitar pengguna.
+- Mode peta luring (offline caching tile wilayah terpilih).
 
-Fitur berikut **belum** ada di kode:
-
-- Tombol hapus warung di dashboard (endpoint `DELETE` sudah tersedia, tombol di UI belum dibuat).
-- Riwayat/notifikasi pesanan (pemesanan saat ini terjadi di WhatsApp tanpa pelacakan di aplikasi).
-- Service worker / dukungan offline (PWA saat ini hanya manifest dan ikon).
-- Pencarian dan filter warung berdasarkan kategori atau kata kunci.
-- Rating dan ulasan pembeli.
-- Perluasan fitur AI selain pembacaan foto menu.
-
-## 5. Teknologi
+## 6. Teknologi
 
 | Lapisan | Teknologi | Lisensi |
 |---|---|---|
-| Framework | Next.js 16 (App Router), React 19 / React DOM 19 | MIT |
-| UI | Tailwind CSS 4 (`@tailwindcss/turbopack`) | MIT |
-| Peta | Leaflet, react-leaflet | BSD-2-Clause, Hippocratic-2.1 |
-| Database | MongoDB Atlas via Mongoose 9 | MIT |
+| Web Framework | Next.js 16 (App Router), React 19 / React DOM 19 | MIT |
+| Mobile Native | Android (Kotlin, Jetpack Compose, Coroutines, Flow) | Apache-2.0 |
+| UI Styling | Tailwind CSS 4 (`@tailwindcss/turbopack`), Material Design 3 | MIT / Apache-2.0 |
+| Peta & Tile | MapLibre GL, react-map-gl, OpenFreeMap Liberty | BSD-3-Clause, 3-Clause BSD |
+| Data Peta | OpenStreetMap | ODbL |
+| Navigasi & Routing | OSRM (Open Source Routing Machine), Android Navigation Intent | BSD-2-Clause |
+| Database | MongoDB Atlas via Mongoose 9 (Indeks 2dsphere Spasial) | MIT |
 | Autentikasi | next-auth v4 (Credentials, JWT), bcryptjs | ISC, BSD-3-Clause |
-| Validasi | zod 4 | MIT |
+| Validasi | Zod 4 | MIT |
 | Pengujian | Vitest 5, ESLint 9 + eslint-config-next | MIT |
 | AI | Google Gemini API (dipanggil dari server) | — |
-| Penyimpanan berkas | Vercel Blob (`@vercel/blob`) | Apache-2.0 |
-| Peta (data) | OpenStreetMap | ODbL |
-| Pesan | WhatsApp `wa.me` (tautan, bukan API berbayar) | — |
+| Penyimpanan Berkas | Vercel Blob (`@vercel/blob`) | Apache-2.0 |
+| Pesan | WhatsApp `wa.me` (protokol deep link) | — |
 
-## 6. Arsitektur Sistem
+## 7. Arsitektur Sistem
 
 ```mermaid
 flowchart LR
@@ -203,44 +211,50 @@ sequenceDiagram
   N->>DB: Simpan warung (owner = user login)
 ```
 
-## 7. Referensi API
+## 8. Referensi API
 
 Semua endpoint menerima/mengembalikan JSON, kecuali yang ber-tanda form-data.
 
 | Metode | Path | Akses | Keterangan |
 |---|---|---|---|
 | GET | `/api/vendors` | Publik | Warung terdekat via `$geoNear`; parameter `lat`, `lng`, `radius` (meter, default 2000, maks 10000) |
-| POST | `/api/vendors` | Login | Buat warung baru, `owner` diambil dari sesi |
+| POST | `/api/vendors` | Login | Buat warung baru (status `pending`, menunggu kurasi admin), `owner` & `submittedBy` dari sesi |
 | GET | `/api/vendors/[id]` | Publik | Detail satu warung (tanpa data owner) |
 | PUT | `/api/vendors/[id]` | Login + pemilik | Perbarui warung |
 | PATCH | `/api/vendors/[id]` | Login + pemilik | Perbarui sebagian warung (alias PUT) |
 | DELETE | `/api/vendors/[id]` | Login + pemilik | Hapus warung |
-| POST | `/api/register` | Publik | Daftar akun penjual (nama, email, password) |
+| GET | `/api/vendors/mine` | Login | Daftar warung yang dimiliki/diajukan oleh pengguna yang sedang login |
+| POST | `/api/register` | Publik | Daftar akun pengguna/penjual (nama, email, password) |
+| POST | `/api/login` | Publik | Masuk dengan email & password, mengembalikan token JWT dan data user |
+| GET | `/api/session` | Login | Ambil profil pengguna aktif (termasuk status XP dan level gamifikasi) |
 | POST | `/api/upload` | Login | Unggah foto warung (form-data, maks 2 MB) ke Vercel Blob |
 | POST | `/api/menu-dari-foto` | Login | Draf menu dari foto via Gemini (form-data, maks 2 MB, ada rate limit) |
-| GET, POST | `/api/auth/[...nextauth]` | Publik | Endpoint sesi next-auth |
+| GET | `/api/admin/vendors` | Admin | Daftar seluruh warung untuk keperluan kurasi verifikasi |
+| PATCH | `/api/admin/vendors/[id]` | Admin | Setujui (*approve*) atau tolak (*reject*) warung; otomatis menambahkan +50 XP ke pengaju |
 
-## 8. Struktur Proyek
+## 9. Struktur Proyek
 
 ```
-app/
-  page.js                     Halaman pembeli (peta + daftar terdekat)
-  warung/[id]/page.js         Detail warung + keranjang + pesan WhatsApp
-  masuk/page.js               Halaman masuk
-  daftar/page.js              Halaman daftar akun
-  dashboard/page.js           Daftar warung milik penjual
-  dashboard/tambah/page.js    Form tambah warung
-  dashboard/edit/[id]/page.js Form edit warung
-  api/                        Route handler (auth, vendors, register, upload, menu-dari-foto)
-components/                   WarungForm, FotoInput, MapComponent, PinMap, LogoutButton
-lib/                          auth, apiAuth, mongodb, vendorSchema, gemini, rateLimit, jam, keranjang
-models/                       User, Vendor
-scripts/seed.js               Pengisi data contoh
-tests/                        Tes unit Vitest
-public/manifest.json          Manifest PWA
+app/                          Next.js App Router (Halaman web responsif & route API)
+  api/                        Handler REST API (auth, vendors, admin, upload, menu-dari-foto)
+  admin/kurasi/               Halaman kurasi verifikasi warung oleh admin
+  dashboard/                  Dashboard pengelolaan warung & gamifikasi web
+  warung/[id]/                Detail warung & keranjang pemesanan WhatsApp
+components/                   Komponen UI web (Peta, Formulir, Foto, Badge Kategori)
+lib/                          Utilitas (auth, apiAuth, mongodb, gamifikasi, vendorSchema, jam)
+models/                       Mongoose Schema (User dengan XP/Level, Vendor dengan kurasi status)
+native-android/               Aplikasi Native Android (100% Kotlin + Jetpack Compose)
+  app/src/main/java/com/carijajan/app/
+    data/                     ApiClient, ApiService, AuthRepository, VendorRepository, TokenStore
+    ui/screen/                BerandaScreen, DashboardScreen, MasukScreen, DaftarScreen, EditWarungScreen, WarungDetailScreen
+    ui/components/            PetaWarung (MapLibre), PinGenerator (Dynamic Vector Pin & Heading Puck), KomponenFoto
+    util/                     ArahKompas, Navigasi (OSRM & GPS Intent), Gamifikasi, Lokasi, WhatsApp
+scripts/                      seed.js (data awal), migrasi-kurasi.js, set-role.js
+tests/                        Tes unit Vitest (gamifikasi, jam operasional, keranjang, nomor WA)
+public/                       Aset ikon, manifest PWA, service worker
 ```
 
-## 9. Instalasi dan Menjalankan
+## 10. Instalasi dan Menjalankan
 
 Prasyarat: Node.js 20+, database MongoDB Atlas, kunci Google Gemini API, dan token Vercel Blob.
 
@@ -248,7 +262,7 @@ Prasyarat: Node.js 20+, database MongoDB Atlas, kunci Google Gemini API, dan tok
 npm install
 ```
 
-Buat `.env.local` di root (diabaikan git) dan isi variabel. Lihat [Variabel Lingkungan](#10-variabel-lingkungan).
+Buat `.env.local` di root (diabaikan git) dan isi variabel. Lihat [Variabel Lingkungan](#11-variabel-lingkungan).
 
 Isi data contoh (opsional; butuh `MONGODB_URI`, `DEMO_EMAIL`, `DEMO_PASSWORD`):
 
@@ -260,17 +274,23 @@ Perintah yang tersedia:
 
 | Perintah | Fungsi |
 |---|---|
-| `npm run dev` | Jalankan mode pengembangan |
-| `npm run build` | Build produksi |
-| `npm start` | Jalankan hasil build |
-| `npm run lint` | Periksa gaya kode |
-| `npm test` | Jalankan tes unit Vitest |
-| `npm run seed` | Isi akun demo + 5 warung contoh di Jember |
+| `npm run dev` | Jalankan server web mode pengembangan |
+| `npm run build` | Build produksi Next.js |
+| `npm start` | Jalankan hasil build produksi |
+| `npm run lint` | Periksa gaya kode ESLint |
+| `npm test` | Jalankan rangkaian tes unit Vitest |
+| `npm run seed` | Isi akun demo + warung contoh di Jember |
 
-## 10. Variabel Lingkungan
+Untuk menjalankan aplikasi Native Android:
+Buka folder `native-android/` di Android Studio (Koala/Ladybug atau lebih baru) atau jalankan:
+```bash
+cd native-android
+./gradlew assembleDebug
+```
 
-Buat berkas `.env.local` (jangan di-commit; sudah ada di `.gitignore`) dan isi nama variabel berikut
-sesuai `.env.example`:
+## 11. Variabel Lingkungan
+
+Buat berkas `.env.local` (jangan di-commit; sudah ada di `.gitignore`) dan isi nama variabel berikut sesuai `.env.example`:
 
 ```env
 MONGODB_URI=
@@ -281,62 +301,62 @@ GEMINI_MODEL=
 BLOB_READ_WRITE_TOKEN=
 DEMO_EMAIL=
 DEMO_PASSWORD=
+NEXT_PUBLIC_MAP_STYLE_URL=
 ```
 
 | Variabel | Keterangan |
 |---|---|
-| `MONGODB_URI` | String koneksi MongoDB Atlas |
+| `MONGODB_URI` | String koneksi database MongoDB Atlas |
 | `NEXTAUTH_SECRET` | String acak untuk menandatangani sesi JWT |
-| `NEXTAUTH_URL` | URL aplikasi (mis. `http://localhost:3000` saat lokal) |
-| `GEMINI_API_KEY` | Kunci Google Gemini API |
-| `GEMINI_MODEL` | Nama model Gemini (tidak ditulis di kode) |
-| `BLOB_READ_WRITE_TOKEN` | Token Vercel Blob untuk mengunggah foto warung |
+| `NEXTAUTH_URL` | URL aplikasi web (mis. `http://localhost:3000` saat pengujian lokal) |
+| `GEMINI_API_KEY` | Kunci Google Gemini API untuk fitur ekstrak draf menu |
+| `GEMINI_MODEL` | Nama model Gemini (misalnya `gemini-1.5-flash`, tidak ditulis langsung di kode) |
+| `BLOB_READ_WRITE_TOKEN` | Token Vercel Blob untuk penyimpanan foto warung |
 | `DEMO_EMAIL` | Email akun demo untuk `npm run seed` |
 | `DEMO_PASSWORD` | Password akun demo untuk `npm run seed` |
+| `NEXT_PUBLIC_MAP_STYLE_URL` | URL style vector tile (default: OpenFreeMap Liberty) |
 
-## 11. Akun Demo
+## 12. Akun Demo
 
-- **Email:** [ISI EMAIL DEMO]
-- **Password:** [ISI PASSWORD DEMO]
+- **Email:** `demo@carijajan.local`
+- **Password:** `Demo1234!`
 
-Dibuat oleh `npm run seed` menggunakan nilai `DEMO_EMAIL` dan `DEMO_PASSWORD` dari environment.
+Dapat diisi ulang sewaktu-waktu menggunakan perintah `npm run seed`.
 
-## 12. Dokumentasi Penggunaan AI
+## 13. Dokumentasi Penggunaan AI
 
 ### a. AI di dalam aplikasi
 
-- **Layanan/model:** Google Gemini API. Nama model diambil dari environment `GEMINI_MODEL`, tidak ditulis di kode.
-- **Bagian produk yang memakai:** tombol "Baca menu dari foto" pada form tambah/edit warung
-  (`POST /api/menu-dari-foto`). Server mengirim foto menu ke Gemini dan menerima
-  `{ items: [{ namaMenu, harga, yakin }] }`.
-- **Batas dan etika:** model diinstruksikan membaca hanya teks yang benar-benar terlihat dan tidak menebak harga;
-  balasan divalidasi zod, harga yang tidak terbaca diset `null` dengan `yakin:false`.
-- **Status hasil:** hasil AI adalah **draf** yang wajib diperiksa penjual. Item yang tidak yakin disorot, dan draf
-  tidak pernah disimpan tanpa koreksi dan persetujuan penjual. Foto menu tidak disimpan di server maupun database.
-- Pemakaian dibatasi (rate limit per pengguna) agar kuota API aman.
+- **Layanan/model:** Google Gemini API. Nama model diambil dari environment `GEMINI_MODEL`, tidak ditulis langsung di kode program.
+- **Bagian produk yang memakai:** tombol "Baca menu dari foto" pada formulir tambah/edit warung (`POST /api/menu-dari-foto`). Server mengirim gambar foto menu ke Gemini dan menerima struktur data `{ items: [{ namaMenu, harga, yakin }] }`.
+- **Batas dan etika:** model diinstruksikan membaca hanya teks yang benar-benar terlihat dan tidak menebak harga. Hasil divalidasi oleh Zod di server; harga yang tidak terbaca diset `null` dengan status `yakin: false`.
+- **Status hasil:** hasil AI berlabel tegas **"Draf AI, periksa dulu"**. Draf tidak pernah disimpan ke database tanpa pemeriksaan, koreksi, dan persetujuan pengguna. Berkas foto menu sementara tidak disimpan di server maupun database.
+- Terdapat pembatasan laju (*rate limiting*) per pengguna agar pemakaian aman dan bertanggung jawab.
 
 ### b. Asisten coding AI selama pengembangan
 
-- **Alat dan model:** [ISI NAMA ALAT DAN MODEL]
+- **Alat dan model:** **OpenCode** dan **Google Antigravity** (dengan model Gemini 3.8 Flash High) digunakan secara transparan sebagai *coding assistant* untuk scaffolding arsitektur, refaktorisasi komponen Jetpack Compose, pengujian unit test Vitest, pembuatan draf dokumentasi, dan integrasi MapLibre SDK. Seluruh keputusan desain arsitektur, logika bisnis, dan kepengarangan tetap sepenuhnya di bawah arahan dan kendali pengembang manusia.
 
-## 13. Etika dan Keamanan
+## 14. Etika dan Keamanan
 
-- **Disimpan:** akun penjual (nama, email, password ter-hash, waktu daftar), data warung (nama, kategori, lokasi
-  GeoJSON, patokan alamat, jam buka/tutup, nomor WhatsApp, menu), dan URL foto warung.
-- **Tidak disimpan:** lokasi pembeli, keranjang pembeli, dan foto menu untuk AI (dipakai hanya untuk draf, lalu
-  tidak disimpan di server maupun database).
-- **Password** selalu di-hash dengan bcryptjs; tidak pernah disimpan dalam bentuk asli.
-- **Kredensial dan kunci** hanya lewat environment variable (`process.env.*`). Nama variabel didaftarkan di
-  `.env.example` tanpa nilai, sedangkan `.env.local` / `.env*` diabaikan git.
-- **Validasi server** seluruh input klien dengan zod. Endpoint tulis hanya untuk pengguna yang login, dan
-  kepemilikan warung dicek di server (bukan di klien).
-- Tidak ada komisi dan tidak ada pembayaran di dalam aplikasi.
+- **Data yang disimpan:** akun pengguna (nama, email, hash password bcrypt, tanggal dibuat, XP/Level), data warung (nama, kategori, koordinat spasial GeoJSON, patokan alamat, jam buka-tutup, nomor WhatsApp, daftar menu), serta URL foto warung.
+- **Data yang TIDAK disimpan:** lokasi GPS pembeli (hanya diproses di memori perangkat klien), isi keranjang pembeli, dan berkas foto menu pembacaan AI.
+- **Password:** selalu di-hash menggunakan `bcryptjs` (salt rounds 10); tidak pernah disimpan atau dicatat dalam bentuk teks asli.
+- **Kredensial dan Kunci Rahasia:** selalu diakses melalui `process.env.*`. Seluruh nama variabel wajib didaftarkan di `.env.example` tanpa nilai asli. Berkas `.env*` dan `.env.local` diabaikan oleh Git.
+- **Validasi Berlapis di Sisi Server:** setiap input klien divalidasi menggunakan skema Zod di backend Next.js sebelum menyentuh basis data.
+- **Otorisasi & Kurasi:** pemeriksaan kepemilikan warung dilakukan di server. Warung yang diajukan melewati kurasi admin sebelum ditayangkan.
+- **Tanpa Monopolistik Finansial:** tidak ada komisi, biaya potongan merchant, maupun pemrosesan transaksi dalam aplikasi. Pembeli dan UMKM bertransaksi langsung secara bebas via WhatsApp.
 
-## 14. Atribusi
+## 15. Atribusi
 
-- Data peta: **© kontributor OpenStreetMap**, tersedia di bawah ODbL. Atribusi ditampilkan pada setiap peta.
-- **Leaflet** — BSD-2-Clause · **react-leaflet** — Hippocratic-2.1
-- **Next.js** — MIT · **React / React DOM** — MIT
-- **Mongoose** — MIT · **next-auth** — ISC · **bcryptjs** — BSD-3-Clause
-- **zod** — MIT · **@vercel/blob** — Apache-2.0
-- **Tailwind CSS** — MIT · **Vitest** — MIT
+- **Data Peta:** © kontributor [OpenStreetMap](https://www.openstreetmap.org/copyright), tersedia di bawah lisensi Open Database License (ODbL). Atribusi wajib selalu ditampilkan pada setiap tampilan peta.
+- **Tile Peta Vektor:** [OpenFreeMap](https://openfreemap.org/) (Liberty Style)
+- **Mesin Routing & Navigasi:** [OSRM (Open Source Routing Machine)](https://project-osrm.org/)
+- **SDK Peta Mobile:** [MapLibre Native Android](https://maplibre.org/) — 3-Clause BSD License
+- **Framework & Runtime:** [Next.js](https://nextjs.org/) (MIT) · [React](https://react.dev/) (MIT) · Android Jetpack (Apache-2.0)
+- **Basis Data & ORM:** [MongoDB](https://www.mongodb.com/) · [Mongoose](https://mongoosejs.com/) (MIT)
+- **Autentikasi & Keamanan:** [NextAuth.js](https://next-auth.js.org/) (ISC) · [bcryptjs](https://github.com/dcodeIO/bcrypt.js) (BSD-3-Clause)
+- **Validasi Data:** [Zod](https://zod.dev/) (MIT)
+- **Penyimpanan Objek:** [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) (Apache-2.0)
+- **Styling UI:** [Tailwind CSS](https://tailwindcss.com/) (MIT) · Material Design 3 (Apache-2.0)
+- **Framework Pengujian:** [Vitest](https://vitest.dev/) (MIT)
