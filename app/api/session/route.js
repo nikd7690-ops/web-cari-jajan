@@ -14,7 +14,7 @@ export async function GET(request) {
     await connectDB();
 
     const profil = await User.findById(user.id)
-      .select("name email role xp level")
+      .select("name email role xp level tipeAkun emailVerified")
       .lean();
 
     if (!profil) {
@@ -27,6 +27,8 @@ export async function GET(request) {
         name: profil.name,
         email: profil.email,
         role: profil.role || "user",
+        tipeAkun: profil.tipeAkun || "pengguna",
+        emailVerified: profil.emailVerified ?? false,
         xp: profil.xp ?? 0,
         level: profil.level ?? 1,
       },

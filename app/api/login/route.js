@@ -65,6 +65,7 @@ export async function POST(request) {
       name: user.name,
       email: user.email,
       role: user.role || "user",
+      tipeAkun: user.tipeAkun || "pengguna",
     });
 
     return NextResponse.json({
@@ -74,6 +75,8 @@ export async function POST(request) {
         name: user.name,
         email: user.email,
         role: user.role || "user",
+        tipeAkun: user.tipeAkun || "pengguna",
+        emailVerified: user.emailVerified ?? false,
         xp: user.xp ?? 0,
         level: user.level ?? 1,
       },

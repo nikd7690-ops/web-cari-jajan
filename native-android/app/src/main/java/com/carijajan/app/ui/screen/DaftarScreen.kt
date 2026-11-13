@@ -68,7 +68,7 @@ fun DaftarScreen(
     var nama by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var tipeAkun by remember { mutableStateOf("penjual") } // "penjual" atau "pembeli"
+    var tipeAkun by remember { mutableStateOf("mitra") } // "mitra" atau "pengguna"
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
 
@@ -341,25 +341,25 @@ fun DaftarScreen(
             )
         }
 
-        // ── Pilihan Peran Akun: Penjual vs Pembeli / Kontributor ──────────────────
-        Text("Pilih Peran Utama Anda:", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+        // ── Pilihan Peran Akun: Mitra vs Pengguna / Member ──────────────────────
+        Text("Pilih Jenis Akun Anda:", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Opsi 1: Pemilik Warung
-            val isPenjual = tipeAkun == "penjual"
+            // Opsi 1: Mitra / Pemilik Warung
+            val isMitra = tipeAkun == "mitra"
             Surface(
                 shape = RoundedCornerShape(14.dp),
                 border = BorderStroke(
-                    width = if (isPenjual) 2.dp else 1.dp,
-                    color = if (isPenjual) Color(0xFF059669) else Color(0xFFE4E4E7)
+                    width = if (isMitra) 2.dp else 1.dp,
+                    color = if (isMitra) Color(0xFF059669) else Color(0xFFE4E4E7)
                 ),
-                color = if (isPenjual) Color(0xFFECFDF5) else Color.White,
+                color = if (isMitra) Color(0xFFECFDF5) else Color.White,
                 modifier = Modifier
                     .weight(1f)
-                    .clickable { tipeAkun = "penjual" }
+                    .clickable { tipeAkun = "mitra" }
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Row(
@@ -371,17 +371,17 @@ fun DaftarScreen(
                             modifier = Modifier
                                 .size(34.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isPenjual) Color(0xFF059669) else Color(0xFFF4F4F5)),
+                                .background(if (isMitra) Color(0xFF059669) else Color(0xFFF4F4F5)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 Icons.Filled.Storefront,
                                 contentDescription = null,
-                                tint = if (isPenjual) Color.White else Color(0xFF71717A),
+                                tint = if (isMitra) Color.White else Color(0xFF71717A),
                                 modifier = Modifier.size(20.dp)
                             )
                         }
-                        if (isPenjual) {
+                        if (isMitra) {
                             Icon(
                                 Icons.Filled.CheckCircle,
                                 contentDescription = null,
@@ -391,28 +391,29 @@ fun DaftarScreen(
                         }
                     }
                     Spacer(Modifier.height(10.dp))
-                    Text("Pemilik Warung", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Mitra / Pemilik Warung", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     Text(
-                        "Kelola warung, menu, statistik pembeli & promo Zero Waste.",
-                        fontSize = 11.sp,
+                        "Kelola 1 warung resmi, menu, statistik, & diskon darurat Zero Waste Food.",
+                        fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 14.sp,
                         modifier = Modifier.padding(top = 2.dp)
                     )
                 }
             }
 
-            // Opsi 2: Pembeli & Kontributor Komunitas
-            val isPembeli = tipeAkun == "pembeli"
+            // Opsi 2: Pengguna / Member Komunitas
+            val isPengguna = tipeAkun == "pengguna"
             Surface(
                 shape = RoundedCornerShape(14.dp),
                 border = BorderStroke(
-                    width = if (isPembeli) 2.dp else 1.dp,
-                    color = if (isPembeli) Color(0xFF2563EB) else Color(0xFFE4E4E7)
+                    width = if (isPengguna) 2.dp else 1.dp,
+                    color = if (isPengguna) Color(0xFF2563EB) else Color(0xFFE4E4E7)
                 ),
-                color = if (isPembeli) Color(0xFFEFF6FF) else Color.White,
+                color = if (isPengguna) Color(0xFFEFF6FF) else Color.White,
                 modifier = Modifier
                     .weight(1f)
-                    .clickable { tipeAkun = "pembeli" }
+                    .clickable { tipeAkun = "pengguna" }
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Row(
@@ -424,17 +425,17 @@ fun DaftarScreen(
                             modifier = Modifier
                                 .size(34.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isPembeli) Color(0xFF2563EB) else Color(0xFFF4F4F5)),
+                                .background(if (isPengguna) Color(0xFF2563EB) else Color(0xFFF4F4F5)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 Icons.Filled.VolunteerActivism,
                                 contentDescription = null,
-                                tint = if (isPembeli) Color.White else Color(0xFF71717A),
+                                tint = if (isPengguna) Color.White else Color(0xFF71717A),
                                 modifier = Modifier.size(20.dp)
                             )
                         }
-                        if (isPembeli) {
+                        if (isPengguna) {
                             Icon(
                                 Icons.Filled.CheckCircle,
                                 contentDescription = null,
@@ -444,11 +445,12 @@ fun DaftarScreen(
                         }
                     }
                     Spacer(Modifier.height(10.dp))
-                    Text("Pembeli / Kontributor", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Pengguna / Member", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     Text(
-                        "Ajukan warung baru di peta, kumpulkan XP, & naik level!",
-                        fontSize = 11.sp,
+                        "Bebas ajukan data warung baru di sekitar untuk dikurasi & disetujui admin.",
+                        fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 14.sp,
                         modifier = Modifier.padding(top = 2.dp)
                     )
                 }

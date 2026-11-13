@@ -165,8 +165,28 @@ export async function POST(request) {
       jarakPengajuanMeter = Math.round(jarak);
     }
 
+    const tipeAkun = userDb?.tipeAkun || "pengguna";
+
+    // Mitra hanya boleh memiliki 1 warung
+    if (tipeAkun === "mitra" && userDb?.role !== "admin") {
+      const countWarung = await Vendor.countDocuments({ owner: user.id });
+      if (countWarung >= 1) {
+        return NextResponse.json(
+          {
+            error:
+              "Mitra / Pemilik warung hanya dapat memiliki 1 warung. Untuk menambah warung kedua atau cabang, silakan ajukan permohonan ke admin terlebih dahulu.",
+          },
+          { status: 403 }
+        );
+      }
+    }
+
+    // Jika pengguna/member: owner null (data komunitas), submittedBy user.id
+    // Jika mitra: owner user.id, submittedBy user.id
+    const vendorOwner = tipeAkun === "mitra" ? user.id : null;
+
     const vendor = await Vendor.create({
-      owner: user.id,
+      owner: vendorOwner,
       submittedBy: user.id,
       status: "pending",
       namaToko: d.namaToko,
@@ -180,6 +200,11 @@ export async function POST(request) {
       foto: d.foto,
       menus: d.menus,
       jarakPengajuanMeter,
+      zeroWaste: d.zeroWaste || {
+        aktif: false,
+        diskonPersen: 0,
+        keterangan: "",
+      },
     });
 
     return NextResponse.json({ data: vendor }, { status: 201 });

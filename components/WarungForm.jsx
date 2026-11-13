@@ -50,6 +50,15 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
     lng: initial?.lng ?? PUSAT_JEMBER.lng,
   });
   const [deviceCoords, setDeviceCoords] = useState(null);
+  const [zeroWasteAktif, setZeroWasteAktif] = useState(
+    initial?.zeroWaste?.aktif ?? false
+  );
+  const [zeroWasteDiskon, setZeroWasteDiskon] = useState(
+    initial?.zeroWaste?.diskonPersen ?? 30
+  );
+  const [zeroWasteKet, setZeroWasteKet] = useState(
+    initial?.zeroWaste?.keterangan ?? "Diskon sisa porsi lezat sebelum warung tutup"
+  );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [geoLoading, setGeoLoading] = useState(mode === "tambah");
@@ -258,6 +267,11 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
         lng: pin.lng,
         userLat: deviceCoords?.lat ?? pin.lat,
         userLng: deviceCoords?.lng ?? pin.lng,
+        zeroWaste: {
+          aktif: Boolean(zeroWasteAktif),
+          diskonPersen: Number(zeroWasteDiskon) || 0,
+          keterangan: zeroWasteKet.trim(),
+        },
         menus: menuBersih,
       };
 
@@ -497,6 +511,79 @@ export default function WarungForm({ mode = "tambah", vendorId, initial }) {
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🌿</span>
+            <div>
+              <p className="text-sm font-bold text-amber-950">
+                Fitur Khusus: Zero Waste Food
+              </p>
+              <p className="text-xs text-amber-800">
+                Beri diskon sewaktu-waktu untuk porsi tersisa sebelum warung tutup
+              </p>
+            </div>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={zeroWasteAktif}
+              onChange={(e) => setZeroWasteAktif(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+          </label>
+        </div>
+
+        {zeroWasteAktif ? (
+          <div className="pt-2 border-t border-amber-200 space-y-3">
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-amber-900">
+                Besaran Diskon Sewaktu-waktu (%)
+              </label>
+              <div className="flex items-center gap-2">
+                {[20, 30, 50].map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => setZeroWasteDiskon(pct)}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${
+                      zeroWasteDiskon === pct
+                        ? "bg-amber-600 border-amber-600 text-white"
+                        : "bg-white border-amber-300 text-amber-900 hover:bg-amber-50"
+                    }`}
+                  >
+                    Diskon {pct}%
+                  </button>
+                ))}
+                <input
+                  type="number"
+                  min="5"
+                  max="90"
+                  value={zeroWasteDiskon}
+                  onChange={(e) => setZeroWasteDiskon(Number(e.target.value) || 0)}
+                  className="w-20 rounded-lg border border-amber-300 bg-white px-2 py-1.5 text-center text-xs font-bold text-amber-950 outline-none"
+                  placeholder="%"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-amber-900">
+                Keterangan Promo
+              </label>
+              <input
+                type="text"
+                value={zeroWasteKet}
+                onChange={(e) => setZeroWasteKet(e.target.value)}
+                className="w-full rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs text-amber-950 outline-none"
+                placeholder="Misal: Promo jelang tutup porsi nasi goreng diskon 30%"
+              />
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="space-y-4">

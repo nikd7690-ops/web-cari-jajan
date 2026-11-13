@@ -10,6 +10,7 @@ export default function DaftarForm() {
   const [nama, setNama] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [tipeAkun, setTipeAkun] = useState("mitra"); // "mitra" atau "pengguna"
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -36,7 +37,7 @@ export default function DaftarForm() {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nama, email: cleanEmail, password }),
+        body: JSON.stringify({ nama, email: cleanEmail, password, tipeAkun }),
       });
       const json = await res.json();
 
@@ -203,7 +204,46 @@ export default function DaftarForm() {
           </div>
         </form>
       ) : (
-        <form onSubmit={onSubmit} className="space-y-3">
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              Pilih Jenis Akun
+            </label>
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => setTipeAkun("mitra")}
+                className={`flex flex-col text-left p-3 rounded-xl border transition-all ${
+                  tipeAkun === "mitra"
+                    ? "border-emerald-600 bg-emerald-50 text-emerald-950 ring-1 ring-emerald-600"
+                    : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+                }`}
+              >
+                <span className="text-xl mb-1">🏪</span>
+                <span className="text-xs font-bold">Mitra / Pemilik Warung</span>
+                <span className="text-[10px] text-zinc-500 mt-1 leading-snug">
+                  Kelola 1 warung resmi, menu, & diskon darurat Zero Waste Food.
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTipeAkun("pengguna")}
+                className={`flex flex-col text-left p-3 rounded-xl border transition-all ${
+                  tipeAkun === "pengguna"
+                    ? "border-blue-600 bg-blue-50 text-blue-950 ring-1 ring-blue-600"
+                    : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+                }`}
+              >
+                <span className="text-xl mb-1">👤</span>
+                <span className="text-xs font-bold">Pengguna / Member</span>
+                <span className="text-[10px] text-zinc-500 mt-1 leading-snug">
+                  Bebas ajukan data warung baru di sekitar untuk dikurasi admin.
+                </span>
+              </button>
+            </div>
+          </div>
+
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-700">
               Nama

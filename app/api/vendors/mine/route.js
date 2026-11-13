@@ -11,7 +11,9 @@ export async function GET(request) {
   try {
     await connectDB();
 
-    const vendors = await Vendor.find({ owner: user.id })
+    const vendors = await Vendor.find({
+      $or: [{ owner: user.id }, { submittedBy: user.id }],
+    })
       .sort({ createdAt: -1 })
       .lean();
 

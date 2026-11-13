@@ -17,6 +17,10 @@ const registerSchema = z.object({
       message: "Hanya akun resmi @gmail.com yang diizinkan untuk mencegah akun palsu",
     }),
   password: z.string().min(8, "Password minimal 8 karakter"),
+  tipeAkun: z
+    .enum(["pengguna", "mitra", "pembeli", "penjual"])
+    .optional()
+    .default("pengguna"),
 });
 
 export async function POST(request) {
@@ -46,7 +50,9 @@ export async function POST(request) {
     );
   }
 
-  const { nama, email, password } = parsed.data;
+  const { nama, email, password, tipeAkun: rawTipe } = parsed.data;
+  const tipeAkun =
+    rawTipe === "mitra" || rawTipe === "penjual" ? "mitra" : "pengguna";
 
   try {
     await connectDB();
@@ -66,6 +72,7 @@ export async function POST(request) {
       email,
       passwordHash,
       emailVerified: false,
+      tipeAkun,
     });
 
     // Buat kode OTP 6-Digit untuk verifikasi Gmail
@@ -85,6 +92,7 @@ export async function POST(request) {
           name: user.name,
           email: user.email,
           emailVerified: user.emailVerified,
+          tipeAkun: user.tipeAkun,
         },
         pesan: "Akun berhasil dibuat. Kode verifikasi telah dikirim ke Gmail Anda.",
         devOtp: hasilKirim.devOtp,

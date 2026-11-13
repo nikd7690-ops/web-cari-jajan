@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -70,6 +71,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.carijajan.app.AppContainer
 import com.carijajan.app.data.MenuInput
 import com.carijajan.app.data.VendorInput
+import com.carijajan.app.data.ZeroWasteDto
 import com.carijajan.app.ui.components.JudulBagian
 import com.carijajan.app.ui.components.KameraDialog
 import com.carijajan.app.ui.components.KomponenFoto
@@ -106,7 +108,13 @@ fun EditWarungScreen(
     val scope = rememberCoroutineScope()
     val isEdit = vendorId != null
     val tipeAkun by container.authRepository.tipeAkun.collectAsStateWithLifecycle()
-    val bisaUbahKetersediaan = tipeAkun != "pembeli"
+    val isPengguna = tipeAkun == "pengguna" || tipeAkun == "pembeli"
+    val bisaUbahKetersediaan = !isPengguna
+
+    // ── Zero Waste Promo ────────────────────────────────────────────────────────
+    var zeroWasteAktif by remember { mutableStateOf(false) }
+    var zeroWasteDiskon by remember { mutableStateOf(30) }
+    var zeroWasteKet by remember { mutableStateOf("Diskon porsi lezat sebelum warung tutup") }
 
     // ── Form state ──────────────────────────────────────────────────────────────
     var namaToko by remember { mutableStateOf("") }
@@ -212,6 +220,11 @@ fun EditWarungScreen(
             adaWhatsApp = v.nomorWA.isNotBlank()
             layananAntar = v.layananAntar
             fotoUrl = v.foto
+            v.zeroWaste?.let {
+                zeroWasteAktif = it.aktif
+                zeroWasteDiskon = it.diskonPersen
+                zeroWasteKet = it.keterangan.ifBlank { zeroWasteKet }
+            }
             menus.clear()
             menus.addAll(v.menus.map { MenuBaris(it.namaMenu, it.harga.toLong().toString(), it.tersedia) })
         }.onFailure { error = it.message ?: "Gagal memuat data warung" }
@@ -240,6 +253,10 @@ fun EditWarungScreen(
 
     // ── Upload foto lalu simpan ─────────────────────────────────────────────────
     fun simpan() {
+        if (isEdit && isPengguna) {
+            error = "Pengguna/member tidak memiliki izin untuk mengubah data warung. Data yang diajukan hanya dikurasi dan dikonfirmasi oleh admin."
+            return
+        }
         if (namaToko.isBlank()) { error = "Nama toko wajib diisi."; return }
         val lat = latStr.toDoubleOrNull()
         val lng = lngStr.toDoubleOrNull()
@@ -313,7 +330,12 @@ fun EditWarungScreen(
                 foto = finalFotoUrl,
                 menus = menuInputs,
                 userLat = deviceLoc?.latitude ?: lat,
-                userLng = deviceLoc?.longitude ?: lng
+                userLng = deviceLoc?.longitude ?: lng,
+                zeroWaste = ZeroWasteDto(
+                    aktif = zeroWasteAktif,
+                    diskonPersen = zeroWasteDiskon,
+                    keterangan = zeroWasteKet.trim()
+                )
             )
 
             val res = if (isEdit) {
@@ -369,8 +391,32 @@ fun EditWarungScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
+        // Banner peringatan jika mode edit dibuka oleh Pengguna / Member
+        if (isEdit && isPengguna) {
+            Surface(
+                color = Color(0xFFFEF2F2),
+                shape = RoundedCornerShape(10.dp),
+                border = BorderStroke(1.dp, Color(0xFFFECACA)),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            ) {
+                Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Warning, contentDescription = null, tint = Color(0xFFDC2626), modifier = Modifier.size(24.dp))
+                    Spacer(Modifier.width(10.dp))
+                    Column {
+                        Text("Hak Akses Terbatas (Pengguna/Member)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF991B1B))
+                        Text(
+                            "Akun Pengguna/Member hanya dapat mengajukan warung baru. Anda tidak dapat mengubah data warung karena kurasi dilakukan langsung oleh admin.",
+                            fontSize = 11.sp,
+                            color = Color(0xFFB91C1C),
+                            lineHeight = 15.sp
+                        )
+                    }
+                }
+            }
+        }
+
         // Banner informasi sesuai tipe pengguna
-        if (!isEdit && tipeAkun == "pembeli") {
+        if (!isEdit && isPengguna) {
             Surface(
                 color = Color(0xFFEFF6FF),
                 shape = RoundedCornerShape(10.dp),
@@ -380,8 +426,8 @@ fun EditWarungScreen(
                     Icon(Icons.Filled.VolunteerActivism, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(8.dp))
                     Column {
-                        Text("Kontribusi Komunitas (+50 XP)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color(0xFF1E40AF))
-                        Text("Warung akan diverifikasi oleh kurator admin sebelum tampil di peta publik.", fontSize = 11.sp, color = Color(0xFF3B82F6))
+                        Text("Kontribusi Komunitas Bebas (+50 XP)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color(0xFF1E40AF))
+                        Text("Ajukan warung baru dengan bebas. Admin akan mengurasi & mengonfirmasi data sebelum tayang.", fontSize = 11.sp, color = Color(0xFF3B82F6))
                     }
                 }
             }
@@ -395,8 +441,8 @@ fun EditWarungScreen(
                     Icon(Icons.Filled.Info, contentDescription = null, tint = Color(0xFFD97706), modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Column {
-                        Text("Verifikasi Kurasi Awal", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color(0xFF92400E))
-                        Text("Warung baru akan masuk status 'Menunggu Verifikasi Admin' pada awalan saja.", fontSize = 11.sp, color = Color(0xFFB45309))
+                        Text("Mitra Warung Resmi (Batas 1 Warung)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color(0xFF92400E))
+                        Text("Sebagai mitra, Anda dapat mengelola 1 warung utama beserta fitur diskon Zero Waste Food.", fontSize = 11.sp, color = Color(0xFFB45309))
                     }
                 }
             }
@@ -822,6 +868,66 @@ fun EditWarungScreen(
             )
         }
 
+        // ── Fitur Khusus Mitra: Zero Waste Food (Diskon Sewaktu-waktu) ───────
+        if (!isPengguna) {
+            JudulBagian("🌿 Zero Waste Food (Penyelamat Makanan)")
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFFFFFBEB),
+                border = BorderStroke(1.dp, Color(0xFFFDE68A)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Promo Diskon Zero Waste", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF92400E))
+                            Text("Beri diskon mendadak sewaktu-waktu untuk sisa porsi sebelum warung tutup.", fontSize = 11.sp, color = Color(0xFFB45309))
+                        }
+                        Switch(
+                            checked = zeroWasteAktif,
+                            onCheckedChange = { zeroWasteAktif = it }
+                        )
+                    }
+
+                    if (zeroWasteAktif) {
+                        HorizontalDivider(color = Color(0xFFFDE68A))
+                        Text("Pilih Besaran Diskon:", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF92400E))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf(20, 30, 50).forEach { disc ->
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = if (zeroWasteDiskon == disc) Color(0xFFD97706) else Color.White,
+                                    border = BorderStroke(1.dp, if (zeroWasteDiskon == disc) Color(0xFFD97706) else Color(0xFFFDE68A)),
+                                    modifier = Modifier.clickable { zeroWasteDiskon = disc }
+                                ) {
+                                    Text(
+                                        text = "-$disc%",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        color = if (zeroWasteDiskon == disc) Color.White else Color(0xFF92400E),
+                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        OutlinedTextField(
+                            value = zeroWasteKet,
+                            onValueChange = { zeroWasteKet = it },
+                            label = { Text("Keterangan Promo") },
+                            placeholder = { Text("Contoh: Promo jelang tutup porsi lezat diskon 30%") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+        }
+
         // ── Error & Simpan ──────────────────────────────────────────────────────
         if (error.isNotBlank()) {
             PesanError(error)
@@ -831,7 +937,7 @@ fun EditWarungScreen(
 
         Button(
             onClick = { simpan() },
-            enabled = !loading && !uploadProses && !aiScanning,
+            enabled = !loading && !uploadProses && !aiScanning && !(isEdit && isPengguna),
             modifier = Modifier.fillMaxWidth()
         ) {
             if (loading) {
@@ -841,8 +947,9 @@ fun EditWarungScreen(
                 when {
                     uploadProses -> "Mengunggah foto..."
                     loading -> "Menyimpan..."
+                    isEdit && isPengguna -> "Pengguna Tidak Bisa Mengubah Warung"
                     isEdit -> "Simpan Perubahan"
-                    tipeAkun == "pembeli" -> "Ajukan Warung (+50 XP)"
+                    isPengguna -> "Ajukan Warung (+50 XP)"
                     else -> "Kirim & Tunggu Verifikasi"
                 }
             )

@@ -27,8 +27,10 @@ class AuthRepository(
                 Result.failure(ApiException("Balasan login tidak valid"))
             } else {
                 tokenStore.saveToken(body.token)
+                val tipe = body.user.tipeAkun.ifBlank { tokenStore.getTipeAkun() }
+                tokenStore.saveTipeAkun(tipe)
+                _tipeAkun.value = tipe
                 _user.value = body.user
-                _tipeAkun.value = tokenStore.getTipeAkun()
                 Result.success(body.user)
             }
         } else {
@@ -42,12 +44,13 @@ class AuthRepository(
         nama: String,
         email: String,
         password: String,
-        tipeAkun: String = "penjual"
+        tipeAkun: String = "mitra"
     ): Result<RegisterResponse> = try {
-        val res = api.register(RegisterRequest(nama.trim(), email.trim().lowercase(), password))
+        val cleanTipe = if (tipeAkun == "mitra" || tipeAkun == "penjual") "mitra" else "pengguna"
+        val res = api.register(RegisterRequest(nama.trim(), email.trim().lowercase(), password, cleanTipe))
         if (res.isSuccessful) {
-            tokenStore.saveTipeAkun(tipeAkun)
-            _tipeAkun.value = tipeAkun
+            tokenStore.saveTipeAkun(cleanTipe)
+            _tipeAkun.value = cleanTipe
             Result.success(res.body() ?: RegisterResponse())
         } else {
             Result.failure(ApiException(ApiErrors.message(res)))

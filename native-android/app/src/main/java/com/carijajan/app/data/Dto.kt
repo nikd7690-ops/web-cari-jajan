@@ -18,6 +18,13 @@ data class MenuDto(
 )
 
 @Serializable
+data class ZeroWasteDto(
+    val aktif: Boolean = false,
+    val diskonPersen: Int = 0,
+    val keterangan: String = ""
+)
+
+@Serializable
 data class VendorDto(
     @SerialName("_id") val id: String = "",
     val owner: String? = null,
@@ -35,6 +42,7 @@ data class VendorDto(
     val menus: List<MenuDto> = emptyList(),
     val jarak: Double? = null,
     val buka: Boolean = false,
+    val zeroWaste: ZeroWasteDto? = null,
     val createdAt: String? = null
 ) {
     val lat: Double get() = lokasi?.coordinates?.getOrNull(1) ?: 0.0
@@ -47,6 +55,7 @@ data class UserDto(
     val name: String = "",
     val email: String = "",
     val role: String = "user",
+    val tipeAkun: String = "pengguna",
     val xp: Int = 0,
     val level: Int = 1,
     val emailVerified: Boolean = false
@@ -56,7 +65,12 @@ data class UserDto(
 data class LoginRequest(val email: String, val password: String)
 
 @Serializable
-data class RegisterRequest(val nama: String, val email: String, val password: String)
+data class RegisterRequest(
+    val nama: String,
+    val email: String,
+    val password: String,
+    val tipeAkun: String = "pengguna"
+)
 
 @Serializable
 data class LoginResponse(val token: String, val user: UserDto)
@@ -131,7 +145,8 @@ data class VendorInput(
     val foto: String = "",
     val menus: List<MenuInput> = emptyList(),
     val userLat: Double? = null,
-    val userLng: Double? = null
+    val userLng: Double? = null,
+    val zeroWaste: ZeroWasteDto? = null
 )
 
 @Serializable

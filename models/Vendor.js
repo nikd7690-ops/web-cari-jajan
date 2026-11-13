@@ -25,15 +25,13 @@ const VendorSchema = new mongoose.Schema(
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
+      default: null,
     },
     submittedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      default: function () {
-        return this.owner;
-      },
     },
     status: {
       type: String,
@@ -103,6 +101,23 @@ const VendorSchema = new mongoose.Schema(
     jarakPengajuanMeter: {
       type: Number,
       default: 0,
+    },
+    zeroWaste: {
+      aktif: {
+        type: Boolean,
+        default: false,
+      },
+      diskonPersen: {
+        type: Number,
+        min: 0,
+        max: 100,
+        default: 0,
+      },
+      keterangan: {
+        type: String,
+        default: "",
+        trim: true,
+      },
     },
   },
   { timestamps: true }

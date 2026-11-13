@@ -111,6 +111,7 @@ export async function PATCH(request, { params }) {
       "layananAntar",
       "foto",
       "menus",
+      "zeroWaste",
     ]) {
       if (d[key] !== undefined) update[key] = d[key];
     }

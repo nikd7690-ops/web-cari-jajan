@@ -24,6 +24,12 @@ const UserSchema = new mongoose.Schema(
       default: "user",
       index: true,
     },
+    tipeAkun: {
+      type: String,
+      enum: ["pengguna", "mitra"],
+      default: "pengguna",
+      index: true,
+    },
     xp: {
       type: Number,
       min: 0,
