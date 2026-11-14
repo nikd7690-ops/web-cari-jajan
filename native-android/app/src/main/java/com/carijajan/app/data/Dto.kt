@@ -342,3 +342,15 @@ data class AdminBanMemberRequest(
     val banned: Boolean,
     val reason: String = ""
 )
+
+@Serializable
+data class ResetPasswordRequest(
+    val email: String,
+    val passwordBaru: String
+)
+
+@Serializable
+data class ResetPasswordResponse(
+    val ok: Boolean = false,
+    val message: String = ""
+)

@@ -85,6 +85,17 @@ class AuthRepository(
         Result.failure(e)
     }
 
+    suspend fun resetPassword(email: String, passwordBaru: String): Result<String> = try {
+        val res = api.resetPassword(ResetPasswordRequest(email.trim().lowercase(), passwordBaru))
+        if (res.isSuccessful) {
+            Result.success(res.body()?.message ?: "Password berhasil diperbarui.")
+        } else {
+            Result.failure(ApiException(ApiErrors.message(res)))
+        }
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
     suspend fun restoreSession(): UserDto? {
         val token = tokenStore.getToken()
         _tipeAkun.value = tokenStore.getTipeAkun()

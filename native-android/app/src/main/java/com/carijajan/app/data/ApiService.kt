@@ -26,6 +26,9 @@ interface ApiService {
     @POST("api/auth/verifikasi-otp-email")
     suspend fun verifikasiOtpEmail(@Body body: VerifikasiOtpEmailRequest): Response<OtpActionResponse>
 
+    @POST("api/auth/reset-password")
+    suspend fun resetPassword(@Body body: ResetPasswordRequest): Response<ResetPasswordResponse>
+
     @GET("api/session")
     suspend fun session(): Response<SessionResponse>
 

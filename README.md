@@ -73,7 +73,7 @@ Kami yang bertanda tangan di bawah ini menyatakan dengan sebenar-benarnya, serta
 - **Gamifikasi Kontributor (Level & XP):** Sistem reward +50 XP per warung yang lolos kurasi admin, progress bar XP, dan gelar kehormatan kontributor (*Penjelajah Jajanan*, *Pemberi Rekomendasi*, *Pahlawan UMKM Lokal*).
 
 ### B. Pemilik Warung (Penjual)
-- **Pendaftaran & Autentikasi:** Masuk dan buat akun dengan validasi Zod dan enkripsi password bcrypt.
+- **Pendaftaran & Autentikasi Mandiri:** Masuk, buat akun, dan pemulihan akun cepat lewat fitur "Lupa Password" dengan validasi Zod ketat dan enkripsi password bcrypt (salt 10).
 - **Dashboard Performa Warung:**
   - **Statistik Pengunjung Real-Time:** Menampilkan total berapa kali warung dilihat oleh pembeli (*view count*) yang tercatat dan terakumulasi secara nyata di database setiap kali pembeli membuka halaman warung.
   - **Tanda Diskon Aktif:** Indikator visual mencolok pada kartu warung di dashboard saat pemilik warung sedang menyalakan promo potongan harga.
@@ -238,6 +238,7 @@ Semua endpoint menerima/mengembalikan JSON, kecuali yang ber-tanda form-data.
 | GET | `/api/vendors/mine` | Login | Daftar warung yang dimiliki/diajukan oleh pengguna yang sedang login |
 | POST | `/api/register` | Publik | Daftar akun pengguna/penjual (nama, email, password) |
 | POST | `/api/login` | Publik | Masuk dengan email & password, mengembalikan token JWT dan data user |
+| POST | `/api/auth/reset-password` | Publik | Atur ulang kata sandi (lupa password) berbasis email aktif; password di-hash dengan bcrypt |
 | GET | `/api/session` | Login | Ambil profil pengguna aktif (termasuk status XP dan level gamifikasi) |
 | POST | `/api/upload` | Login | Unggah foto warung (form-data, maks 2 MB) ke Vercel Blob |
 | POST | `/api/menu-dari-foto` | Login | Draf menu dari foto via Gemini (form-data, maks 2 MB, ada rate limit) |

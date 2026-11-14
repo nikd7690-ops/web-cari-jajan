@@ -1,5 +1,6 @@
 package com.carijajan.app.ui.screen
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.VolunteerActivism
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -67,6 +69,15 @@ fun MasukScreen(
     var password by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
+
+    // State Lupa Password
+    var dialogLupaPassword by remember { mutableStateOf(false) }
+    var resetEmail by remember { mutableStateOf("") }
+    var resetPasswordBaru by remember { mutableStateOf("") }
+    var resetKonfirmasi by remember { mutableStateOf("") }
+    var resetLoading by remember { mutableStateOf(false) }
+    var resetError by remember { mutableStateOf("") }
+    var resetSuksesPesan by remember { mutableStateOf("") }
 
     fun submit() {
         if (email.isBlank() || password.isBlank()) {
@@ -185,6 +196,30 @@ fun MasukScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(
+                onClick = {
+                    resetEmail = email.trim()
+                    resetPasswordBaru = ""
+                    resetKonfirmasi = ""
+                    resetError = ""
+                    resetSuksesPesan = ""
+                    dialogLupaPassword = true
+                },
+                modifier = Modifier.bounceEffect()
+            ) {
+                Text(
+                    text = "Lupa password?",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = BrandOrange
+                )
+            }
+        }
+
         if (error.isNotBlank()) {
             Surface(
                 color = MaterialTheme.colorScheme.errorContainer,
@@ -247,6 +282,135 @@ fun MasukScreen(
                         "daftar" -> onBack()
                         "tambah" -> onBack()
                         "akun" -> Unit
+                    }
+                }
+            )
+        }
+
+        if (dialogLupaPassword) {
+            AlertDialog(
+                onDismissRequest = { if (!resetLoading) dialogLupaPassword = false },
+                title = { Text("Lupa Password", fontWeight = FontWeight.Bold) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        if (resetSuksesPesan.isNotBlank()) {
+                            Surface(
+                                color = Color(0xFFECFDF5),
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, Color(0xFF86EFAC)),
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
+                            ) {
+                                Text(
+                                    resetSuksesPesan,
+                                    color = Color(0xFF047857),
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.padding(10.dp)
+                                )
+                            }
+                        } else {
+                            Text(
+                                "Masukkan email akun Anda dan buat kata sandi baru (minimal 8 karakter).",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            OutlinedTextField(
+                                value = resetEmail,
+                                onValueChange = { resetEmail = it },
+                                label = { Text("Email Akun") },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            OutlinedTextField(
+                                value = resetPasswordBaru,
+                                onValueChange = { resetPasswordBaru = it },
+                                label = { Text("Password Baru") },
+                                singleLine = true,
+                                visualTransformation = PasswordVisualTransformation(),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            OutlinedTextField(
+                                value = resetKonfirmasi,
+                                onValueChange = { resetKonfirmasi = it },
+                                label = { Text("Konfirmasi Password Baru") },
+                                singleLine = true,
+                                visualTransformation = PasswordVisualTransformation(),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            if (resetError.isNotBlank()) {
+                                Text(
+                                    resetError,
+                                    color = MaterialTheme.colorScheme.error,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    if (resetSuksesPesan.isNotBlank()) {
+                        Button(
+                            onClick = {
+                                email = resetEmail
+                                password = ""
+                                dialogLupaPassword = false
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
+                        ) {
+                            Text("Tutup & Masuk")
+                        }
+                    } else {
+                        Button(
+                            onClick = {
+                                if (resetEmail.isBlank() || !resetEmail.contains("@")) {
+                                    resetError = "Masukkan email akun yang valid."
+                                    return@Button
+                                }
+                                if (resetPasswordBaru.length < 8) {
+                                    resetError = "Password baru minimal 8 karakter."
+                                    return@Button
+                                }
+                                if (resetPasswordBaru != resetKonfirmasi) {
+                                    resetError = "Konfirmasi password baru tidak cocok."
+                                    return@Button
+                                }
+                                resetLoading = true
+                                resetError = ""
+                                scope.launch {
+                                    val res = container.authRepository.resetPassword(resetEmail, resetPasswordBaru)
+                                    resetLoading = false
+                                    res.onSuccess {
+                                        resetSuksesPesan = it
+                                    }.onFailure { err ->
+                                        resetError = err.message ?: "Gagal memperbarui password."
+                                    }
+                                }
+                            },
+                            enabled = !resetLoading,
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
+                        ) {
+                            if (resetLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Color.White
+                                )
+                                Spacer(Modifier.width(6.dp))
+                            }
+                            Text("Perbarui Password")
+                        }
+                    }
+                },
+                dismissButton = {
+                    if (resetSuksesPesan.isBlank()) {
+                        TextButton(
+                            onClick = { dialogLupaPassword = false },
+                            enabled = !resetLoading
+                        ) {
+                            Text("Batal")
+                        }
                     }
                 }
             )
