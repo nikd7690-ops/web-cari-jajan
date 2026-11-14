@@ -50,7 +50,7 @@ Kami yang bertanda tangan di bawah ini menyatakan dengan sebenar-benarnya, serta
 | **Kategori Lomba** | Mobile Application |
 | **Nama Aplikasi** | Cari Jajan |
 | **Platform** | Android (Native Kotlin + Jetpack Compose) |
-| **Tautan Berkas APK** | [Tautan Unduh APK / Rilis GitHub] |
+| **Tautan Berkas APK** | https://github.com/nikd7690-ops/web-cari-jajan/releases/download/v1.0.0/cari-jajan-v1.0.0.apk |
 | **Tautan Backend API** | https://web-cari-jajan.vercel.app |
 | **Target Pengguna** | Pelaku UMKM mikro (warung makan, pedagang kaki lima/PKL, penjual keliling) dan masyarakat pembeli/kontributor kuliner di lingkungan sekitar |
 
