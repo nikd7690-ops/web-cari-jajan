@@ -1,6 +1,6 @@
 # Cari Jajan
 
-Aplikasi mobile etalase hiperlokal UMKM — pembeli menemukan warung terdekat di peta interaktif, bernavigasi langsung, dan memesan tanpa perantara lewat WhatsApp. Tanpa komisi, tanpa potongan merchant, dan tanpa pembayaran di dalam aplikasi.
+Aplikasi mobile etalase hiperlokal UMKM — memudahkan pencarian warung UMKM terdekat di peta interaktif serta memfasilitasi promosi diskon *Zero Waste Food* agar makanan tidak mubazir bagi UMKM, bernavigasi langsung, dan memesan tanpa perantara lewat WhatsApp. Tanpa komisi, tanpa potongan merchant, dan tanpa pembayaran di dalam aplikasi.
 
 > Kategori lomba: **Mobile Application** · Subtema: **Local MSME**
 
@@ -54,9 +54,13 @@ Kami yang bertanda tangan di bawah ini menyatakan dengan sebenar-benarnya, serta
 | **Tautan Backend API** | https://web-cari-jajan.vercel.app |
 | **Target Pengguna** | Pelaku UMKM mikro (warung makan, pedagang kaki lima/PKL, penjual keliling) dan masyarakat pembeli/kontributor kuliner di lingkungan sekitar |
 
-**Masalah yang diangkat.** UMKM mikro — seperti warung rumahan, pedagang kaki lima (PKL), dan penjual keliling — sangat sulit ditemukan oleh pembeli di lingkungan sekitarnya karena keterbatasan visibilitas digital. Tidak tersedianya katalog etalase yang praktis dan mahalnya potongan komisi merchant di aplikasi kurir besar (mencapai 20–30%) menjadi beban berat bagi pedagang kecil dan menaikkan harga beli bagi konsumen lokal.
+**Masalah yang diangkat.**
+1. **Keterbatasan Visibilitas Digital & Potongan Komisi Merchant:** UMKM mikro — seperti warung rumahan, pedagang kaki lima (PKL), dan penjual keliling — sangat sulit ditemukan oleh pembeli di lingkungan sekitarnya karena keterbatasan visibilitas digital. Tidak tersedianya etalase katalog menu digital yang praktis dan mahalnya potongan komisi merchant di aplikasi pesan-antar besar (mencapai 20% – 30%) menjadi beban berat bagi pedagang kecil dan menaikkan harga beli bagi konsumen lokal.
+2. **Tingginya Makanan Mubazir & Kerugian Finansial (*Food Waste* UMKM):** Pelaku usaha kuliner mikro kerap menghadapi sisa porsi makanan layak konsumsi yang belum habis terjual menjelang jam tutup warung. Tanpa adanya saluran promosi cepat langsung ke warga sekitar, makanan segar tersebut terancam terbuang sia-sia (*mubazir*), menimbulkan kerugian modal bahan baku bagi penjual serta menyumbang timbunan limbah makanan (*food waste*) bagi lingkungan.
 
-**Deskripsi solusi.** Cari Jajan hadir sebagai solusi aplikasi mobile (*native Android*) yang menghubungkan pembeli langsung dengan UMKM terdekat melalui peta interaktif berbasis OpenFreeMap dan GPS. Pembeli dapat menjelajah warung terdekat, melihat katalog menu dengan harga asli, mendapatkan navigasi rute turn-by-turn langsung ke lokasi, serta menyusun pesanan yang diteruskan langsung ke WhatsApp penjual tanpa perantara dan tanpa potongan komisi sepeser pun. Aplikasi juga dilengkapi fitur *Zero Waste Food* untuk menyelamatkan makanan berlebih jelang tutup serta sistem gamifikasi kontributor untuk pemetaan UMKM berbasis partisipasi warga.
+**Deskripsi solusi.** Cari Jajan hadir sebagai solusi aplikasi mobile (*native Android*) yang menghubungkan pembeli langsung dengan UMKM terdekat melalui peta interaktif berbasis OpenFreeMap dan GPS. Pembeli dapat menjelajah warung terdekat, melihat katalog menu dengan harga asli, mendapatkan navigasi rute turn-by-turn langsung ke lokasi, serta menyusun pesanan yang diteruskan langsung ke WhatsApp penjual tanpa perantara dan tanpa potongan komisi sepeser pun.
+
+Aplikasi mengintegrasikan fitur gerakan **Zero Waste Food** (mendukung sasaran SDG 12: *Responsible Consumption and Production*) yang memudahkan penjual maupun kontributor mengaktifkan promo diskon porsi makanan jelang tutup secara fleksibel (mulai dari 1% hingga 100%) agar dagangan laris dan makanan tidak terbuang mubazir. Fitur ini dilengkapi pop-up label diskon interaktif yang melayang di atas pin peta dan bergerak harmonis mengikuti navigasi pembeli, serta didukung sistem gamifikasi kontributor (XP dan level) untuk mendorong pemetaan UMKM berbasis partisipasi warga sekitar.
 
 ## 4. Fitur Utama yang Sudah Berjalan
 
