@@ -85,8 +85,19 @@ class AuthRepository(
         Result.failure(e)
     }
 
-    suspend fun resetPassword(email: String, passwordBaru: String): Result<String> = try {
-        val res = api.resetPassword(ResetPasswordRequest(email.trim().lowercase(), passwordBaru))
+    suspend fun requestOtp(email: String): Result<RequestOtpResponse> = try {
+        val res = api.requestOtp(RequestOtpRequest(email.trim().lowercase()))
+        if (res.isSuccessful) {
+            Result.success(res.body() ?: RequestOtpResponse(ok = true, message = "Kode OTP berhasil dikirim."))
+        } else {
+            Result.failure(ApiException(ApiErrors.message(res)))
+        }
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    suspend fun resetPassword(email: String, otp: String, passwordBaru: String): Result<String> = try {
+        val res = api.resetPassword(ResetPasswordRequest(email.trim().lowercase(), otp.trim(), passwordBaru))
         if (res.isSuccessful) {
             Result.success(res.body()?.message ?: "Password berhasil diperbarui.")
         } else {

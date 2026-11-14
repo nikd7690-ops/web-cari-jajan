@@ -344,8 +344,21 @@ data class AdminBanMemberRequest(
 )
 
 @Serializable
+data class RequestOtpRequest(
+    val email: String
+)
+
+@Serializable
+data class RequestOtpResponse(
+    val ok: Boolean = false,
+    val message: String = "",
+    val demoOtp: String? = null
+)
+
+@Serializable
 data class ResetPasswordRequest(
     val email: String,
+    val otp: String,
     val passwordBaru: String
 )
 

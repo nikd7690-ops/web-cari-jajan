@@ -242,7 +242,8 @@ Semua endpoint menerima/mengembalikan JSON, kecuali yang ber-tanda form-data.
 | GET | `/api/vendors/mine` | Login | Daftar warung yang dimiliki/diajukan oleh pengguna yang sedang login |
 | POST | `/api/register` | Publik | Daftar akun pengguna/penjual (nama, email, password) |
 | POST | `/api/login` | Publik | Masuk dengan email & password, mengembalikan token JWT dan data user |
-| POST | `/api/auth/reset-password` | Publik | Atur ulang kata sandi (lupa password) berbasis email aktif; password di-hash dengan bcrypt |
+| POST | `/api/auth/request-otp` | Publik | Minta kode verifikasi OTP 6 digit untuk pemulihan akun (berlaku 10 menit) |
+| POST | `/api/auth/reset-password` | Publik | Atur ulang kata sandi dengan validasi OTP 6 digit; password di-hash dengan bcrypt |
 | GET | `/api/session` | Login | Ambil profil pengguna aktif (termasuk status XP dan level gamifikasi) |
 | POST | `/api/upload` | Login | Unggah foto warung (form-data, maks 2 MB) ke Vercel Blob |
 | POST | `/api/menu-dari-foto` | Login | Draf menu dari foto via Gemini (form-data, maks 2 MB, ada rate limit) |

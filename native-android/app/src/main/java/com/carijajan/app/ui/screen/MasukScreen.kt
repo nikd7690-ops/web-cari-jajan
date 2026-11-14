@@ -72,7 +72,10 @@ fun MasukScreen(
 
     // State Lupa Password
     var dialogLupaPassword by remember { mutableStateOf(false) }
+    var resetStep by remember { mutableStateOf(1) } // 1 = minta OTP, 2 = verifikasi OTP & password baru
     var resetEmail by remember { mutableStateOf("") }
+    var resetOtp by remember { mutableStateOf("") }
+    var demoOtpInfo by remember { mutableStateOf("") }
     var resetPasswordBaru by remember { mutableStateOf("") }
     var resetKonfirmasi by remember { mutableStateOf("") }
     var resetLoading by remember { mutableStateOf(false) }
@@ -202,7 +205,10 @@ fun MasukScreen(
         ) {
             TextButton(
                 onClick = {
+                    resetStep = 1
                     resetEmail = email.trim()
+                    resetOtp = ""
+                    demoOtpInfo = ""
                     resetPasswordBaru = ""
                     resetKonfirmasi = ""
                     resetError = ""
@@ -290,7 +296,16 @@ fun MasukScreen(
         if (dialogLupaPassword) {
             AlertDialog(
                 onDismissRequest = { if (!resetLoading) dialogLupaPassword = false },
-                title = { Text("Lupa Password", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        when {
+                            resetSuksesPesan.isNotBlank() -> "Password Berhasil Diperbarui"
+                            resetStep == 1 -> "Lupa Password (Langkah 1/2)"
+                            else -> "Verifikasi OTP (Langkah 2/2)"
+                        },
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         if (resetSuksesPesan.isNotBlank()) {
@@ -307,9 +322,9 @@ fun MasukScreen(
                                     modifier = Modifier.padding(10.dp)
                                 )
                             }
-                        } else {
+                        } else if (resetStep == 1) {
                             Text(
-                                "Masukkan email akun Anda dan buat kata sandi baru (minimal 8 karakter).",
+                                "Masukkan email akun Anda untuk menerima kode OTP 6-digit.",
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -321,10 +336,48 @@ fun MasukScreen(
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                                 modifier = Modifier.fillMaxWidth()
                             )
+                            if (resetError.isNotBlank()) {
+                                Text(
+                                    resetError,
+                                    color = MaterialTheme.colorScheme.error,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        } else {
+                            if (demoOtpInfo.isNotBlank()) {
+                                Surface(
+                                    color = Color(0xFFFFFBEB),
+                                    shape = RoundedCornerShape(8.dp),
+                                    border = BorderStroke(1.dp, Color(0xFFFDE68A)),
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 2.dp)
+                                ) {
+                                    Column(modifier = Modifier.padding(10.dp)) {
+                                        Text(
+                                            "Kode OTP Demo: $demoOtpInfo",
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFFB45309),
+                                            fontSize = 12.sp
+                                        )
+                                        Text(
+                                            "Kode otomatis terisi untuk kemudahan pengujian juri/demo.",
+                                            color = Color(0xFF92400E),
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                }
+                            }
+                            OutlinedTextField(
+                                value = resetOtp,
+                                onValueChange = { if (it.length <= 6) resetOtp = it },
+                                label = { Text("Kode OTP (6 Digit)") },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.fillMaxWidth()
+                            )
                             OutlinedTextField(
                                 value = resetPasswordBaru,
                                 onValueChange = { resetPasswordBaru = it },
-                                label = { Text("Password Baru") },
+                                label = { Text("Password Baru (Min. 8 Karakter)") },
                                 singleLine = true,
                                 visualTransformation = PasswordVisualTransformation(),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -361,11 +414,45 @@ fun MasukScreen(
                         ) {
                             Text("Tutup & Masuk")
                         }
-                    } else {
+                    } else if (resetStep == 1) {
                         Button(
                             onClick = {
                                 if (resetEmail.isBlank() || !resetEmail.contains("@")) {
                                     resetError = "Masukkan email akun yang valid."
+                                    return@Button
+                                }
+                                resetLoading = true
+                                resetError = ""
+                                scope.launch {
+                                    val res = container.authRepository.requestOtp(resetEmail)
+                                    resetLoading = false
+                                    res.onSuccess {
+                                        demoOtpInfo = it.demoOtp ?: ""
+                                        resetOtp = it.demoOtp ?: ""
+                                        resetStep = 2
+                                    }.onFailure { err ->
+                                        resetError = err.message ?: "Gagal meminta kode OTP."
+                                    }
+                                }
+                            },
+                            enabled = !resetLoading,
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
+                        ) {
+                            if (resetLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Color.White
+                                )
+                                Spacer(Modifier.width(6.dp))
+                            }
+                            Text("Kirim Kode OTP")
+                        }
+                    } else {
+                        Button(
+                            onClick = {
+                                if (resetOtp.isBlank() || resetOtp.length != 6) {
+                                    resetError = "Kode OTP wajib 6 digit angka."
                                     return@Button
                                 }
                                 if (resetPasswordBaru.length < 8) {
@@ -379,7 +466,7 @@ fun MasukScreen(
                                 resetLoading = true
                                 resetError = ""
                                 scope.launch {
-                                    val res = container.authRepository.resetPassword(resetEmail, resetPasswordBaru)
+                                    val res = container.authRepository.resetPassword(resetEmail, resetOtp, resetPasswordBaru)
                                     resetLoading = false
                                     res.onSuccess {
                                         resetSuksesPesan = it
@@ -399,17 +486,24 @@ fun MasukScreen(
                                 )
                                 Spacer(Modifier.width(6.dp))
                             }
-                            Text("Perbarui Password")
+                            Text("Simpan Password")
                         }
                     }
                 },
                 dismissButton = {
                     if (resetSuksesPesan.isBlank()) {
                         TextButton(
-                            onClick = { dialogLupaPassword = false },
+                            onClick = {
+                                if (resetStep == 2) {
+                                    resetStep = 1
+                                    resetError = ""
+                                } else {
+                                    dialogLupaPassword = false
+                                }
+                            },
                             enabled = !resetLoading
                         ) {
-                            Text("Batal")
+                            Text(if (resetStep == 2) "Kembali" else "Batal")
                         }
                     }
                 }

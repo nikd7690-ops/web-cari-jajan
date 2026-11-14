@@ -10,6 +10,10 @@ const resetPasswordSchema = z.object({
     .trim()
     .email("Format email tidak valid")
     .toLowerCase(),
+  otp: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, "Kode OTP wajib berupa 6 digit angka"),
   passwordBaru: z
     .string()
     .min(8, "Password baru minimal 8 karakter"),
@@ -42,7 +46,7 @@ export async function POST(request) {
     );
   }
 
-  const { email, passwordBaru } = parsed.data;
+  const { email, otp, passwordBaru } = parsed.data;
 
   try {
     await connectDB();
@@ -66,9 +70,28 @@ export async function POST(request) {
       );
     }
 
+    // Validasi OTP
+    if (!user.otpCode || user.otpCode !== otp) {
+      return NextResponse.json(
+        { error: "Kode OTP salah atau tidak valid." },
+        { status: 400 }
+      );
+    }
+
+    if (!user.otpExpiresAt || new Date() > user.otpExpiresAt) {
+      return NextResponse.json(
+        { error: "Kode OTP telah kedaluwarsa. Silakan minta kode OTP baru." },
+        { status: 400 }
+      );
+    }
+
     // Hash password baru menggunakan bcrypt dengan salt rounds 10 (standar keamanan)
     const passwordHash = await bcrypt.hash(passwordBaru, 10);
     user.passwordHash = passwordHash;
+
+    // Bersihkan OTP setelah berhasil digunakan
+    user.otpCode = null;
+    user.otpExpiresAt = null;
     await user.save();
 
     return NextResponse.json({
