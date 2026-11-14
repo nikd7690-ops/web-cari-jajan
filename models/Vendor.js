@@ -102,6 +102,11 @@ const VendorSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    views: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     zeroWaste: {
       aktif: {
         type: Boolean,

@@ -151,6 +151,12 @@ export default function DetailWarung() {
           <ul className="space-y-2">
             {vendor.menus.map((menu) => {
               const item = keranjang.find((k) => k.id === menu._id);
+              const adaDiskon = vendor.zeroWaste?.aktif && vendor.zeroWaste?.diskonPersen > 0;
+              const diskonPersen = adaDiskon ? vendor.zeroWaste.diskonPersen : 0;
+              const hargaFinal = adaDiskon
+                ? Math.round((menu.harga * (100 - diskonPersen)) / 100)
+                : menu.harga;
+
               return (
                 <li
                   key={menu._id}
@@ -166,10 +172,24 @@ export default function DetailWarung() {
                     >
                       {menu.namaMenu}
                     </p>
-                    <p className="text-sm text-zinc-600">
-                      {formatRupiah(menu.harga)}
-                      {!menu.tersedia ? " - habis" : ""}
-                    </p>
+                    {adaDiskon && menu.tersedia ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-zinc-400 line-through">
+                          {formatRupiah(menu.harga)}
+                        </span>
+                        <span className="rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                          -{diskonPersen}%
+                        </span>
+                        <span className="text-sm font-bold text-red-600">
+                          {formatRupiah(hargaFinal)}
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-zinc-600">
+                        {formatRupiah(menu.harga)}
+                        {!menu.tersedia ? " - habis" : ""}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -190,7 +210,7 @@ export default function DetailWarung() {
                           tambahItem(k, {
                             id: menu._id,
                             namaMenu: menu.namaMenu,
-                            harga: menu.harga,
+                            harga: hargaFinal,
                           })
                         )
                       }

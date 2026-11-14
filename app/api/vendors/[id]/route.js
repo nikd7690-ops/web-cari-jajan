@@ -50,8 +50,16 @@ export async function GET(request, { params }) {
       if (u?.name) namaKontributor = u.name;
     }
 
+    // Catat kunjungan halaman detail warung secara real-time di database
+    try {
+      await Vendor.findByIdAndUpdate(id, { $inc: { views: 1 } });
+    } catch (viewErr) {
+      console.warn("Gagal increment views warung:", viewErr);
+    }
+
     const data = {
       ...vendor,
+      views: (vendor.views || 0) + 1,
       buka: isBuka(vendor.jamBuka, vendor.jamTutup),
       namaKontributor,
     };
@@ -128,8 +136,17 @@ export async function PATCH(request, { params }) {
       update.lokasi = { type: "Point", coordinates: [d.lng, d.lat] };
     }
 
-    // Setiap perubahan oleh penjual wajib dikurasi ulang.
-    if (vendor.status !== "pending") {
+    // Jika warung sudah disetujui (approved):
+    // Perubahan operasional sehari-hari (daftar menu, harga, ketersediaan, diskon promo zeroWaste,
+    // jam buka/tutup, nomor WA, layanan antar, dan foto warung) langsung aktif tanpa menunggu persetujuan admin.
+    // Hanya jika nama warung atau titik GPS diubah oleh pengguna biasa, kurasi awal diaktifkan kembali.
+    const isAdmin = await apakahAdmin(user.id);
+    const adaPerubahanKritis =
+      (d.namaToko !== undefined && d.namaToko !== vendor.namaToko) ||
+      (d.lat !== undefined && d.lng !== undefined &&
+        (d.lat !== vendor.lokasi?.coordinates?.[1] || d.lng !== vendor.lokasi?.coordinates?.[0]));
+
+    if (!isAdmin && vendor.status === "approved" && adaPerubahanKritis) {
       update.status = "pending";
     }
 

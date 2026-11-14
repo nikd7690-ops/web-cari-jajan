@@ -116,15 +116,8 @@ fun DashboardScreen(
     var dialogRevisiWarung by remember { mutableStateOf<VendorDto?>(null) }
     var dialogRevisiTerkirim by remember { mutableStateOf(false) }
 
-    // State Zero Waste untuk Penjual
-    var zeroWasteAktif by remember { mutableStateOf(false) }
-    var zeroWasteDiskon by remember { mutableIntStateOf(30) }
-    var zeroWasteCatatan by remember { mutableStateOf("Diskon 30% jelang tutup! Makanan enak, hemat, dan cegah makanan terbuang.") }
-    var zeroWasteDisimpan by remember { mutableStateOf(false) }
-
-    // Views & impressions
-    var totalViews by remember { mutableIntStateOf(142) }
-    var totalRadar by remember { mutableIntStateOf(86) }
+    // Views warung
+    var totalViews by remember { mutableIntStateOf(24) }
 
     suspend fun load() {
         loading = true
@@ -132,12 +125,9 @@ fun DashboardScreen(
         result.onSuccess { list ->
             vendors = list
             if (list.isNotEmpty()) {
-                val firstId = list.first().id
-                zeroWasteAktif = container.tokenStore.isZeroWasteActive(firstId).first()
-                zeroWasteDiskon = container.tokenStore.getZeroWasteDiscount(firstId).first()
-                zeroWasteCatatan = container.tokenStore.getZeroWasteNote(firstId).first()
-                totalViews = container.tokenStore.getVendorViews(firstId).first()
-                totalRadar = container.tokenStore.getRadarImpressions(firstId).first()
+                val vFirst = list.first()
+                val localViews = container.tokenStore.getVendorViews(vFirst.id).first()
+                totalViews = maxOf(vFirst.views, localViews)
             }
         }.onFailure {
             error = it.message ?: "Gagal mengambil data warung"
@@ -384,158 +374,60 @@ fun DashboardScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text("Statistik Performa Warung", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = BrandMaroon)
-                            Spacer(Modifier.height(12.dp))
+                            Spacer(Modifier.height(10.dp))
 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            Surface(
+                                color = Color.White,
+                                shape = RoundedCornerShape(14.dp),
+                                border = BorderStroke(1.dp, BrandOrangeLight),
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Surface(
-                                    color = Color.White,
-                                    shape = RoundedCornerShape(14.dp),
-                                    border = BorderStroke(1.dp, BrandOrangeLight),
-                                    modifier = Modifier.weight(1f)
+                                Row(
+                                    modifier = Modifier.padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column(modifier = Modifier.padding(12.dp)) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(Icons.Filled.Visibility, contentDescription = null, tint = BrandOrange, modifier = Modifier.size(16.dp))
-                                            Spacer(Modifier.width(6.dp))
-                                            Text("Dilihat Pembeli", fontSize = 11.sp, color = BrandOrangeDark, fontWeight = FontWeight.SemiBold)
-                                        }
-                                        Spacer(Modifier.height(6.dp))
-                                        Text("$totalViews", fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = BrandMaroon)
-                                        Text("kali dilihat", fontSize = 10.sp, color = Color(0xFF78716C))
-                                    }
-                                }
-
-                                Surface(
-                                    color = Color.White,
-                                    shape = RoundedCornerShape(14.dp),
-                                    border = BorderStroke(1.dp, BrandOrangeLight),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Column(modifier = Modifier.padding(12.dp)) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(Icons.Filled.Radar, contentDescription = null, tint = BrandMaroon, modifier = Modifier.size(16.dp))
-                                            Spacer(Modifier.width(6.dp))
-                                            Text("Masuk Radar", fontSize = 11.sp, color = BrandMaroon, fontWeight = FontWeight.SemiBold)
-                                        }
-                                        Spacer(Modifier.height(6.dp))
-                                        Text("$totalRadar", fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = BrandOrange)
-                                        Text("radius pembeli", fontSize = 10.sp, color = Color(0xFF78716C))
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // 2. Fitur Zero Waste Food (Penyelamat Makanan & Diskon Laris)
-                item {
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = Color(0xFFFFFBEB),
-                        border = BorderStroke(1.dp, Color(0xFFFDE68A)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
                                     Box(
                                         modifier = Modifier
-                                            .size(34.dp)
+                                            .size(46.dp)
                                             .clip(CircleShape)
-                                            .background(Color(0xFFD97706)),
+                                            .background(BrandOrangeLight),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Icon(Icons.Filled.Eco, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                                        Icon(
+                                            imageVector = Icons.Filled.Visibility,
+                                            contentDescription = null,
+                                            tint = BrandOrange,
+                                            modifier = Modifier.size(24.dp)
+                                        )
                                     }
-                                    Spacer(Modifier.width(10.dp))
-                                    Column {
-                                        Text("Zero Waste Food", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFF92400E))
-                                        Text("Cegah makanan terbuang & cepat laku", fontSize = 11.sp, color = Color(0xFFB45309))
-                                    }
-                                }
-
-                                Switch(
-                                    checked = zeroWasteAktif,
-                                    onCheckedChange = { zeroWasteAktif = it },
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = Color.White,
-                                        checkedTrackColor = Color(0xFFD97706)
-                                    )
-                                )
-                            }
-
-                            if (zeroWasteAktif) {
-                                Spacer(Modifier.height(10.dp))
-                                HorizontalDivider(color = Color(0xFFFDE68A))
-                                Spacer(Modifier.height(10.dp))
-
-                                Text("Pilih Potongan Diskon Jelang Tutup:", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF92400E))
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    modifier = Modifier.padding(vertical = 6.dp)
-                                ) {
-                                    listOf(20, 30, 50).forEach { diskon ->
-                                        FilterChip(
-                                            selected = zeroWasteDiskon == diskon,
-                                            onClick = { zeroWasteDiskon = diskon },
-                                            label = { Text("Diskon $diskon%", fontSize = 12.sp) },
-                                            colors = FilterChipDefaults.filterChipColors(
-                                                selectedContainerColor = Color(0xFFD97706),
-                                                selectedLabelColor = Color.White
-                                            )
+                                    Spacer(Modifier.width(14.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            "Berapa Kali Dilihat Pembeli",
+                                            fontSize = 12.sp,
+                                            color = BrandOrangeDark,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Spacer(Modifier.height(2.dp))
+                                        Text(
+                                            "$totalViews Kali",
+                                            fontWeight = FontWeight.ExtraBold,
+                                            fontSize = 22.sp,
+                                            color = BrandMaroon
+                                        )
+                                        Text(
+                                            "Total pengunjung yang membuka profil & menu warung Anda",
+                                            fontSize = 10.5.sp,
+                                            color = Color(0xFF78716C)
                                         )
                                     }
                                 }
-
-                                OutlinedTextField(
-                                    value = zeroWasteCatatan,
-                                    onValueChange = { zeroWasteCatatan = it },
-                                    label = { Text("Pesan Promo untuk Pembeli", fontSize = 11.sp) },
-                                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                                    shape = RoundedCornerShape(10.dp)
-                                )
-
-                                Spacer(Modifier.height(8.dp))
-                                Button(
-                                    onClick = {
-                                        if (vendors.isNotEmpty()) {
-                                            val id = vendors.first().id
-                                            scope.launch {
-                                                container.tokenStore.saveZeroWaste(
-                                                    vendorId = id,
-                                                    active = zeroWasteAktif,
-                                                    discount = zeroWasteDiskon,
-                                                    note = zeroWasteCatatan
-                                                )
-                                                zeroWasteDisimpan = true
-                                            }
-                                        }
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD97706)),
-                                    shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.fillMaxWidth().bounceEffect()
-                                ) {
-                                    if (zeroWasteDisimpan) {
-                                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                                        Spacer(Modifier.width(6.dp))
-                                        Text("Promo Berhasil Diaktifkan", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                    } else {
-                                        Text("Simpan Promo Zero Waste", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                    }
-                                }
                             }
                         }
                     }
                 }
 
-                // 3. Status Warung Mitra (Maksimal 1 Warung)
+                // 2. Status Warung Mitra (Maksimal 1 Warung)
                 item {
                     val sudahPunyaWarung = vendors.isNotEmpty()
                     Column(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
@@ -633,8 +525,6 @@ fun DashboardScreen(
                     items(vendors, key = { it.id }) { vendor ->
                         PenjualVendorCard(
                             vendor = vendor,
-                            zeroWasteAktif = zeroWasteAktif,
-                            zeroWasteDiskon = zeroWasteDiskon,
                             onView = { onVendor(vendor.id) },
                             onEdit = { onEdit(vendor.id) },
                             onDelete = { deleteTarget = vendor }
@@ -892,8 +782,6 @@ private fun PembeliVendorCard(
 @Composable
 private fun PenjualVendorCard(
     vendor: VendorDto,
-    zeroWasteAktif: Boolean,
-    zeroWasteDiskon: Int,
     onView: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
@@ -953,29 +841,30 @@ private fun PenjualVendorCard(
                             }
                         }
 
-                        // Badge Zero Waste jika aktif
-                        if (zeroWasteAktif) {
+                        // Tanda Promo Diskon jika sedang aktif dinyalakan oleh pemilik warung
+                        val adaDiskon = vendor.zeroWaste?.aktif == true && (vendor.zeroWaste.diskonPersen > 0)
+                        if (adaDiskon) {
                             Surface(
-                                color = Color(0xFFFFFBEB),
-                                border = BorderStroke(1.dp, Color(0xFFFDE68A)),
+                                color = Color(0xFFFEF2F2),
+                                border = BorderStroke(1.dp, Color(0xFFFCA5A5)),
                                 shape = RoundedCornerShape(50)
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Eco,
                                         contentDescription = null,
-                                        tint = Color(0xFFD97706),
+                                        tint = Color(0xFFDC2626),
                                         modifier = Modifier.size(11.dp)
                                     )
                                     Spacer(Modifier.width(3.dp))
                                     Text(
-                                        "Zero Waste -$zeroWasteDiskon%",
+                                        "Diskon Aktif -${vendor.zeroWaste?.diskonPersen}%",
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFFD97706)
+                                        color = Color(0xFFDC2626)
                                     )
                                 }
                             }

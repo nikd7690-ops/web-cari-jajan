@@ -95,6 +95,7 @@ data class VendorDto(
     val jarak: Double? = null,
     val buka: Boolean = false,
     val zeroWaste: ZeroWasteDto? = null,
+    val views: Int = 0,
     val namaKontributor: String? = null,
     val createdAt: String? = null
 ) {
@@ -105,6 +106,13 @@ data class VendorDto(
         "keliling" -> "Keliling"
         "rumah_makan" -> "Rumah Makan"
         else -> "Warung Tetap"
+    }
+
+    val diskonPersen: Int get() = if (zeroWaste?.aktif == true) zeroWaste.diskonPersen.coerceIn(0, 100) else 0
+    val adaDiskon: Boolean get() = diskonPersen > 0
+    fun hitungHargaDiskon(hargaAsli: Double): Double {
+        if (!adaDiskon) return hargaAsli
+        return (hargaAsli * (100 - diskonPersen) / 100.0).coerceAtLeast(0.0)
     }
 
     /**

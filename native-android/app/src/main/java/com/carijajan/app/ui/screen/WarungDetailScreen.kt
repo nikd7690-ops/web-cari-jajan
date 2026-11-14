@@ -320,7 +320,11 @@ fun WarungDetailScreen(
                 }
 
                 // Banner Zero Waste Food jika aktif
-                if (zeroWasteAktif) {
+                val diskonAktif = toko.adaDiskon || zeroWasteAktif
+                val persentaseDiskon = if (toko.adaDiskon) toko.diskonPersen else zeroWasteDiskon
+                val catatanPromo = toko.zeroWaste?.keterangan?.ifBlank { zeroWasteCatatan } ?: zeroWasteCatatan
+
+                if (diskonAktif && persentaseDiskon > 0) {
                     item {
                         Surface(
                             color = Color(0xFFFFFBEB),
@@ -350,13 +354,13 @@ fun WarungDetailScreen(
                                 Spacer(Modifier.width(12.dp))
                                 Column {
                                     Text(
-                                        "Promo Zero Waste Food (-$zeroWasteDiskon%)",
+                                        "Promo Zero Waste Food (-$persentaseDiskon%)",
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF92400E),
                                         fontSize = 13.sp
                                     )
                                     Text(
-                                        zeroWasteCatatan.ifBlank { "Diskon khusus porsi lezat sebelum warung tutup agar tidak terbuang!" },
+                                        catatanPromo.ifBlank { "Diskon khusus porsi lezat sebelum warung tutup agar tidak terbuang!" },
                                         style = MaterialTheme.typography.bodySmall,
                                         color = Color(0xFFB45309),
                                         fontSize = 11.sp
@@ -408,12 +412,18 @@ fun WarungDetailScreen(
                 }
 
                 items(toko.menus) { menu ->
+                    val hargaPromo = if (diskonAktif && persentaseDiskon > 0) {
+                        (menu.harga * (100 - persentaseDiskon) / 100.0).coerceAtLeast(0.0)
+                    } else menu.harga
+
                     MenuRow(
                         menu = menu,
+                        diskonPersen = if (diskonAktif) persentaseDiskon else 0,
+                        hargaPromo = hargaPromo,
                         cartItem = cart.firstOrNull { it.id == menu.id.orEmpty() },
                         onAdd = {
                             if (menu.id != null) {
-                                val updated = Keranjang.tambahItem(cart, menu.id, menu.namaMenu, menu.harga)
+                                val updated = Keranjang.tambahItem(cart, menu.id, menu.namaMenu, hargaPromo)
                                 cart.clear()
                                 cart.addAll(updated)
                             }
@@ -564,10 +574,14 @@ fun WarungDetailScreen(
 @Composable
 private fun MenuRow(
     menu: MenuDto,
+    diskonPersen: Int = 0,
+    hargaPromo: Double = menu.harga,
     cartItem: CartItem?,
     onAdd: () -> Unit,
     onRemove: () -> Unit
 ) {
+    val adaDiskon = diskonPersen > 0 && menu.tersedia
+
     Surface(
         color = if (menu.tersedia) Color.White else Color(0xFFF9FAFB),
         shape = RoundedCornerShape(16.dp),
@@ -591,12 +605,53 @@ private fun MenuRow(
                     color = if (menu.tersedia) BrandMaroon else Color.Gray
                 )
                 Spacer(Modifier.height(2.dp))
-                Text(
-                    text = if (menu.tersedia) Format.rupiah(menu.harga) else "${Format.rupiah(menu.harga)} · Stok Habis",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (menu.tersedia) BrandOrange else Color(0xFF9CA3AF)
-                )
+
+                if (!menu.tersedia) {
+                    Text(
+                        text = "${Format.rupiah(menu.harga)} · Stok Habis",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF9CA3AF)
+                    )
+                } else if (adaDiskon) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = Format.rupiah(menu.harga),
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough
+                            ),
+                            fontSize = 11.5.sp,
+                            color = Color(0xFF78716C)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Surface(
+                            color = Color(0xFFDC2626),
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                text = "-$diskonPersen%",
+                                color = Color.White,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(1.dp))
+                    Text(
+                        text = Format.rupiah(hargaPromo),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFDC2626)
+                    )
+                } else {
+                    Text(
+                        text = Format.rupiah(menu.harga),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = BrandOrange
+                    )
+                }
             }
 
             if (menu.tersedia) {

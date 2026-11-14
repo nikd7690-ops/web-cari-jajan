@@ -68,17 +68,19 @@ Kami yang bertanda tangan di bawah ini menyatakan dengan sebenar-benarnya, serta
 - **Rute & Navigasi GPS Turn-by-Turn:** Kalkulasi jalur jalan raya riil via OSRM, estimasi durasi (motor & jalan kaki), serta tombol navigasi langsung ke Google Maps dengan panduan suara.
 - **Pencarian & Filter Kategori:** Filter chip warung (Semua, Warung, PKL, Rumah Makan, Cafe, Keliling) dan live search bar.
 - **Daftar Warung Terdekat:** Menampilkan warung terdekat dalam radius dengan penanda status Buka/Tutup dan jarak riil.
-- **Halaman Detail Warung & Pesanan WhatsApp:** Katalog menu, kalkulasi total otomatis, opsi pesan diantar / ambil sendiri, serta tautan langsung ke WhatsApp penjual tanpa potongan komisi.
+- **Halaman Detail Warung & Pesanan WhatsApp:** Katalog menu dengan kalkulasi harga promo otomatis saat ada diskon (harga asli dicoret dan badge diskon tertera jelas), opsi pesan diantar / ambil sendiri, serta tautan langsung ke WhatsApp penjual tanpa potongan komisi.
 - **Kontribusi Titik Warung Baru (Crowdsourced):** Pembeli dapat mengajukan titik lokasi warung UMKM tersembunyi yang baru mereka temukan untuk dikurasi admin, termasuk menginfokan jika warung sedang mengadakan diskon/promo.
 - **Gamifikasi Kontributor (Level & XP):** Sistem reward +50 XP per warung yang lolos kurasi admin, progress bar XP, dan gelar kehormatan kontributor (*Penjelajah Jajanan*, *Pemberi Rekomendasi*, *Pahlawan UMKM Lokal*).
 
 ### B. Pemilik Warung (Penjual)
 - **Pendaftaran & Autentikasi:** Masuk dan buat akun dengan validasi Zod dan enkripsi password bcrypt.
 - **Dashboard Performa Warung:**
-  - **Statistik Pengunjung:** Menampilkan total dilihat pembeli (*view count*) dan frekuensi warung masuk radar pencarian radius pembeli.
+  - **Statistik Pengunjung Real-Time:** Menampilkan total berapa kali warung dilihat oleh pembeli (*view count*) yang tercatat dan terakumulasi secara nyata di database setiap kali pembeli membuka halaman warung.
+  - **Tanda Diskon Aktif:** Indikator visual mencolok pada kartu warung di dashboard saat pemilik warung sedang menyalakan promo potongan harga.
   - **Status Kurasi Admin:** Tampilan status verifikasi awal (*Menunggu Kurasi Admin* atau *Terverifikasi & Tayang*).
 - **Fitur Khusus "Zero Waste Food" Fleksibel (1% – 100%):**
   - Sesuai pilar SDG 12 (*Responsible Consumption*), penjual (maupun pembeli yang mendaftarkan) dapat mengaktifkan promo diskon porsi makanan jelang tutup secara fleksibel mulai dari **1% hingga 100%** dengan slider dan preset cepat (-1%, -10%, -20%, -30%, -50%) agar dagangan laris dan mencegah makanan mubazir.
+- **Pembaruan Seketika Tanpa Kurasi Ulang:** Perubahan daftar menu, harga makanan, ketersediaan menu, dan promo diskon langsung aktif seketika di aplikasi tanpa harus menunggu persetujuan ulang kurator admin.
 - **Pengelolaan Warung & Menu:** Menambah, mengedit nama, patokan alamat, jam buka-tutup, nomor WhatsApp, foto, dan daftar menu dinamis.
 - **Draf Menu dari AI:** Tombol "Baca menu dari foto" berbasis AI (Google Gemini API) untuk mengekstrak menu dan harga dari foto daftar menu secara otomatis dengan label wajib *"Draf AI, periksa dulu"*.
 - **Keamanan Data Server-Side:** Validasi kepemilikan warung ketat di server; penjual hanya bisa mengubah warung miliknya sendiri.
